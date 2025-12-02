@@ -95,7 +95,7 @@
                     </div>
                     <div id="pinSection" class="hidden fade-in">
                         <label class="block text-sm font-bold text-gray-700 mb-1">PIN de Acceso</label>
-                        <input type="password" id="loginPin" placeholder="****" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none text-center text-2xl tracking-widest" maxlength="4">
+                        <input type="tel" id="loginPin" inputmode="numeric" placeholder="****" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none text-center text-2xl tracking-widest" maxlength="4">
                         <p id="pinHint" class="text-xs text-gray-400 mt-2 text-center"></p>
                     </div>
                     <div id="nameSection" class="hidden fade-in">
@@ -295,12 +295,15 @@
             </div>
         </div>
     </div>
-
+    
+    <div id="toastNotification" class="fixed top-5 left-1/2 -translate-x-1/2 px-6 py-3 bg-green-500 text-white font-bold rounded-lg shadow-xl z-50 hidden transition-all duration-300 transform opacity-0">
+        Turno confirmado 👍
+    </div>
 
     <script>
         // --- CONFIGURACIÓN DE SUPABASE ---
-        const SUPABASE_URL = 'https://hqoyjsngydafaagsrzlg.supabase.co'; 
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhxb3lqc25neWRhZmFhZ3NyemxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MDI5MDQsImV4cCI6MjA3OTk3ODkwNH0.WyTlANZLTRd6IlhxuDlQai8Zz6dgexGPvwXmBr7HsZs';
+        const SUPABASE_URL = 'TU_URL_AQUI'; 
+        const SUPABASE_KEY = 'TU_KEY_AQUI';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let currentShop = null;
@@ -308,15 +311,34 @@
         let selectedTime = null;
         let shopConfig = {}; 
         let generatedHours = []; 
+        
+        // Claves de LocalStorage para persistencia
+        const CLIENT_STORAGE_KEY = 'barbersaas_client_id';
+        const ADMIN_STORAGE_KEY = 'barbersaas_admin_id';
+
+        // Función para mostrar el toast
+        function showToast(message) {
+            const toast = document.getElementById('toastNotification');
+            toast.innerText = message;
+            toast.classList.remove('hidden', 'opacity-0', 'scale-90');
+            toast.classList.add('opacity-100', 'scale-100');
+            
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'scale-100');
+                toast.classList.add('opacity-0', 'scale-90');
+                setTimeout(() => toast.classList.add('hidden'), 300); 
+            }, 3000); 
+        }
+
 
         document.addEventListener('DOMContentLoaded', async () => {
             const params = new URLSearchParams(window.location.search);
             const slug = params.get('barberia') || 'elite'; 
-
+            
             const { data: shop, error } = await supabase
                 .from('barberias').select('*').eq('slug', slug).single();
 
-            if (error || !shop) return alert('Barbería no encontrada. ' + (error ? error.message : ''));
+            if (error || !shop) return alert(`Barbería con slug '${slug}' no encontrada. Verifica el parámetro 'barberia' en la URL y la base de datos. ${error ? error.message : ''}`);
 
             currentShop = shop;
             shopConfig = shop.config || {};
@@ -336,7 +358,27 @@
             document.getElementById('loader').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
             
+            // --- PERSISTENCIA DE SESIÓN ---
+            const storedClientId = localStorage.getItem(CLIENT_STORAGE_KEY);
+            const storedAdminId = localStorage.getItem(ADMIN_STORAGE_KEY);
+            
+            if (storedClientId && storedClientId !== 'null') {
+                const { data: client } = await supabase.from('clientes').select('*').eq('id', storedClientId).single();
+                if (client) {
+                    currentUser = client;
+                    return showClientDashboard();
+                }
+            } else if (storedAdminId && storedAdminId !== 'null') {
+                 const { data: admin } = await supabase.from('barberos').select('*').eq('id', storedAdminId).single();
+                if (admin) {
+                    currentUser = admin;
+                    return showAdminDashboard();
+                }
+            }
+            
+            // Si no hay sesión persistente, muestra el login de cliente
             updateAdminDropdownVisibility(false);
+            // -----------------------------
         });
 
         // --- CORE UTILS ---
@@ -486,7 +528,10 @@
 
             const { data: existing } = await supabase.from('clientes').select('*').eq('barberia_id', currentShop.id).eq('celular', phone).eq('pin', pin).single();
             if (existing) {
-                currentUser = existing; showClientDashboard();
+                currentUser = existing; 
+                localStorage.setItem(CLIENT_STORAGE_KEY, currentUser.id); // Guardar ID
+                localStorage.removeItem(ADMIN_STORAGE_KEY);
+                showClientDashboard();
             } else {
                 const { data: existingName } = await supabase.from('clientes').select('*').eq('barberia_id', currentShop.id).eq('celular', phone).single();
                 if (existingName) {
@@ -496,7 +541,12 @@
                 
                 if (!name) return alert("Falta nombre");
                 const { data, error } = await supabase.from('clientes').insert({ barberia_id: currentShop.id, celular: phone, nombre: name, pin: pin }).select().single();
-                if (!error) { currentUser = data; showClientDashboard(); }
+                if (!error) { 
+                    currentUser = data; 
+                    localStorage.setItem(CLIENT_STORAGE_KEY, currentUser.id); // Guardar ID
+                    localStorage.removeItem(ADMIN_STORAGE_KEY);
+                    showClientDashboard(); 
+                }
                 else alert("Error al registrar: " + error.message);
             }
         }
@@ -573,7 +623,6 @@
                 
                 const currentCount = occupation[time] || 0;
                 const availableSlots = Math.max(0, currentCapacity);
-                const isFull = currentCount >= availableSlots;
                 const remaining = availableSlots - currentCount;
                 
                 const isAvailable = remaining > 0;
@@ -610,7 +659,10 @@
             const { error } = await supabase.from('turnos').insert({
                 barberia_id: currentShop.id, cliente_id: currentUser.id, fecha: date, hora: selectedTime, servicio: service
             });
-            if (!error) { alert("¡Turno confirmado!"); showClientDashboard(); }
+            if (!error) { 
+                showToast("¡Turno confirmado! 👍"); 
+                showClientDashboard(); 
+            }
             else alert("Error: " + error.message);
         }
 
@@ -661,6 +713,8 @@
 
             if (barber) {
                 currentUser = barber;
+                localStorage.setItem(ADMIN_STORAGE_KEY, currentUser.id); // Guardar ID
+                localStorage.removeItem(CLIENT_STORAGE_KEY);
                 document.getElementById('modalBarberLogin').classList.add('hidden');
                 showAdminDashboard();
             } else alert("Usuario o Contraseña incorrectos");
@@ -847,12 +901,12 @@
 
             if (!error) {
                 currentUser.password = newPass; 
-                alert("Contraseña actualizada con éxito.");
+                showToast("Contraseña actualizada con éxito.");
                 document.getElementById('currentPass').value = '';
                 document.getElementById('newPass').value = '';
                 document.getElementById('confirmNewPass').value = '';
                 
-                // CAMBIO CLAVE: Solo cierra el modal, NO recarga la página
+                // Solo cierra el modal, NO recarga la página
                 toggleModal('modalAccountSettings'); 
             } else {
                 alert("Error al actualizar la contraseña: " + error.message);
@@ -883,7 +937,7 @@
             }).eq('id', currentShop.id);
 
             if(!error) {
-                alert("Configuración guardada.");
+                showToast("Configuración guardada.");
                 
                 // Actualiza los datos de la barbería en el objeto global para reflejar los cambios
                 currentShop.apertura = newOpen;
@@ -891,9 +945,9 @@
                 currentShop.intervalo = newInterval;
                 currentShop.sillas = newChairs;
                 
-                // CAMBIO CLAVE: Vuelve a cargar el dashboard del administrador sin recargar la página
+                // Vuelve a cargar el dashboard del administrador sin recargar la página
                 generatedHours = generateTimeSlots(currentShop.apertura, currentShop.cierre, currentShop.intervalo);
-                renderServiceOptions(); // Refresca las opciones si cambiaron
+                renderServiceOptions(); 
                 showAdminDashboard();
                 switchAdminTab('config'); 
             } else {
@@ -926,7 +980,11 @@
                 barberia_id: currentShop.id, cliente_id: clientId, fecha: date, hora: time, servicio: service
             });
 
-            if(!error) { alert("Agendado"); toggleModal('modalManualBooking'); loadBarberDashboard(); }
+            if(!error) { 
+                showToast("Agendado manualmente."); 
+                toggleModal('modalManualBooking'); 
+                loadBarberDashboard(); 
+            }
             else alert(error.message);
         }
         
@@ -943,6 +1001,9 @@
 
         function logout() { 
             currentUser = null;
+            localStorage.removeItem(CLIENT_STORAGE_KEY);
+            localStorage.removeItem(ADMIN_STORAGE_KEY);
+            
             document.title = currentShop.nombre + " - Agendamiento";
             updateAdminDropdownVisibility(false);
             
