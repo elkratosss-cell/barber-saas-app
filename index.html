@@ -99,27 +99,29 @@
 
                 <div class="space-y-5">
                     <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Celular</label>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Celular (Ej: 099 123 456)</label>
                         <div class="relative">
-                            <span class="absolute left-3 top-3.5 text-gray-400">🇺🇾 +598</span>
-                            <input type="tel" id="loginPhone" placeholder="99123456" class="w-full pl-24 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none text-lg" maxlength="9" autocomplete="off">
+                            <span class="absolute left-3 top-3.5 text-gray-400">🇺🇾</span>
+                            <input type="tel" id="loginPhone" placeholder="099 123 456" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none text-lg" maxlength="11" oninput="maskPhone(this)" autocomplete="off">
                         </div>
+                        <p id="phoneError" class="text-xs text-red-500 mt-1 hidden">Número de celular inválido.</p>
                     </div>
-                    <div id="pinSection" class="hidden fade-in">
-                        <label class="block text-sm font-bold text-gray-700 mb-1">PIN de Acceso</label>
-                        <div class="relative">
-                            <input type="password" id="loginPin" inputmode="numeric" placeholder="****" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none text-center text-2xl tracking-widest" maxlength="4" autocomplete="new-password">
-                            <button type="button" onclick="togglePinVisibility()" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-primary transition">
-                                <i id="pinToggleIcon" class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                        <p id="pinHint" class="text-xs text-gray-400 mt-2 text-center"></p>
-                    </div>
+                    
                     <div id="nameSection" class="hidden fade-in">
                         <label class="block text-sm font-bold text-gray-700 mb-1">Nombre</label>
                         <input type="text" id="loginName" placeholder="Tu nombre" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none" autocomplete="off">
                     </div>
-                    <button id="btnActionLogin" class="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-md hover:opacity-90 transition mt-2">Ingresar</button>
+                    
+                    <div id="pinSection" class="hidden fade-in">
+                        <label class="block text-sm font-bold text-gray-700 mb-1">PIN de Acceso SMS</label>
+                        <div class="relative">
+                            <input type="tel" inputmode="numeric" id="loginPin" placeholder="****" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none text-center text-2xl tracking-widest" maxlength="4" autocomplete="new-password">
+                        </div>
+                        <p id="pinHint" class="text-xs text-gray-400 mt-2 text-center"></p>
+                    </div>
+                    
+                    <button id="btnActionLogin" onclick="handleLoginFlow()" class="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-md hover:opacity-90 transition mt-2">Solicitar PIN</button>
+                    <button id="btnResendPin" onclick="requestPin(phoneToVerify, document.getElementById('btnActionLogin'))" class="w-full py-2 text-gray-500 text-sm hover:text-primary hidden">Reenviar PIN</button>
                 </div>
             </section>
 
@@ -327,18 +329,24 @@
         const SUPABASE_URL = 'https://hqoyjsngydafaagsrzlg.supabase.co'; 
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhxb3lqc25neWRhZmFhZ3NyemxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MDI5MDQsImV4cCI6MjA3OTk3ODkwNH0.WyTlANZLTRd6IlhxuDlQai8Zz6dgexGPvwXmBr7HsZs';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // !!! ATENCIÓN: REEMPLAZA ESTE EMAIL CON EL TUYO REAL PARA EL BLOQUEO DE PRUEBA
+        const CONTACT_EMAIL = 'TU_EMAIL@EJEMPLO.COM'; 
 
         let currentShop = null;
         let currentUser = null; 
         let selectedTime = null;
         let shopConfig = {}; 
         let generatedHours = []; 
-        let calendarInstance = null; // Instancia de Flatpickr cliente
-        let adminCalendarInstance = null; // Instancia de Flatpickr admin
-        let manualCalendarInstance = null; // Instancia de Flatpickr manual
+        let calendarInstance = null;
+        let adminCalendarInstance = null;
+        let manualCalendarInstance = null;
         
         const CLIENT_STORAGE_KEY = 'barbersaas_client_id';
         const ADMIN_STORAGE_KEY = 'barbersaas_admin_id';
+        
+        // Variables para el nuevo flujo de login de cliente
+        let loginStep = 1; // 1: Solicitar PIN, 2: Ingresar PIN
+        let phoneToVerify = null; // Almacena el número validado
 
         // Configuración común de Flatpickr
         const flatpickrConfig = {
@@ -346,9 +354,9 @@
             dateFormat: "Y-m-d",
             altInput: true,
             altFormat: "j \\de F, Y",
-            disableMobile: true, // Forzar estilo propio en móviles
+            disableMobile: true, 
             minDate: "today",
-            theme: "material_orange" // Puedes buscar temas CSS o dejar el default
+            theme: "material_orange"
         };
 
         function maskTime(input) {
@@ -358,6 +366,32 @@
                 v = v.slice(0, 2) + ':' + v.slice(2);
             }
             input.value = v;
+        }
+        
+        // NUEVA FUNCIÓN: Máscara y validación para el formato de celular UY (09X XXX XXX)
+        function maskPhone(input) {
+            let v = input.value.replace(/\D/g, ''); 
+            
+            // Normalizar a 9 dígitos (099123456)
+            if (v.length > 9) v = v.slice(0, 9);
+            
+            // Si el usuario olvidó el 0 inicial, se lo agregamos automáticamente si tiene 8 dígitos y comienza con 9
+            if (v.length === 8 && v.startsWith('9')) {
+                v = '0' + v;
+            }
+
+            let formatted = '';
+            if (v.length > 3) {
+                formatted += v.slice(0, 3) + ' ';
+                if (v.length > 6) {
+                    formatted += v.slice(3, 6) + ' ' + v.slice(6);
+                } else {
+                    formatted += v.slice(3);
+                }
+            } else {
+                formatted = v;
+            }
+            input.value = formatted;
         }
 
         function showToast(message, isError = false) {
@@ -403,6 +437,39 @@
             if (error || !shop) return alert('Barbería no encontrada.');
 
             currentShop = shop;
+            
+            // =========================================================
+            // === INICIO DEL BLOQUEO AUTOMÁTICO DE PRUEBA (14 DÍAS) ===
+            // =========================================================
+            if (currentShop.fecha_fin_prueba) {
+                // Añadimos 'T00:00:00' para que la comparación sea fiable
+                const trialEnd = new Date(currentShop.fecha_fin_prueba + 'T00:00:00'); 
+                const today = new Date();
+                today.setHours(0,0,0,0); 
+
+                if (today > trialEnd) {
+                    document.title = currentShop.nombre + " - Prueba Finalizada";
+                    document.getElementById('loader').classList.add('hidden');
+                    document.getElementById('app').classList.remove('hidden');
+                    
+                    document.getElementById('viewLogin').innerHTML = `
+                        <div class="p-6 text-center mt-10">
+                            <i class="fas fa-calendar-times text-6xl text-red-500 mb-4"></i>
+                            <h2 class="text-2xl font-bold text-red-600 mb-4">Prueba Gratuita Finalizada</h2>
+                            <p class="text-gray-700 mb-6">Gracias por probar BarberSaaS. La prueba de 14 días de ${currentShop.nombre} ha expirado.</p>
+                            <a href="mailto:${CONTACT_EMAIL}" class="mt-4 inline-block bg-primary text-white py-3 px-6 rounded-xl font-bold hover:opacity-90 transition">
+                                <i class="fas fa-crown mr-2"></i> Quiero Seguir Usándolo
+                            </a>
+                        </div>`;
+                    document.getElementById('viewClient').classList.add('hidden');
+                    document.getElementById('viewBarber').classList.add('hidden');
+                    return; 
+                }
+            }
+            // =========================================================
+            // === FIN DEL BLOQUEO AUTOMÁTICO DE PRUEBA ==============
+            // =========================================================
+            
             shopConfig = shop.config || {};
             if (!shopConfig.barber_breaks) shopConfig.barber_breaks = [];
             
@@ -427,6 +494,7 @@
                 if (admin) { currentUser = admin; return showAdminDashboard(); }
             }
             updateAdminDropdownVisibility(false);
+            resetLoginView(); // Asegura la vista de login en Paso 1
         });
 
         function generateTimeSlots(startStr, endStr, intervalMins) {
@@ -460,7 +528,6 @@
         function setupInputs() {
             const today = new Date().toISOString().split('T')[0];
             
-            // Inicializar Flatpickr en el input de cliente
             calendarInstance = flatpickr("#datePicker", {
                 ...flatpickrConfig,
                 defaultDate: today,
@@ -469,7 +536,6 @@
                 }
             });
 
-            // Inicializar Flatpickr en el input de Admin
             adminCalendarInstance = flatpickr("#barberDatePicker", {
                 ...flatpickrConfig,
                 defaultDate: today,
@@ -478,15 +544,13 @@
                 }
             });
             
-            // Inicializar Flatpickr en el input Manual
             manualCalendarInstance = flatpickr("#manualDate", {
                 ...flatpickrConfig,
                 defaultDate: today
             });
 
             document.getElementById('btnConfirmBooking').addEventListener('click', createClientBooking);
-            document.getElementById('loginPhone').addEventListener('input', checkPhoneRegistered);
-            document.getElementById('btnActionLogin').addEventListener('click', handleClientLogin);
+            // El listener para el teléfono ahora es handled por maskPhone y handleLoginFlow
         }
 
         function renderServiceOptions() {
@@ -520,63 +584,135 @@
         function openAccountSettingsAndCloseDropdown(e) { e.preventDefault(); toggleDropdown('adminDropdown'); toggleModal('modalAccountSettings'); }
         function adminLogoutAndCloseDropdown(e) { e.preventDefault(); toggleDropdown('adminDropdown'); logout(); }
 
-        // --- CLIENTE ---
-        async function checkPhoneRegistered() {
-            const phone = document.getElementById('loginPhone').value;
-            if (phone.length < 8) {
-                document.getElementById('pinSection').classList.add('hidden');
-                document.getElementById('nameSection').classList.add('hidden');
-                document.getElementById('loginPin').value = '';
-                document.getElementById('loginName').value = '';
-                document.getElementById('btnActionLogin').innerText = 'Ingresar';
-                return;
-            }
-            const { data } = await supabase.from('clientes').select('*').eq('barberia_id', currentShop.id).eq('celular', phone).single();
-            document.getElementById('pinSection').classList.remove('hidden');
-            const nameSec = document.getElementById('nameSection');
+        // --- CLIENTE LOGIN (Flujo de 2 pasos con PIN) ---
+        
+        // Paso 1: Solicitar PIN / Paso 2: Verificar PIN
+        async function handleLoginFlow() {
+            const phoneInput = document.getElementById('loginPhone');
+            const phone = phoneInput.value.replace(/\D/g, ''); // Número limpio (9 dígitos)
             const btn = document.getElementById('btnActionLogin');
             
-            document.getElementById('loginPin').type = 'password';
-            document.getElementById('pinToggleIcon').classList.remove('fa-eye-slash');
-            document.getElementById('pinToggleIcon').classList.add('fa-eye');
+            document.getElementById('phoneError').classList.add('hidden');
+            
+            // Validación de formato: Debe ser 9 dígitos y empezar con '09'
+            if (phone.length !== 9 || !phone.startsWith('09')) {
+                document.getElementById('phoneError').innerText = 'El celular debe tener 9 dígitos (Ej: 099123456).';
+                document.getElementById('phoneError').classList.remove('hidden');
+                return;
+            }
+            
+            btn.disabled = true;
 
-            if (data) {
-                nameSec.classList.add('hidden');
-                document.getElementById('loginName').value = data.nombre;
-                document.getElementById('pinHint').innerText = "Ingresa tu PIN";
-                btn.innerText = "Ingresar";
-            } else {
-                nameSec.classList.remove('hidden');
-                document.getElementById('loginName').value = '';
-                document.getElementById('pinHint').innerText = "Crea un PIN";
-                btn.innerText = "Registrarme";
+            if (loginStep === 1) {
+                await requestPin(phone, btn);
+            } else if (loginStep === 2) {
+                await verifyPinAndLogin(phone, btn);
             }
         }
 
-        async function handleClientLogin() {
-            const phone = document.getElementById('loginPhone').value;
-            const pin = document.getElementById('loginPin').value;
-            let name = document.getElementById('loginName').value;
-            if (phone.length < 8 || pin.length < 4) { showToast("Datos incompletos", true); return; }
+        // Lógica de Solicitud de PIN (Paso 1)
+        async function requestPin(phone, btn) {
+            const min = 1000;
+            const max = 9999;
+            const randomPin = (Math.floor(Math.random() * (max - min + 1)) + min).toString();
+            phoneToVerify = phone;
 
-            const { data: existing } = await supabase.from('clientes').select('*').eq('barberia_id', currentShop.id).eq('celular', phone).eq('pin', pin).single();
-            if (existing) {
-                currentUser = existing; 
-                localStorage.setItem(CLIENT_STORAGE_KEY, currentUser.id); 
-                localStorage.removeItem(ADMIN_STORAGE_KEY);
-                showClientDashboard();
-            } else {
-                const { data: existingName } = await supabase.from('clientes').select('*').eq('barberia_id', currentShop.id).eq('celular', phone).single();
-                if (existingName) { showToast("PIN Incorrecto", true); return; }
-                if (!name) { showToast("Falta nombre", true); return; }
-                const { data, error } = await supabase.from('clientes').insert({ barberia_id: currentShop.id, celular: phone, nombre: name, pin: pin }).select().single();
-                if (!error) { 
-                    currentUser = data; 
-                    localStorage.setItem(CLIENT_STORAGE_KEY, currentUser.id);
-                    localStorage.removeItem(ADMIN_STORAGE_KEY);
-                    showClientDashboard(); 
-                } else showToast("Error: " + error.message, true);
+            let { data: client, error: searchError } = await supabase.from('clientes').select('*').eq('barberia_id', currentShop.id).eq('celular', phone).single();
+
+            if (searchError && searchError.code !== 'PGRST116') { 
+                showToast("Error en la búsqueda.", true);
+                btn.disabled = false;
+                return;
             }
+            
+            let isNewUser = !client;
+            
+            if (isNewUser) {
+                document.getElementById('nameSection').classList.remove('hidden');
+                document.getElementById('pinHint').innerText = "Crea tu cuenta e ingresa el PIN (Simulado abajo)";
+            } else {
+                document.getElementById('nameSection').classList.add('hidden');
+                document.getElementById('loginName').value = client.nombre; 
+                document.getElementById('pinHint').innerText = "Ingresa el PIN que recibiste (Simulado abajo)";
+            }
+
+            // Guardar PIN temporalmente en la base de datos (SIMULACIÓN DE ENVÍO SMS)
+            const { error: pinUpdateError } = await supabase.from('clientes').upsert({ 
+                barberia_id: currentShop.id, 
+                celular: phone, 
+                nombre: isNewUser ? 'PENDIENTE' : client.nombre,
+                pin: randomPin 
+            }, { onConflict: ['barberia_id', 'celular'] });
+
+            if (pinUpdateError) {
+                showToast("Error al generar PIN: " + pinUpdateError.message, true);
+                btn.disabled = false;
+                return;
+            }
+            
+            // SIMULACIÓN: Mostrar el PIN al usuario (¡REEMPLAZAR POR SMS REAL EN PRODUCCIÓN!)
+            showToast(`PIN de prueba: ${randomPin}`, false);
+
+            // Transición de la interfaz al Paso 2
+            document.getElementById('loginPhone').disabled = true;
+            document.getElementById('pinSection').classList.remove('hidden');
+            document.getElementById('btnResendPin').classList.remove('hidden');
+            btn.innerText = "Ingresar";
+            btn.disabled = false;
+            loginStep = 2;
+        }
+
+        // Lógica de Verificación de PIN y Login Final (Paso 2)
+        async function verifyPinAndLogin(phone, btn) {
+            const pin = document.getElementById('loginPin').value;
+            const name = document.getElementById('loginName').value;
+            
+            if (pin.length !== 4) { showToast("El PIN debe tener 4 dígitos.", true); btn.disabled = false; return; }
+            
+            const { data: client, error: searchError } = await supabase.from('clientes')
+                .select('*')
+                .eq('barberia_id', currentShop.id)
+                .eq('celular', phone)
+                .eq('pin', pin) // El pin guardado es el PIN temporal
+                .single();
+            
+            if (searchError) {
+                showToast("PIN incorrecto o expirado. Solicítalo de nuevo.", true);
+                btn.disabled = false;
+                return;
+            }
+            
+            // Si el nombre está pendiente (nuevo usuario), lo guardamos.
+            if (client.nombre === 'PENDIENTE') {
+                if (!name) { showToast("Por favor, ingresa tu nombre.", true); btn.disabled = false; return; }
+                await supabase.from('clientes').update({ nombre: name, pin: null }).eq('id', client.id);
+                client.nombre = name;
+            } else {
+                // Si es usuario existente, limpiamos el PIN de la base de datos
+                await supabase.from('clientes').update({ pin: null }).eq('id', client.id);
+            }
+            
+            // Login Exitoso
+            currentUser = client; 
+            localStorage.setItem(CLIENT_STORAGE_KEY, currentUser.id); 
+            localStorage.removeItem(ADMIN_STORAGE_KEY);
+            showClientDashboard();
+            
+            resetLoginView();
+        }
+
+        // Función de reseteo de la vista
+        function resetLoginView() {
+            loginStep = 1;
+            document.getElementById('loginPhone').disabled = false;
+            document.getElementById('loginPhone').value = '';
+            document.getElementById('loginPin').value = '';
+            document.getElementById('loginName').value = '';
+            document.getElementById('nameSection').classList.add('hidden');
+            document.getElementById('pinSection').classList.add('hidden');
+            document.getElementById('btnActionLogin').innerText = 'Solicitar PIN';
+            document.getElementById('btnResendPin').classList.add('hidden');
+            document.getElementById('phoneError').classList.add('hidden');
         }
 
         async function showClientDashboard() {
@@ -606,7 +742,6 @@
         }
 
         async function loadSlots() {
-            // Usamos el valor del input de flatpickr (formato YYYY-MM-DD)
             const dateStr = document.getElementById('datePicker').value;
             const dateObj = new Date(dateStr + 'T00:00:00'); 
             const dayOfWeek = dateObj.getDay(); 
@@ -641,12 +776,12 @@
                 });
                 
                 const currentCount = occupation[time] || 0;
-                const isFull = currentCount >= Math.max(0, currentCapacity);
                 const isAvailable = (Math.max(0, currentCapacity) - currentCount) > 0;
 
                 const btn = document.createElement('button');
                 btn.className = `slot-btn border rounded-lg py-3 font-medium text-sm flex flex-col items-center justify-center ${ !isAvailable ? 'occupied' : 'available bg-white border-gray-200 text-gray-700' }`;
-                let badgeHtml = (isAvailable && (Math.max(0, currentCapacity) - currentCount) <= 2) ? `<span class="spots-badge">${Math.max(0, currentCapacity) - currentCount}</span>` : '';
+                let spotsLeft = Math.max(0, currentCapacity) - currentCount;
+                let badgeHtml = (isAvailable && spotsLeft <= 2) ? `<span class="spots-badge">${spotsLeft}</span>` : '';
                 btn.innerHTML = `${time}${badgeHtml}`;
 
                 if (isAvailable) {
@@ -744,19 +879,15 @@
                 }
             });
 
-            // CORRECCIÓN: Botón de borrado para cancelados
             appts.forEach(a => {
                 const isBlocked = a.clientes.nombre === 'PAUSA'; 
                 let cardClass = 'bg-white shadow-sm border-l-4 border-green-500';
                 let statusLabel = `<span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">✅ EN ESPERA</span>`;
-                
-                // Acción por defecto: Cancelar
                 let actionBtn = `<button onclick="barberCancel(${a.id})" class="text-red-500 p-2 hover:bg-red-100 rounded-full transition" title="Cancelar Turno"><i class="fas fa-times"></i></button>`;
 
                 if (a.estado === 'cancelado') {
                     cardClass = 'bg-red-50 border-l-4 border-red-300 opacity-75';
                     statusLabel = `<span class="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded">❌ CANCELADO</span>`;
-                    // Acción si cancelado: Borrar (Papelera)
                     actionBtn = `<button onclick="deleteAppt(${a.id})" class="text-gray-500 p-2 hover:bg-gray-200 rounded-full transition" title="Borrar Definitivamente"><i class="fas fa-trash-alt"></i></button>`;
                 } else if (isBlocked) {
                     cardClass = 'bg-yellow-50 border-l-4 border-yellow-400';
@@ -789,7 +920,6 @@
                 }, () => {});
         }
         
-        // NUEVA FUNCIÓN: Borrar definitivamente
         async function deleteAppt(id) {
             showConfirmationModal("¿Borrar definitivamente del historial?", 
                 async () => {
@@ -836,7 +966,6 @@
                 `;
                 container.appendChild(div);
             });
-            // Listeners para guardar cambios en inputs de pausa
             container.querySelectorAll('input').forEach(input => {
                 input.addEventListener('change', (e) => {
                     const id = parseInt(e.target.dataset.barberId);
@@ -927,8 +1056,8 @@
             document.title = currentShop.nombre + " - Agendamiento"; updateAdminDropdownVisibility(false);
             document.getElementById('viewBarber').classList.add('hidden'); document.getElementById('viewClient').classList.add('hidden');
             document.getElementById('viewLogin').classList.remove('hidden'); document.getElementById('fabAdd').classList.add('hidden');
-            document.getElementById('loginPhone').value = ''; document.getElementById('loginPin').value = '';
-            document.getElementById('pinSection').classList.add('hidden'); document.getElementById('nameSection').classList.add('hidden');
+            
+            resetLoginView();
         }
     </script>
 </body>
