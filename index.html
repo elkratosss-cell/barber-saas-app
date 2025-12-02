@@ -171,11 +171,11 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="text-xs text-gray-500 block">Apertura</label>
-                                <input type="time" id="cfgOpen" class="w-full p-2 border rounded">
+                                <select id="cfgOpen" class="w-full p-2 border rounded bg-white"></select>
                             </div>
                             <div>
                                 <label class="text-xs text-gray-500 block">Cierre</label>
-                                <input type="time" id="cfgClose" class="w-full p-2 border rounded">
+                                <select id="cfgClose" class="w-full p-2 border rounded bg-white"></select>
                             </div>
                         </div>
 
@@ -328,6 +328,7 @@
         let selectedTime = null;
         let shopConfig = {}; 
         let generatedHours = []; 
+        let allPossibleHours = []; // Almacena todas las horas para los SELECT de apertura/cierre
         
         // Claves de LocalStorage para persistencia
         const CLIENT_STORAGE_KEY = 'barbersaas_client_id';
@@ -412,6 +413,7 @@
             
             document.title = currentShop.nombre + " - Agendamiento";
 
+            allPossibleHours = generateAllPossibleHours(30); // Genera todas las horas de 00:00 a 23:30
             generatedHours = generateTimeSlots(shop.apertura, shop.cierre, shop.intervalo);
 
             applyTheme();
@@ -446,6 +448,7 @@
 
         // --- CORE UTILS ---
 
+        // Genera las horas disponibles para agendamiento (slots)
         function generateTimeSlots(startStr, endStr, intervalMins) {
             const slots = [];
             let [h, m] = startStr.split(':').map(Number);
@@ -463,6 +466,36 @@
                 current.setMinutes(current.getMinutes() + intervalMins);
             }
             return slots;
+        }
+
+        // Genera todas las horas posibles para los SELECT de configuración
+        function generateAllPossibleHours(intervalMins) {
+            const hours = [];
+            for (let h = 0; h < 24; h++) {
+                for (let m = 0; m < 60; m += intervalMins) {
+                    const timeString = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                    hours.push(timeString);
+                }
+            }
+            return hours;
+        }
+        
+        // Llena los SELECT de hora con las horas posibles
+        function fillTimeSelects(selectId, selectedValue) {
+            const select = document.getElementById(selectId);
+            select.innerHTML = '';
+            
+            // Asegura que la lista de horas incluye la hora de cierre para la selección
+            const hoursToFill = allPossibleHours.includes(currentShop.cierre.slice(0,5)) 
+                ? allPossibleHours : [...allPossibleHours, currentShop.cierre.slice(0,5)].sort(); 
+            
+            hoursToFill.forEach(h => {
+                const opt = document.createElement('option');
+                opt.value = h; 
+                opt.innerText = h;
+                if (h === selectedValue) opt.selected = true;
+                select.appendChild(opt);
+            });
         }
 
         function applyTheme() {
@@ -499,7 +532,9 @@
             document.getElementById('loginPhone').addEventListener('input', checkPhoneRegistered);
             document.getElementById('btnActionLogin').addEventListener('click', handleClientLogin);
 
+            // Rellenar SELECT de hora para agendamiento manual
             const manualTimeSelect = document.getElementById('manualTime');
+            manualTimeSelect.innerHTML = '';
             generatedHours.forEach(h => {
                 const opt = document.createElement('option');
                 opt.value = h; opt.innerText = h;
@@ -881,17 +916,24 @@
         }
 
         async function barberCancel(id) {
-            if(!confirm("¿Eliminar turno?")) return;
-            await supabase.from('turnos').update({estado:'cancelado'}).eq('id', id);
-            showToast("Turno eliminado.", true);
-            loadBarberDashboard();
+            // Usamos el modal de confirmación profesional en lugar del nativo
+            showConfirmationModal("¿Estás seguro de ELIMINAR este turno?", 
+                async () => {
+                    await supabase.from('turnos').update({estado:'cancelado'}).eq('id', id);
+                    showToast("Turno eliminado.", true);
+                    loadBarberDashboard();
+                }, 
+                () => {}
+            );
         }
 
         // --- CONFIGURATION LOGIC ---
 
         function loadConfigForm() {
-            document.getElementById('cfgOpen').value = currentShop.apertura;
-            document.getElementById('cfgClose').value = currentShop.cierre;
+            // Reemplazado input type="time" por SELECT y llenado
+            fillTimeSelects('cfgOpen', currentShop.apertura.slice(0,5));
+            fillTimeSelects('cfgClose', currentShop.cierre.slice(0,5));
+            
             document.getElementById('cfgInterval').value = currentShop.intervalo;
             document.getElementById('cfgChairs').value = currentShop.sillas;
             
@@ -923,15 +965,32 @@
                 div.className = 'flex gap-2 items-center';
                 div.innerHTML = `
                     <label class="text-sm font-medium w-16">Barbero ${index + 1}:</label>
-                    <input type="time" class="p-1 border rounded w-full text-sm" data-barber-id="${index}" data-time-type="start" value="${breakTime.start || ''}">
+                    <select class="p-1 border rounded w-full text-sm" data-barber-id="${index}" data-time-type="start"></select>
                     <span class="text-xs">-</span>
-                    <input type="time" class="p-1 border rounded w-full text-sm" data-barber-id="${index}" data-time-type="end" value="${breakTime.end || ''}">
+                    <select class="p-1 border rounded w-full text-sm" data-barber-id="${index}" data-time-type="end"></select>
                 `;
                 container.appendChild(div);
+                
+                // Llenar selectores de pausa
+                const startSelect = div.querySelector('[data-time-type="start"]');
+                const endSelect = div.querySelector('[data-time-type="end"]');
+
+                // Llenar con todas las horas (o subconjunto si es necesario)
+                allPossibleHours.forEach(h => {
+                    const optStart = document.createElement('option');
+                    optStart.value = h; optStart.innerText = h;
+                    if (h === breakTime.start) optStart.selected = true;
+                    startSelect.appendChild(optStart);
+                    
+                    const optEnd = document.createElement('option');
+                    optEnd.value = h; optEnd.innerText = h;
+                    if (h === breakTime.end) optEnd.selected = true;
+                    endSelect.appendChild(optEnd);
+                });
             });
 
-            container.querySelectorAll('input[type="time"]').forEach(input => {
-                input.addEventListener('change', (e) => {
+            container.querySelectorAll('select').forEach(select => {
+                select.addEventListener('change', (e) => {
                     const id = parseInt(e.target.dataset.barberId);
                     const type = e.target.dataset.timeType;
                     shopConfig.barber_breaks[id][type] = e.target.value;
@@ -1021,6 +1080,7 @@
             shopConfig.mostrar_whatsapp = document.getElementById('cfgShowWpp').checked;
             shopConfig.whatsapp = document.getElementById('cfgWppNumber').value;
             
+            // Filtra solo las pausas que tienen hora de inicio Y fin
             shopConfig.barber_breaks = shopConfig.barber_breaks.filter(b => b.start && b.end); 
 
             const { error } = await supabase.from('barberias').update({
@@ -1040,7 +1100,7 @@
                 currentShop.intervalo = newInterval;
                 currentShop.sillas = newChairs;
                 
-                // Vuelve a cargar el dashboard del administrador sin recargar la página
+                // Vuelve a generar las horas de turno y recarga el dashboard
                 generatedHours = generateTimeSlots(currentShop.apertura, currentShop.cierre, currentShop.intervalo);
                 renderServiceOptions(); 
                 showAdminDashboard();
