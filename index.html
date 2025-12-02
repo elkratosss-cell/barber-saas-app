@@ -4,10 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BarberSaaS - Cargando...</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
     
     <script>
         tailwind.config = {
@@ -34,7 +41,13 @@
         .slot-btn.selected { background-color: var(--color-primary); color: white; border-color: var(--color-primary); }
         .slot-btn.occupied { background-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; opacity: 0.7; }
         .spots-badge { position: absolute; top: -5px; right: -5px; background-color: #10B981; color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 999px; font-weight: bold; }
-        .datepicker-es { font-family: inherit; } 
+        
+        /* Personalización del Calendario Flatpickr */
+        .flatpickr-calendar { border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: none; }
+        .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange, .flatpickr-day.selected.inRange, .flatpickr-day.startRange.inRange, .flatpickr-day.endRange.inRange, .flatpickr-day.selected:focus, .flatpickr-day.startRange:focus, .flatpickr-day.endRange:focus, .flatpickr-day.selected:hover, .flatpickr-day.startRange:hover, .flatpickr-day.endRange:hover, .flatpickr-day.selected.prevMonthDay, .flatpickr-day.startRange.prevMonthDay, .flatpickr-day.endRange.prevMonthDay, .flatpickr-day.selected.nextMonthDay, .flatpickr-day.startRange.nextMonthDay, .flatpickr-day.endRange.nextMonthDay {
+            background: var(--color-primary) !important;
+            border-color: var(--color-primary) !important;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800 font-sans pb-10">
@@ -121,7 +134,7 @@
                         <div>
                             <p class="text-xs text-gray-500 uppercase tracking-wide font-bold">Tu turno</p>
                             <h3 id="activeDate" class="text-lg font-bold text-gray-800 mt-1">...</h3>
-                            <p id="activeTime" class="text-2xl font-bold text-primary my-1">...</p>
+                            <p id="activeTime" class="text-2xl font-bold text-primary my-1">...</h3>
                             <p id="activeService" class="text-sm text-gray-600">...</p>
                         </div>
                         <button onclick="cancelMyAppointment()" class="text-red-500 text-xs border border-red-200 px-3 py-1 rounded hover:bg-red-50">Cancelar</button>
@@ -130,7 +143,7 @@
 
                 <div id="newBookingContainer">
                     <h3 class="font-bold text-gray-700 mb-4 text-lg">📅 Nuevo Turno</h3>
-                    <input type="date" id="datePicker" class="w-full px-4 py-3 border border-gray-300 rounded-xl mb-6 focus:ring-2 focus:ring-primary outline-none bg-white datepicker-es">
+                    <input type="text" id="datePicker" class="w-full px-4 py-3 border border-gray-300 rounded-xl mb-6 focus:ring-2 focus:ring-primary outline-none bg-white" placeholder="Selecciona una fecha">
                     
                     <div id="closedMessage" class="hidden text-center text-red-500 py-4 bg-red-50 rounded-xl mb-6">
                         El local permanece cerrado este día.
@@ -154,7 +167,7 @@
 
                 <div id="panelAgenda">
                     <div class="flex justify-between items-center mb-4">
-                        <input type="date" id="barberDatePicker" class="px-3 py-2 border rounded-lg text-sm bg-white font-medium datepicker-es">
+                        <input type="text" id="barberDatePicker" class="px-3 py-2 border rounded-lg text-sm bg-white font-medium w-40 text-center">
                         <button onclick="logout()" class="text-gray-400 hover:text-red-500 text-sm"><i class="fas fa-sign-out-alt"></i> Salir</button>
                     </div>
                     <div id="occupancySummary" class="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide"></div>
@@ -205,8 +218,7 @@
 
                         <h3 class="font-bold text-sm text-gray-800 pt-4">🕒 Pausas Individuales</h3>
                         <p class="text-xs text-gray-400 mb-2">Escribe la hora (ej: 1300)</p>
-                        <div id="barberBreaksContainer" class="space-y-3 p-3 border rounded-lg bg-gray-50">
-                            </div>
+                        <div id="barberBreaksContainer" class="space-y-3 p-3 border rounded-lg bg-gray-50"></div>
 
                         <div>
                             <label class="text-xs text-gray-500 block mb-2">Servicios y Precios</label>
@@ -270,7 +282,7 @@
                 <input type="tel" id="manualPhone" placeholder="Celular (Opcional)" class="w-full px-4 py-3 border rounded-xl" autocomplete="off">
                 <input type="text" id="manualName" placeholder="Nombre" class="w-full px-4 py-3 border rounded-xl" autocomplete="off">
                 <div class="grid grid-cols-2 gap-2">
-                    <input type="date" id="manualDate" class="px-4 py-3 border rounded-xl datepicker-es">
+                    <input type="text" id="manualDate" class="px-4 py-3 border rounded-xl text-center" placeholder="Fecha">
                     <input type="tel" inputmode="numeric" id="manualTime" placeholder="Hora (09:00)" maxlength="5" class="w-full px-4 py-3 border rounded-xl font-mono text-center time-mask" oninput="maskTime(this)">
                 </div>
                 <select id="manualService" class="w-full px-4 py-3 border rounded-xl"></select>
@@ -321,9 +333,23 @@
         let selectedTime = null;
         let shopConfig = {}; 
         let generatedHours = []; 
+        let calendarInstance = null; // Instancia de Flatpickr cliente
+        let adminCalendarInstance = null; // Instancia de Flatpickr admin
+        let manualCalendarInstance = null; // Instancia de Flatpickr manual
         
         const CLIENT_STORAGE_KEY = 'barbersaas_client_id';
         const ADMIN_STORAGE_KEY = 'barbersaas_admin_id';
+
+        // Configuración común de Flatpickr
+        const flatpickrConfig = {
+            locale: "es",
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "j \\de F, Y",
+            disableMobile: true, // Forzar estilo propio en móviles
+            minDate: "today",
+            theme: "material_orange" // Puedes buscar temas CSS o dejar el default
+        };
 
         function maskTime(input) {
             let v = input.value.replace(/\D/g, ''); 
@@ -433,13 +459,31 @@
 
         function setupInputs() {
             const today = new Date().toISOString().split('T')[0];
-            document.getElementById('datePicker').min = today;
-            document.getElementById('datePicker').value = today;
-            document.getElementById('barberDatePicker').value = today;
-            document.getElementById('manualDate').value = today;
+            
+            // Inicializar Flatpickr en el input de cliente
+            calendarInstance = flatpickr("#datePicker", {
+                ...flatpickrConfig,
+                defaultDate: today,
+                onChange: function(selectedDates, dateStr, instance) {
+                    loadSlots();
+                }
+            });
 
-            document.getElementById('datePicker').addEventListener('change', loadSlots);
-            document.getElementById('barberDatePicker').addEventListener('change', loadBarberDashboard);
+            // Inicializar Flatpickr en el input de Admin
+            adminCalendarInstance = flatpickr("#barberDatePicker", {
+                ...flatpickrConfig,
+                defaultDate: today,
+                onChange: function(selectedDates, dateStr, instance) {
+                    loadBarberDashboard();
+                }
+            });
+            
+            // Inicializar Flatpickr en el input Manual
+            manualCalendarInstance = flatpickr("#manualDate", {
+                ...flatpickrConfig,
+                defaultDate: today
+            });
+
             document.getElementById('btnConfirmBooking').addEventListener('click', createClientBooking);
             document.getElementById('loginPhone').addEventListener('input', checkPhoneRegistered);
             document.getElementById('btnActionLogin').addEventListener('click', handleClientLogin);
@@ -562,6 +606,7 @@
         }
 
         async function loadSlots() {
+            // Usamos el valor del input de flatpickr (formato YYYY-MM-DD)
             const dateStr = document.getElementById('datePicker').value;
             const dateObj = new Date(dateStr + 'T00:00:00'); 
             const dayOfWeek = dateObj.getDay(); 
@@ -699,15 +744,20 @@
                 }
             });
 
-            // Etiquetas de estado claras
+            // CORRECCIÓN: Botón de borrado para cancelados
             appts.forEach(a => {
                 const isBlocked = a.clientes.nombre === 'PAUSA'; 
                 let cardClass = 'bg-white shadow-sm border-l-4 border-green-500';
                 let statusLabel = `<span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">✅ EN ESPERA</span>`;
                 
+                // Acción por defecto: Cancelar
+                let actionBtn = `<button onclick="barberCancel(${a.id})" class="text-red-500 p-2 hover:bg-red-100 rounded-full transition" title="Cancelar Turno"><i class="fas fa-times"></i></button>`;
+
                 if (a.estado === 'cancelado') {
                     cardClass = 'bg-red-50 border-l-4 border-red-300 opacity-75';
                     statusLabel = `<span class="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded">❌ CANCELADO</span>`;
+                    // Acción si cancelado: Borrar (Papelera)
+                    actionBtn = `<button onclick="deleteAppt(${a.id})" class="text-gray-500 p-2 hover:bg-gray-200 rounded-full transition" title="Borrar Definitivamente"><i class="fas fa-trash-alt"></i></button>`;
                 } else if (isBlocked) {
                     cardClass = 'bg-yellow-50 border-l-4 border-yellow-400';
                     statusLabel = `<span class="text-xs font-bold text-yellow-700 bg-yellow-100 px-2 py-1 rounded">⏸️ PAUSA</span>`;
@@ -724,25 +774,35 @@
                         <div class="text-sm font-medium ${isBlocked ? 'text-yellow-700' : 'text-gray-700'}">${a.clientes.nombre}</div>
                         <div class="text-xs text-gray-500">${a.servicio}</div>
                     </div>
-                    ${a.estado === 'pendiente' ? 
-                        `<button onclick="barberCancel(${a.id})" class="text-red-500 p-2 hover:bg-red-100 rounded-full transition" title="Cancelar Turno"><i class="fas fa-times"></i></button>` : ''}
+                    ${actionBtn}
                 `;
                 list.appendChild(item);
             });
         }
 
         async function barberCancel(id) {
-            showConfirmationModal("¿Eliminar este turno?", 
+            showConfirmationModal("¿Cancelar este turno?", 
                 async () => {
                     await supabase.from('turnos').update({estado:'cancelado'}).eq('id', id);
-                    showToast("Turno eliminado.", true);
+                    showToast("Turno cancelado.");
                     loadBarberDashboard();
+                }, () => {});
+        }
+        
+        // NUEVA FUNCIÓN: Borrar definitivamente
+        async function deleteAppt(id) {
+            showConfirmationModal("¿Borrar definitivamente del historial?", 
+                async () => {
+                    const { error } = await supabase.from('turnos').delete().eq('id', id);
+                    if(!error) {
+                        showToast("Registro eliminado.");
+                        loadBarberDashboard();
+                    } else showToast("Error al borrar", true);
                 }, () => {});
         }
 
         // --- CONFIG ---
         function loadConfigForm() {
-            // Muestra hora como texto 09:00
             document.getElementById('cfgOpen').value = currentShop.apertura.slice(0,5);
             document.getElementById('cfgClose').value = currentShop.cierre.slice(0,5);
             document.getElementById('cfgInterval').value = currentShop.intervalo;
