@@ -90,13 +90,13 @@
                         <label class="block text-sm font-bold text-gray-700 mb-1">Celular</label>
                         <div class="relative">
                             <span class="absolute left-3 top-3.5 text-gray-400">🇺🇾 +598</span>
-                            <input type="tel" id="loginPhone" placeholder="99123456" class="w-full pl-24 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none text-lg" maxlength="9">
+                            <input type="tel" id="loginPhone" placeholder="99123456" class="w-full pl-24 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none text-lg" maxlength="9" autocomplete="off">
                         </div>
                     </div>
                     <div id="pinSection" class="hidden fade-in">
                         <label class="block text-sm font-bold text-gray-700 mb-1">PIN de Acceso</label>
                         <div class="relative">
-                            <input type="password" id="loginPin" inputmode="numeric" placeholder="****" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none text-center text-2xl tracking-widest" maxlength="4">
+                            <input type="password" id="loginPin" inputmode="numeric" placeholder="****" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none text-center text-2xl tracking-widest" maxlength="4" autocomplete="new-password">
                             <button type="button" onclick="togglePinVisibility()" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-primary transition">
                                 <i id="pinToggleIcon" class="fas fa-eye"></i>
                             </button>
@@ -105,7 +105,7 @@
                     </div>
                     <div id="nameSection" class="hidden fade-in">
                         <label class="block text-sm font-bold text-gray-700 mb-1">Nombre</label>
-                        <input type="text" id="loginName" placeholder="Tu nombre" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none">
+                        <input type="text" id="loginName" placeholder="Tu nombre" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none" autocomplete="off">
                     </div>
                     <button id="btnActionLogin" class="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-md hover:opacity-90 transition mt-2">Ingresar</button>
                 </div>
@@ -301,6 +301,18 @@
         </div>
     </div>
     
+    <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center px-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center">
+            <i id="confirmIcon" class="fas fa-exclamation-triangle text-3xl text-red-500 mb-4"></i>
+            <h3 id="confirmTitle" class="font-bold text-xl mb-3 text-gray-800">Confirmación</h3>
+            <p id="confirmMessage" class="text-gray-600 mb-6">¿Estás seguro de continuar?</p>
+            <div class="flex gap-3">
+                <button id="confirmBtnCancel" class="flex-1 py-3 text-gray-500 border border-gray-300 rounded-xl hover:bg-gray-100 transition">Cancelar</button>
+                <button id="confirmBtnAccept" class="flex-1 py-3 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition">Aceptar</button>
+            </div>
+        </div>
+    </div>
+    
     <div id="toastNotification" class="fixed top-5 left-1/2 -translate-x-1/2 px-6 py-3 bg-green-500 text-white font-bold rounded-lg shadow-xl z-50 hidden transition-all duration-300 transform opacity-0">
         Turno confirmado 👍
     </div>
@@ -353,6 +365,32 @@
                 pinIcon.classList.remove('fa-eye-slash');
                 pinIcon.classList.add('fa-eye');
             }
+        }
+        
+        // Función para mostrar el modal de confirmación profesional
+        function showConfirmationModal(message, onAccept, onCancel) {
+            const modal = document.getElementById('confirmationModal');
+            document.getElementById('confirmMessage').innerText = message;
+            
+            const acceptBtn = document.getElementById('confirmBtnAccept');
+            const cancelBtn = document.getElementById('confirmBtnCancel');
+
+            // Limpiar eventos anteriores
+            acceptBtn.onclick = null;
+            cancelBtn.onclick = null;
+            
+            // Asignar nuevos eventos
+            acceptBtn.onclick = () => {
+                onAccept();
+                modal.classList.add('hidden');
+            };
+
+            cancelBtn.onclick = () => {
+                onCancel();
+                modal.classList.add('hidden');
+            };
+
+            modal.classList.remove('hidden');
         }
 
 
@@ -527,7 +565,15 @@
 
         async function checkPhoneRegistered() {
             const phone = document.getElementById('loginPhone').value;
-            if (phone.length < 8) return;
+            if (phone.length < 8) {
+                document.getElementById('pinSection').classList.add('hidden');
+                document.getElementById('nameSection').classList.add('hidden');
+                document.getElementById('loginPin').value = '';
+                document.getElementById('loginName').value = '';
+                document.getElementById('btnActionLogin').innerText = 'Ingresar';
+                return;
+            }
+            
             const { data } = await supabase.from('clientes').select('*').eq('barberia_id', currentShop.id).eq('celular', phone).single();
             
             document.getElementById('pinSection').classList.remove('hidden');
@@ -542,10 +588,12 @@
 
             if (data) {
                 nameSec.classList.add('hidden');
+                document.getElementById('loginName').value = data.nombre; // Opcional: precargar nombre (oculto)
                 document.getElementById('pinHint').innerText = "Ingresa tu PIN";
                 btn.innerText = "Ingresar";
             } else {
                 nameSec.classList.remove('hidden');
+                document.getElementById('loginName').value = ''; // Asegurar que está vacío si es nuevo
                 document.getElementById('pinHint').innerText = "Crea un PIN";
                 btn.innerText = "Registrarme";
             }
@@ -554,27 +602,32 @@
         async function handleClientLogin() {
             const phone = document.getElementById('loginPhone').value;
             const pin = document.getElementById('loginPin').value;
-            const name = document.getElementById('loginName').value;
+            let name = document.getElementById('loginName').value;
+            
             if (phone.length < 8 || pin.length < 4) { showToast("Datos incompletos", true); return; }
 
-            const { data: existing } = await supabase.from('clientes').select('*').eq('barberia_id', currentShop.id).eq('celular', phone).eq('pin', pin).single();
+            const { data: existing } = await supabase.from('clientes').select('*').eq('barberia_id', currentShop.id).eq('celular', phone).single();
+            
             if (existing) {
-                currentUser = existing; 
-                localStorage.setItem(CLIENT_STORAGE_KEY, currentUser.id); // Guardar ID
-                localStorage.removeItem(ADMIN_STORAGE_KEY);
-                showClientDashboard();
-            } else {
-                const { data: existingName } = await supabase.from('clientes').select('*').eq('barberia_id', currentShop.id).eq('celular', phone).single();
-                if (existingName) {
+                // Es usuario existente: verificar PIN
+                if (existing.pin === pin) {
+                    currentUser = existing; 
+                    localStorage.setItem(CLIENT_STORAGE_KEY, currentUser.id); 
+                    localStorage.removeItem(ADMIN_STORAGE_KEY);
+                    showClientDashboard();
+                } else {
                     showToast("PIN Incorrecto", true);
+                }
+            } else {
+                // Es usuario nuevo: registrar
+                if (!name) { 
+                    showToast("Falta nombre", true); 
                     return;
                 }
-                
-                if (!name) return showToast("Falta nombre", true);
                 const { data, error } = await supabase.from('clientes').insert({ barberia_id: currentShop.id, celular: phone, nombre: name, pin: pin }).select().single();
                 if (!error) { 
                     currentUser = data; 
-                    localStorage.setItem(CLIENT_STORAGE_KEY, currentUser.id); // Guardar ID
+                    localStorage.setItem(CLIENT_STORAGE_KEY, currentUser.id);
                     localStorage.removeItem(ADMIN_STORAGE_KEY);
                     showClientDashboard(); 
                 }
@@ -698,11 +751,19 @@
         }
 
         async function cancelMyAppointment() {
-            if(!confirm("¿Estás seguro de que quieres CANCELAR tu turno?")) return;
-            
-            await supabase.from('turnos').update({ estado: 'cancelado' }).eq('id', currentUser.activeApptId);
-            showToast("Turno cancelado.", true);
-            showClientDashboard();
+            // Usamos el modal de confirmación profesional en lugar del nativo
+            showConfirmationModal("¿Estás seguro de que quieres CANCELAR tu turno?", 
+                async () => {
+                    // Acción si el usuario ACEPTA
+                    await supabase.from('turnos').update({ estado: 'cancelado' }).eq('id', currentUser.activeApptId);
+                    showToast("Turno cancelado.", true);
+                    showClientDashboard();
+                }, 
+                // Acción si el usuario CANCELA (no se hace nada)
+                () => {
+                    // console.log("Cancelación abortada por el usuario.");
+                } 
+            );
         }
 
         // --- ADMIN SECTION ---
@@ -1046,6 +1107,13 @@
             document.getElementById('viewClient').classList.add('hidden');
             document.getElementById('viewLogin').classList.remove('hidden');
             document.getElementById('fabAdd').classList.add('hidden');
+            
+            // Limpiar inputs de login
+            document.getElementById('loginPhone').value = '';
+            document.getElementById('loginPin').value = '';
+            document.getElementById('loginName').value = '';
+            document.getElementById('pinSection').classList.add('hidden');
+            document.getElementById('nameSection').classList.add('hidden');
         }
     </script>
 </body>
