@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BarberSaaS - Cargando...</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
@@ -25,6 +25,9 @@
     </script>
     <style>
         :root { --color-primary: #8B4513; }
+        /* CORRECCIÓN 1: Evitar franja gris y scroll horizontal */
+        html, body { overflow-x: hidden; width: 100%; position: relative; }
+        
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .slot-btn { transition: all 0.2s; position: relative; }
@@ -32,7 +35,6 @@
         .slot-btn.selected { background-color: var(--color-primary); color: white; border-color: var(--color-primary); }
         .slot-btn.occupied { background-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; opacity: 0.7; }
         .spots-badge { position: absolute; top: -5px; right: -5px; background-color: #10B981; color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 999px; font-weight: bold; }
-        /* Para navegadores que no respetan el lang="es" en el input date */
         .datepicker-es { font-family: inherit; } 
     </style>
 </head>
@@ -42,7 +44,7 @@
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
     </div>
 
-    <div id="app" class="max-w-md mx-auto min-h-screen bg-white shadow-2xl relative hidden flex flex-col">
+    <div id="app" class="max-w-md mx-auto min-h-screen bg-white shadow-2xl relative hidden flex flex-col w-full overflow-hidden">
         
         <header class="p-6 text-center bg-primary text-white rounded-b-3xl shadow-lg relative z-10 transition-colors duration-500">
             <h1 id="shopName" class="text-3xl font-bold mb-1">Cargando...</h1>
@@ -54,7 +56,6 @@
                 </button>
                 
                 <div id="adminDropdown" class="hidden absolute right-0 mt-3 w-40 bg-white rounded-lg shadow-xl py-1 text-gray-800 text-sm z-50">
-                    
                     <div id="adminOptions" class="hidden">
                         <a href="#" onclick="openAccountSettingsAndCloseDropdown(event)" class="block px-4 py-2 hover:bg-gray-100 font-medium">
                             <i class="fas fa-user-circle mr-2"></i> Cuenta
@@ -63,7 +64,6 @@
                             <i class="fas fa-sign-out-alt mr-2"></i> Salir
                         </a>
                     </div>
-                    
                     <div id="loginOption">
                         <a href="#" onclick="openAdminLoginAndCloseDropdown(event)" class="block px-4 py-2 hover:bg-gray-100 font-medium text-primary">
                             <i class="fas fa-sign-in-alt mr-2"></i> Ingresar
@@ -158,24 +158,21 @@
                         <input type="date" id="barberDatePicker" class="px-3 py-2 border rounded-lg text-sm bg-white font-medium datepicker-es">
                         <button onclick="logout()" class="text-gray-400 hover:text-red-500 text-sm"><i class="fas fa-sign-out-alt"></i> Salir</button>
                     </div>
-                    
                     <div id="occupancySummary" class="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide"></div>
-                    
                     <div id="barberAppointmentsList" class="space-y-3 pb-20"></div>
                 </div>
 
                 <div id="panelConfig" class="hidden pb-20">
                     <h3 class="font-bold text-lg mb-4 text-gray-800">🏢 Datos del Local</h3>
-                    
                     <div class="space-y-4">
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="text-xs text-gray-500 block">Apertura</label>
-                                <select id="cfgOpen" class="w-full p-2 border rounded bg-white"></select>
+                                <input type="text" id="cfgOpen" placeholder="09:00" maxlength="5" class="w-full p-2 border rounded text-center font-mono time-mask" oninput="maskTime(this)">
                             </div>
                             <div>
                                 <label class="text-xs text-gray-500 block">Cierre</label>
-                                <select id="cfgClose" class="w-full p-2 border rounded bg-white"></select>
+                                <input type="text" id="cfgClose" placeholder="20:00" maxlength="5" class="w-full p-2 border rounded text-center font-mono time-mask" oninput="maskTime(this)">
                             </div>
                         </div>
 
@@ -208,9 +205,9 @@
                         </div>
 
                         <h3 class="font-bold text-sm text-gray-800 pt-4">🕒 Pausas Individuales</h3>
+                        <p class="text-xs text-gray-400 mb-2">Escribe la hora (ej: 1300)</p>
                         <div id="barberBreaksContainer" class="space-y-3 p-3 border rounded-lg bg-gray-50">
                             </div>
-
 
                         <div>
                             <label class="text-xs text-gray-500 block mb-2">Servicios y Precios</label>
@@ -223,7 +220,7 @@
                         </div>
 
                         <div>
-                            <label class="text-xs text-gray-500 block">Mensaje de Aviso (Opcional)</label>
+                            <label class="text-xs text-gray-500 block">Mensaje de Aviso</label>
                             <input type="text" id="cfgMsg" placeholder="Ej: Vuelvo el martes" class="w-full p-2 border rounded">
                         </div>
                         
@@ -249,7 +246,6 @@
             <button id="fabAdd" onclick="toggleModal('modalManualBooking')" class="hidden fixed bottom-6 right-6 bg-primary text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-2xl hover:scale-110 transition z-40">
                 <i class="fas fa-plus"></i>
             </button>
-
         </main>
     </div>
 
@@ -276,7 +272,7 @@
                 <input type="text" id="manualName" placeholder="Nombre" class="w-full px-4 py-3 border rounded-xl">
                 <div class="grid grid-cols-2 gap-2">
                     <input type="date" id="manualDate" class="px-4 py-3 border rounded-xl datepicker-es">
-                    <select id="manualTime" class="px-4 py-3 border rounded-xl"></select>
+                    <input type="text" id="manualTime" placeholder="Hora (09:00)" maxlength="5" class="w-full px-4 py-3 border rounded-xl font-mono text-center time-mask" oninput="maskTime(this)">
                 </div>
                 <select id="manualService" class="w-full px-4 py-3 border rounded-xl"></select>
                 <button onclick="createManualBooking()" class="w-full bg-primary text-white py-3 rounded-xl font-bold mt-2">Guardar</button>
@@ -285,12 +281,11 @@
     </div>
 
     <div id="modalAccountSettings" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center px-4 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="font-bold text-xl text-primary">🔑 Configuración de Cuenta</h3>
                 <button onclick="toggleModal('modalAccountSettings')" class="text-gray-400">✕</button>
             </div>
-            
             <div class="space-y-4 p-4 border rounded-xl bg-gray-50">
                 <p class="text-sm text-gray-600 font-bold border-b pb-2">Cambiar Contraseña</p>
                 <input type="password" id="currentPass" placeholder="Contraseña Actual" class="w-full p-3 border rounded-xl text-sm">
@@ -318,7 +313,6 @@
     </div>
 
     <script>
-        // --- CONFIGURACIÓN DE SUPABASE ---
         const SUPABASE_URL = 'https://hqoyjsngydafaagsrzlg.supabase.co'; 
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhxb3lqc25neWRhZmFhZ3NyemxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MDI5MDQsImV4cCI6MjA3OTk3ODkwNH0.WyTlANZLTRd6IlhxuDlQai8Zz6dgexGPvwXmBr7HsZs';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -328,23 +322,27 @@
         let selectedTime = null;
         let shopConfig = {}; 
         let generatedHours = []; 
-        let allPossibleHours = []; // Almacena todas las horas para los SELECT de apertura/cierre
         
-        // Claves de LocalStorage para persistencia
         const CLIENT_STORAGE_KEY = 'barbersaas_client_id';
         const ADMIN_STORAGE_KEY = 'barbersaas_admin_id';
 
-        // Función para mostrar el toast
+        // MÁSCARA PARA HORA (0930 -> 09:30)
+        function maskTime(input) {
+            let v = input.value.replace(/\D/g, ''); // Solo números
+            if (v.length > 4) v = v.slice(0, 4);
+            if (v.length >= 3) {
+                v = v.slice(0, 2) + ':' + v.slice(2);
+            }
+            input.value = v;
+        }
+
         function showToast(message, isError = false) {
             const toast = document.getElementById('toastNotification');
             toast.innerText = message;
-            
             toast.classList.remove('bg-green-500', 'bg-red-500');
             toast.classList.add(isError ? 'bg-red-500' : 'bg-green-500');
-
             toast.classList.remove('hidden', 'opacity-0', 'scale-90');
             toast.classList.add('opacity-100', 'scale-100');
-            
             setTimeout(() => {
                 toast.classList.remove('opacity-100', 'scale-100');
                 toast.classList.add('opacity-0', 'scale-90');
@@ -352,68 +350,39 @@
             }, 3000); 
         }
         
-        // Función para alternar la visibilidad del PIN
         function togglePinVisibility() {
             const pinInput = document.getElementById('loginPin');
             const pinIcon = document.getElementById('pinToggleIcon');
-            
             if (pinInput.type === 'password') {
-                pinInput.type = 'text';
-                pinIcon.classList.remove('fa-eye');
-                pinIcon.classList.add('fa-eye-slash');
+                pinInput.type = 'text'; pinIcon.classList.remove('fa-eye'); pinIcon.classList.add('fa-eye-slash');
             } else {
-                pinInput.type = 'password';
-                pinIcon.classList.remove('fa-eye-slash');
-                pinIcon.classList.add('fa-eye');
+                pinInput.type = 'password'; pinIcon.classList.remove('fa-eye-slash'); pinIcon.classList.add('fa-eye');
             }
         }
         
-        // Función para mostrar el modal de confirmación profesional
         function showConfirmationModal(message, onAccept, onCancel) {
             const modal = document.getElementById('confirmationModal');
             document.getElementById('confirmMessage').innerText = message;
-            
             const acceptBtn = document.getElementById('confirmBtnAccept');
             const cancelBtn = document.getElementById('confirmBtnCancel');
-
-            // Limpiar eventos anteriores
-            acceptBtn.onclick = null;
-            cancelBtn.onclick = null;
             
-            // Asignar nuevos eventos
-            acceptBtn.onclick = () => {
-                onAccept();
-                modal.classList.add('hidden');
-            };
-
-            cancelBtn.onclick = () => {
-                onCancel();
-                modal.classList.add('hidden');
-            };
-
+            acceptBtn.onclick = () => { onAccept(); modal.classList.add('hidden'); };
+            cancelBtn.onclick = () => { onCancel(); modal.classList.add('hidden'); };
             modal.classList.remove('hidden');
         }
-
 
         document.addEventListener('DOMContentLoaded', async () => {
             const params = new URLSearchParams(window.location.search);
             const slug = params.get('barberia') || 'elite'; 
             
-            const { data: shop, error } = await supabase
-                .from('barberias').select('*').eq('slug', slug).single();
-
-            if (error || !shop) return alert(`Barbería con slug '${slug}' no encontrada. Verifica el parámetro 'barberia' en la URL y la base de datos. ${error ? error.message : ''}`);
+            const { data: shop, error } = await supabase.from('barberias').select('*').eq('slug', slug).single();
+            if (error || !shop) return alert('Barbería no encontrada.');
 
             currentShop = shop;
             shopConfig = shop.config || {};
-            
-            if (!shopConfig.barber_breaks) {
-                shopConfig.barber_breaks = [];
-            }
+            if (!shopConfig.barber_breaks) shopConfig.barber_breaks = [];
             
             document.title = currentShop.nombre + " - Agendamiento";
-
-            allPossibleHours = generateAllPossibleHours(30); // Genera todas las horas de 00:00 a 23:30
             generatedHours = generateTimeSlots(shop.apertura, shop.cierre, shop.intervalo);
 
             applyTheme();
@@ -423,43 +392,25 @@
             document.getElementById('loader').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
             
-            // --- PERSISTENCIA DE SESIÓN ---
             const storedClientId = localStorage.getItem(CLIENT_STORAGE_KEY);
             const storedAdminId = localStorage.getItem(ADMIN_STORAGE_KEY);
             
             if (storedClientId && storedClientId !== 'null') {
                 const { data: client } = await supabase.from('clientes').select('*').eq('id', storedClientId).single();
-                if (client) {
-                    currentUser = client;
-                    return showClientDashboard();
-                }
+                if (client) { currentUser = client; return showClientDashboard(); }
             } else if (storedAdminId && storedAdminId !== 'null') {
                  const { data: admin } = await supabase.from('barberos').select('*').eq('id', storedAdminId).single();
-                if (admin) {
-                    currentUser = admin;
-                    return showAdminDashboard();
-                }
+                if (admin) { currentUser = admin; return showAdminDashboard(); }
             }
-            
-            // Si no hay sesión persistente, muestra el login de cliente
             updateAdminDropdownVisibility(false);
-            // -----------------------------
         });
 
-        // --- CORE UTILS ---
-
-        // Genera las horas disponibles para agendamiento (slots)
         function generateTimeSlots(startStr, endStr, intervalMins) {
             const slots = [];
             let [h, m] = startStr.split(':').map(Number);
             let [endH, endM] = endStr.split(':').map(Number);
-            
-            let current = new Date();
-            current.setHours(h, m, 0, 0);
-            
-            let end = new Date();
-            end.setHours(endH, endM, 0, 0);
-
+            let current = new Date(); current.setHours(h, m, 0, 0);
+            let end = new Date(); end.setHours(endH, endM, 0, 0);
             while (current < end) {
                 const timeString = current.toLocaleTimeString('es-UY', {hour: '2-digit', minute:'2-digit', hour12: false});
                 slots.push(timeString);
@@ -468,54 +419,18 @@
             return slots;
         }
 
-        // Genera todas las horas posibles para los SELECT de configuración
-        function generateAllPossibleHours(intervalMins) {
-            const hours = [];
-            for (let h = 0; h < 24; h++) {
-                for (let m = 0; m < 60; m += intervalMins) {
-                    const timeString = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-                    hours.push(timeString);
-                }
-            }
-            return hours;
-        }
-        
-        // Llena los SELECT de hora con las horas posibles
-        function fillTimeSelects(selectId, selectedValue) {
-            const select = document.getElementById(selectId);
-            select.innerHTML = '';
-            
-            // Asegura que la lista de horas incluye la hora de cierre para la selección
-            const hoursToFill = allPossibleHours.includes(currentShop.cierre.slice(0,5)) 
-                ? allPossibleHours : [...allPossibleHours, currentShop.cierre.slice(0,5)].sort(); 
-            
-            hoursToFill.forEach(h => {
-                const opt = document.createElement('option');
-                opt.value = h; 
-                opt.innerText = h;
-                if (h === selectedValue) opt.selected = true;
-                select.appendChild(opt);
-            });
-        }
-
         function applyTheme() {
             document.getElementById('shopName').innerText = currentShop.nombre;
             document.getElementById('headerSub').innerText = `${currentShop.sillas} Prof. • Abrimos ${currentShop.apertura.slice(0,5)}`;
             document.documentElement.style.setProperty('--color-primary', currentShop.color_primary);
-            
             if(shopConfig.mensaje_aviso) {
                 document.getElementById('shopNotice').classList.remove('hidden');
                 document.getElementById('shopNoticeText').innerText = shopConfig.mensaje_aviso;
-            } else {
-                document.getElementById('shopNotice').classList.add('hidden');
-            }
-
+            } else document.getElementById('shopNotice').classList.add('hidden');
             if(shopConfig.mostrar_whatsapp && shopConfig.whatsapp) {
                 document.getElementById('footerWpp').classList.remove('hidden');
                 document.getElementById('wppLink').href = `https://wa.me/598${shopConfig.whatsapp.replace(/\D/g,'').slice(-9)}`;
-            } else {
-                document.getElementById('footerWpp').classList.add('hidden');
-            }
+            } else document.getElementById('footerWpp').classList.add('hidden');
         }
 
         function setupInputs() {
@@ -528,24 +443,13 @@
             document.getElementById('datePicker').addEventListener('change', loadSlots);
             document.getElementById('barberDatePicker').addEventListener('change', loadBarberDashboard);
             document.getElementById('btnConfirmBooking').addEventListener('click', createClientBooking);
-            
             document.getElementById('loginPhone').addEventListener('input', checkPhoneRegistered);
             document.getElementById('btnActionLogin').addEventListener('click', handleClientLogin);
-
-            // Rellenar SELECT de hora para agendamiento manual
-            const manualTimeSelect = document.getElementById('manualTime');
-            manualTimeSelect.innerHTML = '';
-            generatedHours.forEach(h => {
-                const opt = document.createElement('option');
-                opt.value = h; opt.innerText = h;
-                manualTimeSelect.appendChild(opt);
-            });
         }
 
         function renderServiceOptions() {
             const services = shopConfig.servicios || [{nombre: 'Corte', precio: 0}];
             const selects = [document.getElementById('serviceSelect'), document.getElementById('manualService')];
-            
             selects.forEach(sel => {
                 sel.innerHTML = '';
                 services.forEach(s => {
@@ -557,16 +461,8 @@
             });
         }
 
-        function toggleModal(id) { 
-            document.getElementById(id).classList.toggle('hidden'); 
-        }
-
-        function toggleDropdown(id) {
-            const dropdown = document.getElementById(id);
-            dropdown.classList.toggle('hidden');
-        }
-
-        // --- FUNCIONES DEL DROPDOWN ADMIN ---
+        function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); }
+        function toggleDropdown(id) { document.getElementById(id).classList.toggle('hidden'); }
 
         function updateAdminDropdownVisibility(isAdmin) {
             if (isAdmin) {
@@ -578,26 +474,11 @@
             }
         }
 
-        function openAdminLoginAndCloseDropdown(e) {
-            e.preventDefault();
-            toggleDropdown('adminDropdown');
-            toggleModal('modalBarberLogin');
-        }
+        function openAdminLoginAndCloseDropdown(e) { e.preventDefault(); toggleDropdown('adminDropdown'); toggleModal('modalBarberLogin'); }
+        function openAccountSettingsAndCloseDropdown(e) { e.preventDefault(); toggleDropdown('adminDropdown'); toggleModal('modalAccountSettings'); }
+        function adminLogoutAndCloseDropdown(e) { e.preventDefault(); toggleDropdown('adminDropdown'); logout(); }
 
-        function openAccountSettingsAndCloseDropdown(e) {
-            e.preventDefault();
-            toggleDropdown('adminDropdown');
-            toggleModal('modalAccountSettings');
-        }
-
-        function adminLogoutAndCloseDropdown(e) {
-            e.preventDefault();
-            toggleDropdown('adminDropdown');
-            logout(); 
-        }
-
-        // --- CLIENTE LOGIC ---
-
+        // --- CLIENTE ---
         async function checkPhoneRegistered() {
             const phone = document.getElementById('loginPhone').value;
             if (phone.length < 8) {
@@ -608,27 +489,23 @@
                 document.getElementById('btnActionLogin').innerText = 'Ingresar';
                 return;
             }
-            
             const { data } = await supabase.from('clientes').select('*').eq('barberia_id', currentShop.id).eq('celular', phone).single();
-            
             document.getElementById('pinSection').classList.remove('hidden');
             const nameSec = document.getElementById('nameSection');
             const btn = document.getElementById('btnActionLogin');
             
-            // Asegurarse de que el PIN esté oculto por defecto
             document.getElementById('loginPin').type = 'password';
             document.getElementById('pinToggleIcon').classList.remove('fa-eye-slash');
             document.getElementById('pinToggleIcon').classList.add('fa-eye');
 
-
             if (data) {
                 nameSec.classList.add('hidden');
-                document.getElementById('loginName').value = data.nombre; // Opcional: precargar nombre (oculto)
+                document.getElementById('loginName').value = data.nombre;
                 document.getElementById('pinHint').innerText = "Ingresa tu PIN";
                 btn.innerText = "Ingresar";
             } else {
                 nameSec.classList.remove('hidden');
-                document.getElementById('loginName').value = ''; // Asegurar que está vacío si es nuevo
+                document.getElementById('loginName').value = '';
                 document.getElementById('pinHint').innerText = "Crea un PIN";
                 btn.innerText = "Registrarme";
             }
@@ -638,35 +515,25 @@
             const phone = document.getElementById('loginPhone').value;
             const pin = document.getElementById('loginPin').value;
             let name = document.getElementById('loginName').value;
-            
             if (phone.length < 8 || pin.length < 4) { showToast("Datos incompletos", true); return; }
 
-            const { data: existing } = await supabase.from('clientes').select('*').eq('barberia_id', currentShop.id).eq('celular', phone).single();
-            
+            const { data: existing } = await supabase.from('clientes').select('*').eq('barberia_id', currentShop.id).eq('celular', phone).eq('pin', pin).single();
             if (existing) {
-                // Es usuario existente: verificar PIN
-                if (existing.pin === pin) {
-                    currentUser = existing; 
-                    localStorage.setItem(CLIENT_STORAGE_KEY, currentUser.id); 
-                    localStorage.removeItem(ADMIN_STORAGE_KEY);
-                    showClientDashboard();
-                } else {
-                    showToast("PIN Incorrecto", true);
-                }
+                currentUser = existing; 
+                localStorage.setItem(CLIENT_STORAGE_KEY, currentUser.id); 
+                localStorage.removeItem(ADMIN_STORAGE_KEY);
+                showClientDashboard();
             } else {
-                // Es usuario nuevo: registrar
-                if (!name) { 
-                    showToast("Falta nombre", true); 
-                    return;
-                }
+                const { data: existingName } = await supabase.from('clientes').select('*').eq('barberia_id', currentShop.id).eq('celular', phone).single();
+                if (existingName) { showToast("PIN Incorrecto", true); return; }
+                if (!name) { showToast("Falta nombre", true); return; }
                 const { data, error } = await supabase.from('clientes').insert({ barberia_id: currentShop.id, celular: phone, nombre: name, pin: pin }).select().single();
                 if (!error) { 
                     currentUser = data; 
                     localStorage.setItem(CLIENT_STORAGE_KEY, currentUser.id);
                     localStorage.removeItem(ADMIN_STORAGE_KEY);
                     showClientDashboard(); 
-                }
-                else showToast("Error al registrar: " + error.message, true);
+                } else showToast("Error: " + error.message, true);
             }
         }
 
@@ -676,15 +543,11 @@
             document.getElementById('viewBarber').classList.add('hidden');
             document.getElementById('fabAdd').classList.add('hidden');
             document.getElementById('clientNameDisplay').innerText = currentUser.nombre.split(' ')[0];
-            
             document.title = currentShop.nombre + " - Agendamiento";
             updateAdminDropdownVisibility(false);
 
             const todayISO = new Date().toISOString().split('T')[0];
-
-            const { data: appt } = await supabase.from('turnos').select('*')
-                .eq('barberia_id', currentShop.id).eq('cliente_id', currentUser.id)
-                .eq('estado', 'pendiente').gte('fecha', todayISO).order('fecha', {ascending: true}).single();
+            const { data: appt } = await supabase.from('turnos').select('*').eq('barberia_id', currentShop.id).eq('cliente_id', currentUser.id).eq('estado', 'pendiente').gte('fecha', todayISO).order('fecha', {ascending: true}).single();
 
             if (appt) {
                 document.getElementById('activeAppointmentCard').classList.remove('hidden');
@@ -704,8 +567,8 @@
             const dateStr = document.getElementById('datePicker').value;
             const dateObj = new Date(dateStr + 'T00:00:00'); 
             const dayOfWeek = dateObj.getDay(); 
-            
             const openDays = shopConfig.dias_laborables || [1,2,3,4,5,6];
+            
             if (!openDays.includes(dayOfWeek)) {
                 document.getElementById('slotsGrid').innerHTML = '';
                 document.getElementById('closedMessage').classList.remove('hidden');
@@ -718,40 +581,29 @@
             selectedTime = null;
             document.getElementById('btnConfirmBooking').disabled = true;
 
-            const { data: turnos } = await supabase.from('turnos').select('hora')
-                .eq('barberia_id', currentShop.id).eq('fecha', dateStr).neq('estado', 'cancelado');
-
+            const { data: turnos } = await supabase.from('turnos').select('hora').eq('barberia_id', currentShop.id).eq('fecha', dateStr).neq('estado', 'cancelado');
             const occupation = {};
             turnos.forEach(t => { const h = t.hora.slice(0,5); occupation[h] = (occupation[h] || 0) + 1; });
 
             const capacity = currentShop.sillas || 1;
             grid.innerHTML = '';
-            
             const barberBreaks = shopConfig.barber_breaks || [];
 
             generatedHours.forEach(time => {
                 let currentCapacity = capacity;
-                
                 barberBreaks.forEach(breakTime => {
                     if (breakTime.start && breakTime.end) {
-                        if (time >= breakTime.start && time < breakTime.end) {
-                            currentCapacity--;
-                        }
+                        if (time >= breakTime.start && time < breakTime.end) currentCapacity--;
                     }
                 });
                 
                 const currentCount = occupation[time] || 0;
-                const availableSlots = Math.max(0, currentCapacity);
-                const remaining = availableSlots - currentCount;
-                
-                const isAvailable = remaining > 0;
+                const isFull = currentCount >= Math.max(0, currentCapacity);
+                const isAvailable = (Math.max(0, currentCapacity) - currentCount) > 0;
 
                 const btn = document.createElement('button');
-                btn.className = `slot-btn border rounded-lg py-3 font-medium text-sm flex flex-col items-center justify-center ${
-                    !isAvailable ? 'occupied' : 'available bg-white border-gray-200 text-gray-700'
-                }`;
-                
-                let badgeHtml = (isAvailable && remaining <= 2) ? `<span class="spots-badge ${remaining === 1 ? 'warning' : ''}">${remaining}</span>` : '';
+                btn.className = `slot-btn border rounded-lg py-3 font-medium text-sm flex flex-col items-center justify-center ${ !isAvailable ? 'occupied' : 'available bg-white border-gray-200 text-gray-700' }`;
+                let badgeHtml = (isAvailable && (Math.max(0, currentCapacity) - currentCount) <= 2) ? `<span class="spots-badge">${Math.max(0, currentCapacity) - currentCount}</span>` : '';
                 btn.innerHTML = `${time}${badgeHtml}`;
 
                 if (isAvailable) {
@@ -775,51 +627,34 @@
         async function createClientBooking() {
             const date = document.getElementById('datePicker').value;
             const service = document.getElementById('serviceSelect').value;
-            const { error } = await supabase.from('turnos').insert({
-                barberia_id: currentShop.id, cliente_id: currentUser.id, fecha: date, hora: selectedTime, servicio: service
-            });
-            if (!error) { 
-                showToast("¡Turno confirmado! 👍"); 
-                showClientDashboard(); 
-            }
-            else showToast("Error al confirmar turno: " + error.message, true);
+            const { error } = await supabase.from('turnos').insert({ barberia_id: currentShop.id, cliente_id: currentUser.id, fecha: date, hora: selectedTime, servicio: service });
+            if (!error) { showToast("¡Turno confirmado! 👍"); showClientDashboard(); }
+            else showToast("Error: " + error.message, true);
         }
 
         async function cancelMyAppointment() {
-            // Usamos el modal de confirmación profesional en lugar del nativo
             showConfirmationModal("¿Estás seguro de que quieres CANCELAR tu turno?", 
                 async () => {
-                    // Acción si el usuario ACEPTA
                     await supabase.from('turnos').update({ estado: 'cancelado' }).eq('id', currentUser.activeApptId);
                     showToast("Turno cancelado.", true);
                     showClientDashboard();
-                }, 
-                // Acción si el usuario CANCELA (no se hace nada)
-                () => {
-                    // console.log("Cancelación abortada por el usuario.");
-                } 
-            );
+                }, () => {} );
         }
 
-        // --- ADMIN SECTION ---
-
+        // --- ADMIN ---
         function showAdminDashboard() {
             document.getElementById('viewLogin').classList.add('hidden');
             document.getElementById('viewClient').classList.add('hidden');
             document.getElementById('viewBarber').classList.remove('hidden');
             document.getElementById('fabAdd').classList.remove('hidden');
-
             document.title = currentShop.nombre + " - Administración";
             updateAdminDropdownVisibility(true);
             loadBarberDashboard();
         }
 
         function switchAdminTab(tabName) {
-            const tabA = document.getElementById('tabAgenda');
-            const tabC = document.getElementById('tabConfig');
-            const panA = document.getElementById('panelAgenda');
-            const panC = document.getElementById('panelConfig');
-
+            const tabA = document.getElementById('tabAgenda'); const tabC = document.getElementById('tabConfig');
+            const panA = document.getElementById('panelAgenda'); const panC = document.getElementById('panelConfig');
             if(tabName === 'agenda') {
                 tabA.classList.add('text-primary', 'border-b-2'); tabA.classList.remove('text-gray-500');
                 tabC.classList.remove('text-primary', 'border-b-2'); tabC.classList.add('text-gray-500');
@@ -836,116 +671,91 @@
         async function loginBarber() {
             const username = document.getElementById('adminUsername').value;
             const pass = document.getElementById('adminPass').value;
-            
-            const { data: barber } = await supabase.from('barberos').select('*')
-                .eq('barberia_id', currentShop.id).eq('email', username).eq('password', pass).single();
-
+            const { data: barber } = await supabase.from('barberos').select('*').eq('barberia_id', currentShop.id).eq('email', username).eq('password', pass).single();
             if (barber) {
                 currentUser = barber;
-                localStorage.setItem(ADMIN_STORAGE_KEY, currentUser.id); // Guardar ID
-                localStorage.removeItem(CLIENT_STORAGE_KEY);
+                localStorage.setItem(ADMIN_STORAGE_KEY, currentUser.id); localStorage.removeItem(CLIENT_STORAGE_KEY);
                 document.getElementById('modalBarberLogin').classList.add('hidden');
                 showAdminDashboard();
-            } else showToast("Usuario o Contraseña incorrectos", true);
+            } else showToast("Datos incorrectos", true);
         }
 
         async function loadBarberDashboard() {
             const date = document.getElementById('barberDatePicker').value;
             const list = document.getElementById('barberAppointmentsList');
             const summary = document.getElementById('occupancySummary');
-            
             list.innerHTML = '<p class="text-center text-gray-400">Cargando...</p>';
-
-            const { data: appts } = await supabase.from('turnos')
-                .select(`id, hora, servicio, estado, clientes (nombre, celular)`)
-                .eq('barberia_id', currentShop.id).eq('fecha', date).order('hora');
-
+            const { data: appts } = await supabase.from('turnos').select(`id, hora, servicio, estado, clientes (nombre, celular)`).eq('barberia_id', currentShop.id).eq('fecha', date).order('hora');
             list.innerHTML = ''; summary.innerHTML = '';
-            
             if (!appts.length) list.innerHTML = '<p class="text-center text-gray-400 py-10">Agenda libre 🏖️</p>';
 
             const occupation = {};
             appts.forEach(a => { if(a.estado!=='cancelado') occupation[a.hora.slice(0,5)] = (occupation[a.hora.slice(0,5)]||0)+1; });
-            
-            const capacity = currentShop.sillas || 1;
-            const barberBreaks = shopConfig.barber_breaks || [];
-
             generatedHours.forEach(h => {
-                const currentCount = occupation[h] || 0;
-                let currentCapacity = capacity;
-                
-                barberBreaks.forEach(breakTime => {
-                    if (breakTime.start && breakTime.end && h >= breakTime.start && h < breakTime.end) {
-                        currentCapacity--;
-                    }
-                });
-
-                if(currentCount > 0 || currentCapacity < capacity) {
-                    const available = Math.max(0, currentCapacity - currentCount);
-                    const isFull = currentCount >= currentCapacity;
-                    
+                const count = occupation[h] || 0;
+                if(count > 0) {
                     const div = document.createElement('div');
-                    div.className = `flex-shrink-0 px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap ${isFull ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`;
-                    
-                    if (currentCapacity === 0) {
-                        div.innerText = `${h}: CERRADO`;
-                        div.className = 'flex-shrink-0 px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap bg-red-100 text-red-600';
-                    } else {
-                         div.innerText = `${h}: ${currentCount}/${currentCapacity}`;
-                    }
+                    div.className = `flex-shrink-0 px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap ${count >= currentShop.sillas ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`;
+                    div.innerText = `${h}: ${count}/${currentShop.sillas}`;
                     summary.appendChild(div);
                 }
             });
 
+            // CORRECCIÓN 3: Etiquetas de estado claras
             appts.forEach(a => {
                 const isBlocked = a.clientes.nombre === 'PAUSA'; 
-                const item = document.createElement('div');
-                item.className = `border rounded-xl p-4 flex justify-between items-center ${a.estado === 'cancelado' ? 'bg-red-50 opacity-60' : isBlocked ? 'bg-yellow-50' : 'bg-white shadow-sm'}`;
+                // Color base depende del estado
+                let cardClass = 'bg-white shadow-sm border-l-4 border-green-500';
+                let statusLabel = `<span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">✅ EN ESPERA</span>`;
                 
+                if (a.estado === 'cancelado') {
+                    cardClass = 'bg-red-50 border-l-4 border-red-300 opacity-75';
+                    statusLabel = `<span class="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded">❌ CANCELADO</span>`;
+                } else if (isBlocked) {
+                    cardClass = 'bg-yellow-50 border-l-4 border-yellow-400';
+                    statusLabel = `<span class="text-xs font-bold text-yellow-700 bg-yellow-100 px-2 py-1 rounded">⏸️ PAUSA</span>`;
+                }
+
+                const item = document.createElement('div');
+                item.className = `border rounded-xl p-4 flex justify-between items-center ${cardClass}`;
                 item.innerHTML = `
                     <div>
-                        <div class="font-bold text-lg text-gray-800">${a.hora.slice(0,5)}</div>
-                        <div class="text-sm font-medium ${isBlocked ? 'text-yellow-600 font-bold' : ''}">${a.clientes.nombre}</div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="font-bold text-lg text-gray-800">${a.hora.slice(0,5)}</span>
+                            ${statusLabel}
+                        </div>
+                        <div class="text-sm font-medium ${isBlocked ? 'text-yellow-700' : 'text-gray-700'}">${a.clientes.nombre}</div>
                         <div class="text-xs text-gray-500">${a.servicio}</div>
                     </div>
                     ${a.estado === 'pendiente' ? 
-                        `<button onclick="barberCancel(${a.id})" class="text-red-500 px-3 py-1 text-xs border rounded hover:bg-red-50">✕</button>` : ''}
+                        `<button onclick="barberCancel(${a.id})" class="text-red-500 p-2 hover:bg-red-100 rounded-full transition" title="Cancelar Turno"><i class="fas fa-times"></i></button>` : ''}
                 `;
                 list.appendChild(item);
             });
         }
 
         async function barberCancel(id) {
-            // Usamos el modal de confirmación profesional en lugar del nativo
-            showConfirmationModal("¿Estás seguro de ELIMINAR este turno?", 
+            showConfirmationModal("¿Eliminar este turno?", 
                 async () => {
                     await supabase.from('turnos').update({estado:'cancelado'}).eq('id', id);
                     showToast("Turno eliminado.", true);
                     loadBarberDashboard();
-                }, 
-                () => {}
-            );
+                }, () => {});
         }
 
-        // --- CONFIGURATION LOGIC ---
-
+        // --- CONFIG ---
         function loadConfigForm() {
-            // Reemplazado input type="time" por SELECT y llenado
-            fillTimeSelects('cfgOpen', currentShop.apertura.slice(0,5));
-            fillTimeSelects('cfgClose', currentShop.cierre.slice(0,5));
-            
+            document.getElementById('cfgOpen').value = currentShop.apertura.slice(0,5);
+            document.getElementById('cfgClose').value = currentShop.cierre.slice(0,5);
             document.getElementById('cfgInterval').value = currentShop.intervalo;
             document.getElementById('cfgChairs').value = currentShop.sillas;
-            
             document.getElementById('cfgMsg').value = shopConfig.mensaje_aviso || '';
             document.getElementById('cfgShowWpp').checked = shopConfig.mostrar_whatsapp || false;
             document.getElementById('cfgWppNumber').value = shopConfig.whatsapp || '';
-
+            
             const days = shopConfig.dias_laborables || [];
-            document.querySelectorAll('input[name="workday"]').forEach(cb => {
-                cb.checked = days.includes(parseInt(cb.value));
-            });
-
+            document.querySelectorAll('input[name="workday"]').forEach(cb => { cb.checked = days.includes(parseInt(cb.value)); });
+            
             renderServicesListDOM();
             renderBarberBreaks();
         }
@@ -954,10 +764,7 @@
             const container = document.getElementById('barberBreaksContainer');
             container.innerHTML = '';
             const chairs = parseInt(document.getElementById('cfgChairs').value) || 1;
-            
-            while (shopConfig.barber_breaks.length < chairs) {
-                shopConfig.barber_breaks.push({ id: shopConfig.barber_breaks.length + 1, start: '', end: '' });
-            }
+            while (shopConfig.barber_breaks.length < chairs) shopConfig.barber_breaks.push({ id: shopConfig.barber_breaks.length + 1, start: '', end: '' });
             shopConfig.barber_breaks = shopConfig.barber_breaks.slice(0, chairs);
 
             shopConfig.barber_breaks.forEach((breakTime, index) => {
@@ -965,32 +772,15 @@
                 div.className = 'flex gap-2 items-center';
                 div.innerHTML = `
                     <label class="text-sm font-medium w-16">Barbero ${index + 1}:</label>
-                    <select class="p-1 border rounded w-full text-sm" data-barber-id="${index}" data-time-type="start"></select>
+                    <input type="text" class="p-1 border rounded w-full text-sm text-center time-mask" placeholder="Inicio" data-barber-id="${index}" data-time-type="start" value="${breakTime.start || ''}" oninput="maskTime(this)">
                     <span class="text-xs">-</span>
-                    <select class="p-1 border rounded w-full text-sm" data-barber-id="${index}" data-time-type="end"></select>
+                    <input type="text" class="p-1 border rounded w-full text-sm text-center time-mask" placeholder="Fin" data-barber-id="${index}" data-time-type="end" value="${breakTime.end || ''}" oninput="maskTime(this)">
                 `;
                 container.appendChild(div);
-                
-                // Llenar selectores de pausa
-                const startSelect = div.querySelector('[data-time-type="start"]');
-                const endSelect = div.querySelector('[data-time-type="end"]');
-
-                // Llenar con todas las horas (o subconjunto si es necesario)
-                allPossibleHours.forEach(h => {
-                    const optStart = document.createElement('option');
-                    optStart.value = h; optStart.innerText = h;
-                    if (h === breakTime.start) optStart.selected = true;
-                    startSelect.appendChild(optStart);
-                    
-                    const optEnd = document.createElement('option');
-                    optEnd.value = h; optEnd.innerText = h;
-                    if (h === breakTime.end) optEnd.selected = true;
-                    endSelect.appendChild(optEnd);
-                });
             });
-
-            container.querySelectorAll('select').forEach(select => {
-                select.addEventListener('change', (e) => {
+            // Listeners para guardar cambios en inputs de pausa
+            container.querySelectorAll('input').forEach(input => {
+                input.addEventListener('change', (e) => {
                     const id = parseInt(e.target.dataset.barberId);
                     const type = e.target.dataset.timeType;
                     shopConfig.barber_breaks[id][type] = e.target.value;
@@ -999,72 +789,32 @@
         }
 
         function renderServicesListDOM() {
-            const container = document.getElementById('servicesList');
-            container.innerHTML = '';
+            const container = document.getElementById('servicesList'); container.innerHTML = '';
             (shopConfig.servicios || []).forEach((s, index) => {
                 const div = document.createElement('div');
                 div.className = 'flex justify-between items-center bg-gray-50 p-2 rounded border';
-                div.innerHTML = `
-                    <span class="text-sm">${s.nombre} - $${s.precio}</span>
-                    <button onclick="removeService(${index})" class="text-red-500 font-bold px-2">×</button>
-                `;
+                div.innerHTML = `<span class="text-sm">${s.nombre} - $${s.precio}</span><button onclick="removeService(${index})" class="text-red-500 font-bold px-2">×</button>`;
                 container.appendChild(div);
             });
         }
-
         function addServiceDOM() {
-            const name = document.getElementById('newSvcName').value;
-            const price = document.getElementById('newSvcPrice').value;
+            const name = document.getElementById('newSvcName').value; const price = document.getElementById('newSvcPrice').value;
             if(!name || !price) return;
-            
             if(!shopConfig.servicios) shopConfig.servicios = [];
             shopConfig.servicios.push({nombre: name, precio: parseInt(price)});
-            
-            document.getElementById('newSvcName').value = '';
-            document.getElementById('newSvcPrice').value = '';
+            document.getElementById('newSvcName').value = ''; document.getElementById('newSvcPrice').value = '';
             renderServicesListDOM();
         }
-
-        function removeService(index) {
-            shopConfig.servicios.splice(index, 1);
-            renderServicesListDOM();
-        }
+        function removeService(index) { shopConfig.servicios.splice(index, 1); renderServicesListDOM(); }
 
         async function changeAdminPassword() {
-            const currentPass = document.getElementById('currentPass').value;
-            const newPass = document.getElementById('newPass').value;
-            const confirmPass = document.getElementById('confirmNewPass').value;
-
-            if (!currentPass || !newPass || !confirmPass) {
-                return showToast("Por favor, rellena todos los campos.", true);
-            }
-            if (newPass !== confirmPass) {
-                return showToast("La nueva contraseña y la confirmación no coinciden.", true);
-            }
-            if (newPass.length < 4) {
-                 return showToast("La contraseña debe tener al menos 4 caracteres.", true);
-            }
-            
-            if (currentPass !== currentUser.password) {
-                return showToast("Error: La Contraseña Actual es incorrecta.", true);
-            }
-
-            const { error } = await supabase.from('barberos')
-                .update({ password: newPass })
-                .eq('id', currentUser.id);
-
-            if (!error) {
-                currentUser.password = newPass; 
-                showToast("Contraseña actualizada con éxito.");
-                document.getElementById('currentPass').value = '';
-                document.getElementById('newPass').value = '';
-                document.getElementById('confirmNewPass').value = '';
-                
-                // Solo cierra el modal, NO recarga la página
-                toggleModal('modalAccountSettings'); 
-            } else {
-                showToast("Error al actualizar la contraseña: " + error.message, true);
-            }
+            const currentPass = document.getElementById('currentPass').value; const newPass = document.getElementById('newPass').value; const confirmPass = document.getElementById('confirmNewPass').value;
+            if (!currentPass || !newPass || !confirmPass) return showToast("Faltan datos", true);
+            if (newPass !== confirmPass) return showToast("No coinciden", true);
+            if (currentPass !== currentUser.password) return showToast("Contraseña actual mal", true);
+            const { error } = await supabase.from('barberos').update({ password: newPass }).eq('id', currentUser.id);
+            if (!error) { currentUser.password = newPass; showToast("Actualizado"); toggleModal('modalAccountSettings'); } 
+            else showToast("Error", true);
         }
 
         async function saveConfig() {
@@ -1072,108 +822,55 @@
             const newClose = document.getElementById('cfgClose').value;
             const newInterval = parseInt(document.getElementById('cfgInterval').value);
             const newChairs = parseInt(document.getElementById('cfgChairs').value);
-            
             const activeDays = Array.from(document.querySelectorAll('input[name="workday"]:checked')).map(cb => parseInt(cb.value));
             
             shopConfig.dias_laborables = activeDays;
             shopConfig.mensaje_aviso = document.getElementById('cfgMsg').value;
             shopConfig.mostrar_whatsapp = document.getElementById('cfgShowWpp').checked;
             shopConfig.whatsapp = document.getElementById('cfgWppNumber').value;
-            
-            // Filtra solo las pausas que tienen hora de inicio Y fin
             shopConfig.barber_breaks = shopConfig.barber_breaks.filter(b => b.start && b.end); 
 
             const { error } = await supabase.from('barberias').update({
-                apertura: newOpen,
-                cierre: newClose,
-                intervalo: newInterval,
-                sillas: newChairs,
-                config: shopConfig
+                apertura: newOpen, cierre: newClose, intervalo: newInterval, sillas: newChairs, config: shopConfig
             }).eq('id', currentShop.id);
 
             if(!error) {
-                showToast("Configuración guardada.");
-                
-                // Actualiza los datos de la barbería en el objeto global para reflejar los cambios
-                currentShop.apertura = newOpen;
-                currentShop.cierre = newClose;
-                currentShop.intervalo = newInterval;
-                currentShop.sillas = newChairs;
-                
-                // Vuelve a generar las horas de turno y recarga el dashboard
+                showToast("Guardado");
+                currentShop.apertura = newOpen; currentShop.cierre = newClose; currentShop.intervalo = newInterval; currentShop.sillas = newChairs;
                 generatedHours = generateTimeSlots(currentShop.apertura, currentShop.cierre, currentShop.intervalo);
-                renderServiceOptions(); 
-                showAdminDashboard();
-                switchAdminTab('config'); 
-            } else {
-                showToast("Error: " + error.message, true);
-            }
+                renderServiceOptions(); showAdminDashboard(); switchAdminTab('config'); 
+            } else showToast("Error: " + error.message, true);
         }
 
         async function createManualBooking() {
-            const phone = document.getElementById('manualPhone').value;
-            const name = document.getElementById('manualName').value;
-            const date = document.getElementById('manualDate').value;
-            const time = document.getElementById('manualTime').value;
-            const service = document.getElementById('manualService').value;
-
-            if (!name || !date || !time) return showToast("Completa los datos", true);
-            if (name === 'PAUSA' && !service) return showToast("Si bloqueas con 'PAUSA', selecciona un servicio (ej: Corte)", true);
-
-
+            const phone = document.getElementById('manualPhone').value; const name = document.getElementById('manualName').value;
+            const date = document.getElementById('manualDate').value; const time = document.getElementById('manualTime').value; const service = document.getElementById('manualService').value;
+            if (!name || !date || !time) return showToast("Faltan datos", true);
             let clientId;
             const { data: existing } = await supabase.from('clientes').select('id').eq('barberia_id', currentShop.id).eq('celular', phone || '000000000').single();
             if (existing) clientId = existing.id;
             else {
-                const { data: newC } = await supabase.from('clientes').insert({
-                    barberia_id: currentShop.id, celular: phone || '000000000', nombre: name, pin: '0000'
-                }).select().single();
+                const { data: newC } = await supabase.from('clientes').insert({ barberia_id: currentShop.id, celular: phone || '000000000', nombre: name, pin: '0000' }).select().single();
                 clientId = newC.id;
             }
-
-            const { error } = await supabase.from('turnos').insert({
-                barberia_id: currentShop.id, cliente_id: clientId, fecha: date, hora: time, servicio: service
-            });
-
-            if(!error) { 
-                showToast("Agendado manualmente."); 
-                toggleModal('modalManualBooking'); 
-                loadBarberDashboard(); 
-            }
+            const { error } = await supabase.from('turnos').insert({ barberia_id: currentShop.id, cliente_id: clientId, fecha: date, hora: time, servicio: service });
+            if(!error) { showToast("Agendado"); toggleModal('modalManualBooking'); loadBarberDashboard(); }
             else showToast(error.message, true);
         }
         
-        // --- LOCALIZATION & FORMATTING ---
         const DAYS_ES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-        
         function formatDate(d) {
             const date = new Date(d + 'T00:00:00'); 
-            const dayOfWeek = DAYS_ES[date.getDay()];
-            const options = { day: 'numeric', month: 'long' };
-            const formatted = date.toLocaleDateString('es-UY', options);
-            return `${dayOfWeek}, ${formatted}`;
+            return `${DAYS_ES[date.getDay()]}, ${date.toLocaleDateString('es-UY', { day: 'numeric', month: 'long' })}`;
         }
 
         function logout() { 
-            currentUser = null;
-            localStorage.removeItem(CLIENT_STORAGE_KEY);
-            localStorage.removeItem(ADMIN_STORAGE_KEY);
-            
-            document.title = currentShop.nombre + " - Agendamiento";
-            updateAdminDropdownVisibility(false);
-            
-            // Vuelve a la vista de login de cliente
-            document.getElementById('viewBarber').classList.add('hidden');
-            document.getElementById('viewClient').classList.add('hidden');
-            document.getElementById('viewLogin').classList.remove('hidden');
-            document.getElementById('fabAdd').classList.add('hidden');
-            
-            // Limpiar inputs de login
-            document.getElementById('loginPhone').value = '';
-            document.getElementById('loginPin').value = '';
-            document.getElementById('loginName').value = '';
-            document.getElementById('pinSection').classList.add('hidden');
-            document.getElementById('nameSection').classList.add('hidden');
+            currentUser = null; localStorage.removeItem(CLIENT_STORAGE_KEY); localStorage.removeItem(ADMIN_STORAGE_KEY);
+            document.title = currentShop.nombre + " - Agendamiento"; updateAdminDropdownVisibility(false);
+            document.getElementById('viewBarber').classList.add('hidden'); document.getElementById('viewClient').classList.add('hidden');
+            document.getElementById('viewLogin').classList.remove('hidden'); document.getElementById('fabAdd').classList.add('hidden');
+            document.getElementById('loginPhone').value = ''; document.getElementById('loginPin').value = '';
+            document.getElementById('pinSection').classList.add('hidden'); document.getElementById('nameSection').classList.add('hidden');
         }
     </script>
 </body>
