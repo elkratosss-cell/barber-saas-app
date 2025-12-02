@@ -95,7 +95,12 @@
                     </div>
                     <div id="pinSection" class="hidden fade-in">
                         <label class="block text-sm font-bold text-gray-700 mb-1">PIN de Acceso</label>
-                        <input type="tel" id="loginPin" inputmode="numeric" placeholder="****" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none text-center text-2xl tracking-widest" maxlength="4">
+                        <div class="relative">
+                            <input type="password" id="loginPin" inputmode="numeric" placeholder="****" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none text-center text-2xl tracking-widest" maxlength="4">
+                            <button type="button" onclick="togglePinVisibility()" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-primary transition">
+                                <i id="pinToggleIcon" class="fas fa-eye"></i>
+                            </button>
+                        </div>
                         <p id="pinHint" class="text-xs text-gray-400 mt-2 text-center"></p>
                     </div>
                     <div id="nameSection" class="hidden fade-in">
@@ -317,9 +322,13 @@
         const ADMIN_STORAGE_KEY = 'barbersaas_admin_id';
 
         // Función para mostrar el toast
-        function showToast(message) {
+        function showToast(message, isError = false) {
             const toast = document.getElementById('toastNotification');
             toast.innerText = message;
+            
+            toast.classList.remove('bg-green-500', 'bg-red-500');
+            toast.classList.add(isError ? 'bg-red-500' : 'bg-green-500');
+
             toast.classList.remove('hidden', 'opacity-0', 'scale-90');
             toast.classList.add('opacity-100', 'scale-100');
             
@@ -328,6 +337,22 @@
                 toast.classList.add('opacity-0', 'scale-90');
                 setTimeout(() => toast.classList.add('hidden'), 300); 
             }, 3000); 
+        }
+        
+        // Función para alternar la visibilidad del PIN
+        function togglePinVisibility() {
+            const pinInput = document.getElementById('loginPin');
+            const pinIcon = document.getElementById('pinToggleIcon');
+            
+            if (pinInput.type === 'password') {
+                pinInput.type = 'text';
+                pinIcon.classList.remove('fa-eye');
+                pinIcon.classList.add('fa-eye-slash');
+            } else {
+                pinInput.type = 'password';
+                pinIcon.classList.remove('fa-eye-slash');
+                pinIcon.classList.add('fa-eye');
+            }
         }
 
 
@@ -509,6 +534,12 @@
             const nameSec = document.getElementById('nameSection');
             const btn = document.getElementById('btnActionLogin');
             
+            // Asegurarse de que el PIN esté oculto por defecto
+            document.getElementById('loginPin').type = 'password';
+            document.getElementById('pinToggleIcon').classList.remove('fa-eye-slash');
+            document.getElementById('pinToggleIcon').classList.add('fa-eye');
+
+
             if (data) {
                 nameSec.classList.add('hidden');
                 document.getElementById('pinHint').innerText = "Ingresa tu PIN";
@@ -524,7 +555,7 @@
             const phone = document.getElementById('loginPhone').value;
             const pin = document.getElementById('loginPin').value;
             const name = document.getElementById('loginName').value;
-            if (phone.length < 8 || pin.length < 4) { alert("Datos incompletos"); return; }
+            if (phone.length < 8 || pin.length < 4) { showToast("Datos incompletos", true); return; }
 
             const { data: existing } = await supabase.from('clientes').select('*').eq('barberia_id', currentShop.id).eq('celular', phone).eq('pin', pin).single();
             if (existing) {
@@ -535,11 +566,11 @@
             } else {
                 const { data: existingName } = await supabase.from('clientes').select('*').eq('barberia_id', currentShop.id).eq('celular', phone).single();
                 if (existingName) {
-                    alert("PIN Incorrecto");
+                    showToast("PIN Incorrecto", true);
                     return;
                 }
                 
-                if (!name) return alert("Falta nombre");
+                if (!name) return showToast("Falta nombre", true);
                 const { data, error } = await supabase.from('clientes').insert({ barberia_id: currentShop.id, celular: phone, nombre: name, pin: pin }).select().single();
                 if (!error) { 
                     currentUser = data; 
@@ -547,7 +578,7 @@
                     localStorage.removeItem(ADMIN_STORAGE_KEY);
                     showClientDashboard(); 
                 }
-                else alert("Error al registrar: " + error.message);
+                else showToast("Error al registrar: " + error.message, true);
             }
         }
 
@@ -663,12 +694,14 @@
                 showToast("¡Turno confirmado! 👍"); 
                 showClientDashboard(); 
             }
-            else alert("Error: " + error.message);
+            else showToast("Error al confirmar turno: " + error.message, true);
         }
 
         async function cancelMyAppointment() {
-            if(!confirm("¿Cancelar turno?")) return;
+            if(!confirm("¿Estás seguro de que quieres CANCELAR tu turno?")) return;
+            
             await supabase.from('turnos').update({ estado: 'cancelado' }).eq('id', currentUser.activeApptId);
+            showToast("Turno cancelado.", true);
             showClientDashboard();
         }
 
@@ -717,7 +750,7 @@
                 localStorage.removeItem(CLIENT_STORAGE_KEY);
                 document.getElementById('modalBarberLogin').classList.add('hidden');
                 showAdminDashboard();
-            } else alert("Usuario o Contraseña incorrectos");
+            } else showToast("Usuario o Contraseña incorrectos", true);
         }
 
         async function loadBarberDashboard() {
@@ -789,6 +822,7 @@
         async function barberCancel(id) {
             if(!confirm("¿Eliminar turno?")) return;
             await supabase.from('turnos').update({estado:'cancelado'}).eq('id', id);
+            showToast("Turno eliminado.", true);
             loadBarberDashboard();
         }
 
@@ -882,17 +916,17 @@
             const confirmPass = document.getElementById('confirmNewPass').value;
 
             if (!currentPass || !newPass || !confirmPass) {
-                return alert("Por favor, rellena todos los campos.");
+                return showToast("Por favor, rellena todos los campos.", true);
             }
             if (newPass !== confirmPass) {
-                return alert("La nueva contraseña y la confirmación no coinciden.");
+                return showToast("La nueva contraseña y la confirmación no coinciden.", true);
             }
             if (newPass.length < 4) {
-                 return alert("La contraseña debe tener al menos 4 caracteres.");
+                 return showToast("La contraseña debe tener al menos 4 caracteres.", true);
             }
             
             if (currentPass !== currentUser.password) {
-                return alert("Error: La Contraseña Actual es incorrecta.");
+                return showToast("Error: La Contraseña Actual es incorrecta.", true);
             }
 
             const { error } = await supabase.from('barberos')
@@ -909,7 +943,7 @@
                 // Solo cierra el modal, NO recarga la página
                 toggleModal('modalAccountSettings'); 
             } else {
-                alert("Error al actualizar la contraseña: " + error.message);
+                showToast("Error al actualizar la contraseña: " + error.message, true);
             }
         }
 
@@ -951,7 +985,7 @@
                 showAdminDashboard();
                 switchAdminTab('config'); 
             } else {
-                alert("Error: " + error.message);
+                showToast("Error: " + error.message, true);
             }
         }
 
@@ -962,8 +996,8 @@
             const time = document.getElementById('manualTime').value;
             const service = document.getElementById('manualService').value;
 
-            if (!name || !date || !time) return alert("Completa los datos");
-            if (name === 'PAUSA' && !service) return alert("Si bloqueas con 'PAUSA', selecciona un servicio (ej: Corte)");
+            if (!name || !date || !time) return showToast("Completa los datos", true);
+            if (name === 'PAUSA' && !service) return showToast("Si bloqueas con 'PAUSA', selecciona un servicio (ej: Corte)", true);
 
 
             let clientId;
@@ -985,7 +1019,7 @@
                 toggleModal('modalManualBooking'); 
                 loadBarberDashboard(); 
             }
-            else alert(error.message);
+            else showToast(error.message, true);
         }
         
         // --- LOCALIZATION & FORMATTING ---
@@ -1016,4 +1050,3 @@
     </script>
 </body>
 </html>
-
