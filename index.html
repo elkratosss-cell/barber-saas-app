@@ -170,8 +170,7 @@
                 <div id="panelAgenda">
                     <div class="flex justify-between items-center mb-4">
                         <input type="text" id="barberDatePicker" class="px-3 py-2 border rounded-lg text-sm bg-white font-medium w-40 text-center">
-                        <button onclick="logout()" class="text-gray-400 hover:text-red-500 text-sm"><i class="fas fa-sign-out-alt"></i> Salir</button>
-                    </div>
+                        </div>
                     <div id="occupancySummary" class="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide"></div>
                     <div id="barberAppointmentsList" class="space-y-3 pb-20"></div>
                 </div>
@@ -179,6 +178,10 @@
                 <div id="panelConfig" class="hidden pb-20">
                     <h3 class="font-bold text-lg mb-4 text-gray-800">🏢 Datos del Local</h3>
                     <div class="space-y-4">
+                        <div>
+                            <label class="text-xs text-gray-500 block">Dirección</label>
+                            <input type="text" id="cfgAddress" placeholder="Ej: Av. Italia 1234, Montevideo" class="w-full p-2 border rounded">
+                        </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="text-xs text-gray-500 block">Apertura</label>
@@ -328,9 +331,11 @@
     <script>
         const SUPABASE_URL = 'https://hqoyjsngydafaagsrzlg.supabase.co'; 
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhxb3lqc25neWRhZmFhZ3NyemxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MDI5MDQsImV4cCI6MjA3OTk3ODkwNH0.WyTlANZLTRd6IlhxuDlQai8Zz6dgexGPvwXmBr7HsZs';
+        // URL para las Supabase Edge Functions
+        const SUPABASE_FUNCTIONS_URL = SUPABASE_URL.replace('/rest/v1', '/functions/v1'); 
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         // !!! ATENCIÓN: REEMPLAZA ESTE EMAIL CON EL TUYO REAL PARA EL BLOQUEO DE PRUEBA
-        const CONTACT_EMAIL = 'TU_EMAIL@EJEMPLO.COM'; 
+        const CONTACT_EMAIL = 'elkratosss@gmail.com'; 
 
         let currentShop = null;
         let currentUser = null; 
@@ -368,7 +373,7 @@
             input.value = v;
         }
         
-        // NUEVA FUNCIÓN: Máscara y validación para el formato de celular UY (09X XXX XXX)
+        // Máscara y validación para el formato de celular UY (09X XXX XXX)
         function maskPhone(input) {
             let v = input.value.replace(/\D/g, ''); 
             
@@ -513,7 +518,11 @@
 
         function applyTheme() {
             document.getElementById('shopName').innerText = currentShop.nombre;
-            document.getElementById('headerSub').innerText = `${currentShop.sillas} Prof. • Abrimos ${currentShop.apertura.slice(0,5)}`;
+            // Mostramos la dirección si existe, sino el horario de apertura
+            document.getElementById('headerSub').innerText = currentShop.direccion 
+                ? `${currentShop.direccion}` 
+                : `${currentShop.sillas} Prof. • Abrimos ${currentShop.apertura.slice(0,5)}`;
+
             document.documentElement.style.setProperty('--color-primary', currentShop.color_primary);
             if(shopConfig.mensaje_aviso) {
                 document.getElementById('shopNotice').classList.remove('hidden');
@@ -550,7 +559,6 @@
             });
 
             document.getElementById('btnConfirmBooking').addEventListener('click', createClientBooking);
-            // El listener para el teléfono ahora es handled por maskPhone y handleLoginFlow
         }
 
         function renderServiceOptions() {
@@ -584,7 +592,7 @@
         function openAccountSettingsAndCloseDropdown(e) { e.preventDefault(); toggleDropdown('adminDropdown'); toggleModal('modalAccountSettings'); }
         function adminLogoutAndCloseDropdown(e) { e.preventDefault(); toggleDropdown('adminDropdown'); logout(); }
 
-        // --- CLIENTE LOGIN (Flujo de 2 pasos con PIN) ---
+        // --- CLIENTE LOGIN (Flujo de 2 pasos con PIN SEGURO) ---
         
         // Paso 1: Solicitar PIN / Paso 2: Verificar PIN
         async function handleLoginFlow() {
@@ -610,13 +618,14 @@
             }
         }
 
-        // Lógica de Solicitud de PIN (Paso 1)
+        // Lógica de Solicitud de PIN (Paso 1) - **ACTUALIZADA PARA TWILIO**
         async function requestPin(phone, btn) {
             const min = 1000;
             const max = 9999;
             const randomPin = (Math.floor(Math.random() * (max - min + 1)) + min).toString();
             phoneToVerify = phone;
 
+            // 1. Búsqueda y configuración de interfaz
             let { data: client, error: searchError } = await supabase.from('clientes').select('*').eq('barberia_id', currentShop.id).eq('celular', phone).single();
 
             if (searchError && searchError.code !== 'PGRST116') { 
@@ -629,14 +638,14 @@
             
             if (isNewUser) {
                 document.getElementById('nameSection').classList.remove('hidden');
-                document.getElementById('pinHint').innerText = "Crea tu cuenta e ingresa el PIN (Simulado abajo)";
+                document.getElementById('pinHint').innerText = "Ingresa el PIN enviado a tu celular.";
             } else {
                 document.getElementById('nameSection').classList.add('hidden');
                 document.getElementById('loginName').value = client.nombre; 
-                document.getElementById('pinHint').innerText = "Ingresa el PIN que recibiste (Simulado abajo)";
+                document.getElementById('pinHint').innerText = "Ingresa el PIN enviado a tu celular.";
             }
 
-            // Guardar PIN temporalmente en la base de datos (SIMULACIÓN DE ENVÍO SMS)
+            // 2. Guardar PIN temporalmente en la base de datos
             const { error: pinUpdateError } = await supabase.from('clientes').upsert({ 
                 barberia_id: currentShop.id, 
                 celular: phone, 
@@ -650,10 +659,36 @@
                 return;
             }
             
-            // SIMULACIÓN: Mostrar el PIN al usuario (¡REEMPLAZAR POR SMS REAL EN PRODUCCIÓN!)
-            showToast(`PIN de prueba: ${randomPin}`, false);
+            // =========================================================
+            // 3. LLAMADA SEGURA AL BACKEND (TWILIO EDGE FUNCTION)
+            // =========================================================
+            const twilioUrl = `${SUPABASE_FUNCTIONS_URL}/send-pin`;
+            
+            const smsResponse = await fetch(twilioUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${SUPABASE_KEY}` // Usa la llave anon
+                },
+                body: JSON.stringify({
+                    to: phone.replace(/\D/g, ''), // Enviamos el número limpio de 9 dígitos
+                    pin: randomPin
+                }),
+            });
+            
+            const smsData = await smsResponse.json();
 
-            // Transición de la interfaz al Paso 2
+            if (!smsResponse.ok || smsData.success === false) {
+                // Si Twilio falla, mostramos un error genérico (por seguridad)
+                console.error("Error completo de SMS:", smsData); 
+                showToast("Error al enviar PIN por SMS. Intenta de nuevo.", true);
+                btn.disabled = false;
+                return;
+            }
+            
+            // 4. Transición de la interfaz al Paso 2 (Solo si el SMS fue exitoso)
+            showToast(`PIN enviado correctamente al ${phone.slice(0, 3)}...`, false);
+
             document.getElementById('loginPhone').disabled = true;
             document.getElementById('pinSection').classList.remove('hidden');
             document.getElementById('btnResendPin').classList.remove('hidden');
@@ -933,6 +968,7 @@
 
         // --- CONFIG ---
         function loadConfigForm() {
+            document.getElementById('cfgAddress').value = currentShop.direccion || ''; // NUEVO CAMPO
             document.getElementById('cfgOpen').value = currentShop.apertura.slice(0,5);
             document.getElementById('cfgClose').value = currentShop.cierre.slice(0,5);
             document.getElementById('cfgInterval').value = currentShop.intervalo;
@@ -1005,6 +1041,7 @@
         }
 
         async function saveConfig() {
+            const newAddress = document.getElementById('cfgAddress').value; // NUEVO CAMPO
             const newOpen = document.getElementById('cfgOpen').value;
             const newClose = document.getElementById('cfgClose').value;
             const newInterval = parseInt(document.getElementById('cfgInterval').value);
@@ -1018,14 +1055,16 @@
             shopConfig.barber_breaks = shopConfig.barber_breaks.filter(b => b.start && b.end); 
 
             const { error } = await supabase.from('barberias').update({
-                apertura: newOpen, cierre: newClose, intervalo: newInterval, sillas: newChairs, config: shopConfig
+                apertura: newOpen, cierre: newClose, intervalo: newInterval, sillas: newChairs, config: shopConfig,
+                direccion: newAddress // NUEVO CAMPO
             }).eq('id', currentShop.id);
 
             if(!error) {
                 showToast("Guardado");
-                currentShop.apertura = newOpen; currentShop.cierre = newClose; currentShop.intervalo = newInterval; currentShop.sillas = newChairs;
+                currentShop.apertura = newOpen; currentShop.cierre = newClose; currentShop.intervalo = newInterval; currentShop.sillas = newChairs; currentShop.direccion = newAddress; // Actualizar la variable global
                 generatedHours = generateTimeSlots(currentShop.apertura, currentShop.cierre, currentShop.intervalo);
                 renderServiceOptions(); showAdminDashboard(); switchAdminTab('config'); 
+                applyTheme(); // Para que se actualice la dirección en el header
             } else showToast("Error: " + error.message, true);
         }
 
