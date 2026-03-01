@@ -7,11 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
 
         /* CRITICAL: These must be CSS-only, not dependent on Tailwind timing */
@@ -992,6 +987,10 @@
         Turno confirmado 👍
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
     // ════════════════════════════════════════════════
     //  CONFIG
@@ -1061,7 +1060,7 @@
         document.getElementById('viewBarber').style.display = 'none';
     }
 
-    document.addEventListener('DOMContentLoaded', async () => {
+    window.addEventListener('load', async () => {
         // Safety timeout: if nothing loads in 8s, show error
         const safetyTimeout = setTimeout(() => {
             showErrorScreen('Tiempo de espera agotado. Verificá tu conexión a internet.');
@@ -1092,23 +1091,6 @@
             }
 
             currentShop = shop;
-
-            // Trial block
-            if (currentShop.fecha_fin_prueba) {
-                const trialEnd = new Date(currentShop.fecha_fin_prueba + 'T00:00:00');
-                const today = new Date(); today.setHours(0,0,0,0);
-                if (today > trialEnd) {
-                    showLoader(false);
-                    document.getElementById('viewLogin').innerHTML =
-                        '<div style="text-align:center;margin-top:60px;padding:0 24px;">' +
-                        '<i class="fas fa-calendar-times" style="font-size:48px;color:#ef4444;opacity:0.5;margin-bottom:16px;display:block;"></i>' +
-                        '<h2 style="color:#fff;font-size:20px;font-weight:700;margin-bottom:12px;">Prueba finalizada</h2>' +
-                        '<p style="color:#666;font-size:14px;margin-bottom:24px;">La prueba de 14 días de ' + currentShop.nombre + ' ha expirado.</p>' +
-                        '<a href="mailto:' + CONTACT_EMAIL + '" class="btn-primary" style="display:inline-block;max-width:220px;text-decoration:none;">Quiero continuar</a>' +
-                        '</div>';
-                    return;
-                }
-            }
 
             shopConfig = shop.config || {};
             if (!shopConfig.barber_breaks) shopConfig.barber_breaks = [];
