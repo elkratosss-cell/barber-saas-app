@@ -1002,7 +1002,7 @@
     const MAX_PIN_ATTEMPTS = 3;
     const BLOCK_MINUTES = 15;
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let supabase = null;
 
     // ════════════════════════════════════════════════
     //  STATE
@@ -1061,6 +1061,7 @@
     }
 
     window.addEventListener('load', async () => {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         // Safety timeout: if nothing loads in 8s, show error
         const safetyTimeout = setTimeout(() => {
             showErrorScreen('Tiempo de espera agotado. Verificá tu conexión a internet.');
