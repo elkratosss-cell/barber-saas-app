@@ -1043,69 +1043,103 @@
     // ════════════════════════════════════════════════
     //  INIT
     // ════════════════════════════════════════════════
+    function showLoader(show) {
+        document.getElementById('loader').style.display = show ? 'flex' : 'none';
+        document.getElementById('app').style.display = show ? 'none' : 'flex';
+    }
+
+    function showErrorScreen(msg) {
+        showLoader(false);
+        document.getElementById('viewLogin').innerHTML =
+            '<div style="text-align:center;margin-top:60px;padding:0 24px;">' +
+            '<div style="font-size:48px;margin-bottom:16px;">⚠️</div>' +
+            '<p style="color:#fff;font-weight:700;font-size:18px;margin-bottom:8px;">Error al cargar</p>' +
+            '<p style="color:#666;font-size:14px;margin-bottom:24px;">' + msg + '</p>' +
+            '<button onclick="location.reload()" class="btn-primary" style="max-width:200px;margin:0 auto;">Reintentar</button>' +
+            '</div>';
+        document.getElementById('viewClient').style.display = 'none';
+        document.getElementById('viewBarber').style.display = 'none';
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
+        // Safety timeout: if nothing loads in 8s, show error
+        const safetyTimeout = setTimeout(() => {
+            showErrorScreen('Tiempo de espera agotado. Verificá tu conexión a internet.');
+        }, 8000);
+
         try {
-        const params = new URLSearchParams(window.location.search);
-        const slug = params.get('barberia') || 'elite';
+            const params = new URLSearchParams(window.location.search);
+            const slug = params.get('barberia') || 'elite';
 
-        const { data: shop, error } = await supabase
-            .from('barberias').select('*').eq('slug', slug).single();
+            // Fetch with timeout
+            const fetchWithTimeout = (promise, ms) => {
+                const timeout = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Timeout de conexión')), ms)
+                );
+                return Promise.race([promise, timeout]);
+            };
 
-        if (error || !shop) return alert('Barbería no encontrada.');
-        currentShop = shop;
+            const { data: shop, error } = await fetchWithTimeout(
+                supabase.from('barberias').select('*').eq('slug', slug).single(),
+                7000
+            );
 
-        // Trial block
-        if (currentShop.fecha_fin_prueba) {
-            const trialEnd = new Date(currentShop.fecha_fin_prueba + 'T00:00:00');
-            const today = new Date(); today.setHours(0,0,0,0);
-            if (today > trialEnd) {
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('app').style.display = 'flex';
-                document.getElementById('viewLogin').innerHTML = `
-                    <div class="text-center mt-12 px-4">
-                        <i class="fas fa-calendar-times text-5xl mb-4" style="color:#ef4444;opacity:0.5;"></i>
-                        <h2 class="section-title text-xl mb-3">Prueba finalizada</h2>
-                        <p class="text-sm mb-6" style="color:#555;">La prueba de 14 días de ${currentShop.nombre} ha expirado.</p>
-                        <a href="mailto:${CONTACT_EMAIL}" class="btn-primary inline-block px-6 py-3" style="border-radius:12px;">
-                            <i class="fas fa-crown mr-2"></i> Quiero continuar usándolo
-                        </a>
-                    </div>`;
+            clearTimeout(safetyTimeout);
+
+            if (error || !shop) {
+                showErrorScreen('Barbería no encontrada. Verificá la URL.');
                 return;
             }
-        }
 
-        shopConfig = shop.config || {};
-        if (!shopConfig.barber_breaks) shopConfig.barber_breaks = [];
+            currentShop = shop;
 
-        document.title = currentShop.nombre + ' - Turnos';
-        generatedHours = generateTimeSlots(shop.apertura, shop.cierre, shop.intervalo);
-        applyTheme();
-        setupCalendars();
-        renderServiceOptions();
+            // Trial block
+            if (currentShop.fecha_fin_prueba) {
+                const trialEnd = new Date(currentShop.fecha_fin_prueba + 'T00:00:00');
+                const today = new Date(); today.setHours(0,0,0,0);
+                if (today > trialEnd) {
+                    showLoader(false);
+                    document.getElementById('viewLogin').innerHTML =
+                        '<div style="text-align:center;margin-top:60px;padding:0 24px;">' +
+                        '<i class="fas fa-calendar-times" style="font-size:48px;color:#ef4444;opacity:0.5;margin-bottom:16px;display:block;"></i>' +
+                        '<h2 style="color:#fff;font-size:20px;font-weight:700;margin-bottom:12px;">Prueba finalizada</h2>' +
+                        '<p style="color:#666;font-size:14px;margin-bottom:24px;">La prueba de 14 días de ' + currentShop.nombre + ' ha expirado.</p>' +
+                        '<a href="mailto:' + CONTACT_EMAIL + '" class="btn-primary" style="display:inline-block;max-width:220px;text-decoration:none;">Quiero continuar</a>' +
+                        '</div>';
+                    return;
+                }
+            }
 
-        document.getElementById('loader').style.display = 'none';
-        document.getElementById('app').style.display = 'flex';
+            shopConfig = shop.config || {};
+            if (!shopConfig.barber_breaks) shopConfig.barber_breaks = [];
 
-        // Auto-login
-        const storedClientId = localStorage.getItem(CLIENT_STORAGE_KEY);
-        const storedAdminId  = localStorage.getItem(ADMIN_STORAGE_KEY);
+            document.title = currentShop.nombre + ' - Turnos';
+            generatedHours = generateTimeSlots(shop.apertura, shop.cierre, shop.intervalo);
+            applyTheme();
+            setupCalendars();
+            renderServiceOptions();
 
-        if (storedClientId && storedClientId !== 'null') {
-            const { data: client } = await supabase.from('clientes').select('*').eq('id', storedClientId).single();
-            if (client) { currentUser = client; return showClientDashboard(); }
-        } else if (storedAdminId && storedAdminId !== 'null') {
-            const { data: admin } = await supabase.from('barberos').select('*').eq('id', storedAdminId).single();
-            if (admin) { currentUser = admin; return showAdminDashboard(); }
-        }
+            showLoader(false);
 
-        updateAdminDropdownVisibility(false);
-        resetLoginView();
+            // Auto-login
+            const storedClientId = localStorage.getItem(CLIENT_STORAGE_KEY);
+            const storedAdminId  = localStorage.getItem(ADMIN_STORAGE_KEY);
+
+            if (storedClientId && storedClientId !== 'null') {
+                const { data: client } = await supabase.from('clientes').select('*').eq('id', storedClientId).single();
+                if (client) { currentUser = client; return showClientDashboard(); }
+            } else if (storedAdminId && storedAdminId !== 'null') {
+                const { data: admin } = await supabase.from('barberos').select('*').eq('id', storedAdminId).single();
+                if (admin) { currentUser = admin; return showAdminDashboard(); }
+            }
+
+            updateAdminDropdownVisibility(false);
+            resetLoginView();
 
         } catch(err) {
+            clearTimeout(safetyTimeout);
             console.error('Init error:', err);
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('app').style.display = 'flex';
-            document.getElementById('viewLogin').innerHTML = `<div class="text-center mt-16 px-6"><i class="fas fa-exclamation-circle text-4xl mb-4" style="color:#ef4444;"></i><p class="text-white font-bold mb-2">Error al cargar</p><p class="text-sm" style="color:#666;">` + err.message + `</p><button onclick="location.reload()" class="btn-primary mt-6">Reintentar</button></div>`;
+            showErrorScreen(err.message || 'Error desconocido');
         }
     });
 
