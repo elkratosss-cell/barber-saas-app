@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BarberSaaS - Debug</title>
+    <style>
+        body { font-family: monospace; background: #0f0f0f; color: #0f0; padding: 20px; }
+        .error { color: #f44; }
+        .info { color: #44f; }
+        .success { color: #4f4; }
+        #log { white-space: pre-wrap; word-break: break-all; }
+    </style>
+</head>
+<body>
+    <h2>🔧 Modo Debug</h2>
+    <div id="log">Iniciando...\n</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    <script>
+        const log = (msg, type = 'info') => {
+            const div = document.getElementById('log');
+            const color = type === 'error' ? '#f44' : type === 'success' ? '#4f4' : '#0f0';
+            div.innerHTML += `<span style="color:${color}">[${new Date().toLocaleTimeString()}] ${msg}</span>\n`;
+            console.log(msg);
+        };
+
+        const SUPABASE_URL = 'https://hqoyjsngydafaagsrzlg.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhxb3lqc25neWRhZmFhZ3NyemxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MDI5MDQsImV4cCI6MjA3OTk3ODkwNH0.WyTlANZLTRd6IlhxuDlQai8Zz6dgexGPvwXmBr7HsZs';
+
+        log('Paso 1: Verificando Supabase JS...');
+        
+        if (typeof window.supabase === 'undefined') {
+            log('❌ ERROR: Supabase no cargó', 'error');
+        } else {
+            log('✅ Supabase JS cargado', 'success');
+        }
+
+        log('Paso 2: Creando cliente...');
+        
+        try {
+            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            log('✅ Cliente creado', 'success');
+            
+            log('Paso 3: Probando conexión...');
+            
+            supabase.from('barberias').select('count', { count: 'exact', head: true }).then(({ count, error }) => {
+                if (error) {
+                    log('❌ ERROR conexión: ' + error.message, 'error');
+                    log('Código: ' + error.code, 'error');
+                } else {
+                    log('✅ Conexión OK. Tablas encontradas: ' + count, 'success');
+                }
+            }).catch(err => {
+                log('❌ ERROR catch: ' + err.message, 'error');
+            });
+            
+        } catch (err) {
+            log('❌ ERROR creando cliente: ' + err.message, 'error');
+        }
+
+        // Detectar errores 404
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+            log('Fetch: ' + args[0]);
+            return originalFetch.apply(this, args).then(response => {
+                if (!response.ok) {
+                    log('❌ HTTP ' + response.status + ' en: ' + args[0], 'error');
+                } else {
+                    log('✅ HTTP ' + response.status + ' en: ' + args[0], 'success');
+                }
+                return response;
+            }).catch(err => {
+                log('❌ Network error: ' + err.message, 'error');
+                throw err;
+            });
+        };
+    </script>
+</body>
+</html>
