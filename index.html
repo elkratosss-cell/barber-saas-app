@@ -283,9 +283,11 @@
             <section id="viewClient" class="hidden fade-in">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="font-bold text-xl">Hola, <span id="clientNameDisplay" class="text-primary"></span> 👋</h2>
-                    <div class="flex space-x-2">
-                        <button onclick="openChangePinModal()" class="text-sm text-primary underline mr-2">Cambiar PIN</button>
-                        <button onclick="logout()" class="text-sm text-gray-500 underline">Salir</button>
+                    <div class="flex items-center gap-3">
+                        <button onclick="openClientAccount()" class="flex items-center gap-1 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-xl transition">
+                            <i class="fas fa-user-circle text-primary"></i> Mi cuenta
+                        </button>
+                        <button onclick="logout()" class="text-sm text-gray-400 hover:text-red-500 transition"><i class="fas fa-sign-out-alt"></i></button>
                     </div>
                 </div>
                 <div id="activeAppointmentCard" class="hidden bg-white border-l-4 border-primary shadow-md rounded-r-xl p-5 mb-8">
@@ -310,7 +312,7 @@
                         <label class="block text-sm font-bold text-gray-700 mb-2">Servicio</label>
                         <select id="serviceSelect" class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white"></select>
                     </div>
-                    <button id="btnConfirmBooking" class="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>Confirmar</button>
+                    <button id="btnConfirmBooking" onclick="confirmBookingModal()" class="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>Confirmar turno</button>
                 </div>
             </section>
 
@@ -456,18 +458,94 @@
         </div>
     </div>
 
-    <!-- Modal Cambiar PIN (desde dashboard cliente) -->
-    <div id="modalChangePin" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center px-4 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="font-bold text-xl text-primary">🔒 Cambiar PIN</h3>
-                <button onclick="toggleModal('modalChangePin')" class="text-gray-400">✕</button>
+    <!-- Modal Mi Cuenta (cliente) -->
+    <div id="modalClientAccount" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center px-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl relative overflow-hidden">
+            <!-- Header -->
+            <div class="bg-primary p-5 text-white">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-lg">Mi cuenta</h3>
+                        <p id="accountSubtitle" class="text-xs opacity-80 mt-0.5"></p>
+                    </div>
+                    <button onclick="toggleModal('modalClientAccount')" class="opacity-70 hover:opacity-100 text-white text-xl">✕</button>
+                </div>
             </div>
-            <div class="space-y-4 p-4 border rounded-xl bg-gray-50">
-                <input type="tel" id="currentPin" placeholder="PIN Actual" class="w-full p-3 border rounded-xl text-center text-2xl tracking-widest" maxlength="4" autocomplete="off">
-                <input type="tel" id="newPin" placeholder="Nuevo PIN" class="w-full p-3 border rounded-xl text-center text-2xl tracking-widest" maxlength="4" autocomplete="new-password">
-                <input type="tel" id="confirmNewPin" placeholder="Confirmar Nuevo PIN" class="w-full p-3 border rounded-xl text-center text-2xl tracking-widest" maxlength="4" autocomplete="new-password">
-                <button id="btnSavePin" onclick="changeClientPin()" class="w-full bg-blue-500 text-white py-3 rounded-xl font-bold shadow-md hover:bg-blue-600 transition">Guardar PIN</button>
+            <!-- Tabs -->
+            <div class="flex border-b">
+                <button onclick="switchAccountTab('profile')" id="tabProfile" class="flex-1 py-3 text-sm font-bold text-primary border-b-2 border-primary">
+                    <i class="fas fa-user mr-1"></i> Datos
+                </button>
+                <button onclick="switchAccountTab('pin')" id="tabPin" class="flex-1 py-3 text-sm text-gray-500 hover:text-primary">
+                    <i class="fas fa-lock mr-1"></i> PIN
+                </button>
+            </div>
+            <!-- Panel Datos -->
+            <div id="accountPanelProfile" class="p-5 space-y-4">
+                <p class="text-xs text-gray-400">Así te van a ver los barberos en la agenda.</p>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">Nombre</label>
+                    <input type="text" id="accountFirstName" placeholder="Nombre" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">Apellido</label>
+                    <input type="text" id="accountLastName" placeholder="Apellido" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">Celular</label>
+                    <input type="text" id="accountPhone" class="w-full px-4 py-3 border border-gray-100 rounded-xl bg-gray-50 text-sm text-gray-400 cursor-not-allowed" readonly>
+                </div>
+                <button onclick="saveAccountProfile()" class="w-full bg-primary text-white py-3 rounded-xl font-bold shadow-md hover:opacity-90 transition">
+                    Guardar cambios
+                </button>
+            </div>
+            <!-- Panel PIN -->
+            <div id="accountPanelPin" class="p-5 space-y-4 hidden">
+                <p class="text-xs text-gray-400">El PIN se usa para ingresar al sistema. Debe tener exactamente 4 dígitos.</p>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">PIN actual</label>
+                    <input type="tel" id="currentPin" placeholder="••••" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-center text-2xl tracking-widest focus:ring-2 focus:ring-primary outline-none" maxlength="4" autocomplete="off">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">PIN nuevo</label>
+                    <input type="tel" id="newPin" placeholder="••••" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-center text-2xl tracking-widest focus:ring-2 focus:ring-primary outline-none" maxlength="4" autocomplete="new-password">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">Repetir PIN nuevo</label>
+                    <input type="tel" id="confirmNewPin" placeholder="••••" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-center text-2xl tracking-widest focus:ring-2 focus:ring-primary outline-none" maxlength="4" autocomplete="new-password">
+                </div>
+                <button id="btnSavePin" onclick="changeClientPin()" class="w-full bg-primary text-white py-3 rounded-xl font-bold shadow-md hover:opacity-90 transition">
+                    Actualizar PIN
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmación de Turno -->
+    <div id="modalConfirmBooking" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center px-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center">
+            <div class="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-calendar-check text-2xl text-green-500"></i>
+            </div>
+            <h3 class="font-bold text-xl mb-2 text-gray-800">¿Confirmás el turno?</h3>
+            <p class="text-gray-500 text-sm mb-5">Revisá los detalles antes de confirmar.</p>
+            <div class="bg-gray-50 rounded-xl p-4 mb-6 text-left space-y-2">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-calendar text-primary w-4"></i>
+                    <span id="bookingConfirmDate" class="text-sm font-medium text-gray-700"></span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-clock text-primary w-4"></i>
+                    <span id="bookingConfirmTime" class="text-sm font-medium text-gray-700"></span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-cut text-primary w-4"></i>
+                    <span id="bookingConfirmService" class="text-sm font-medium text-gray-700"></span>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="toggleModal('modalConfirmBooking')" class="flex-1 py-3 text-gray-500 border border-gray-300 rounded-xl hover:bg-gray-100 transition font-medium">Cancelar</button>
+                <button onclick="createClientBooking()" class="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:opacity-90 transition">¡Confirmar!</button>
             </div>
         </div>
     </div>
@@ -1003,7 +1081,6 @@
                 onChange: () => loadBarberDashboard()
             });
             manualCalendarInstance = flatpickr("#manualDate", { ...flatpickrConfig, defaultDate: today });
-            document.getElementById('btnConfirmBooking').addEventListener('click', createClientBooking);
         }
 
         function renderServiceOptions() {
@@ -1100,7 +1177,19 @@
             });
         }
 
+        // Muestra el modal de confirmación con los detalles del turno
+        function confirmBookingModal() {
+            const date = document.getElementById('datePicker').value;
+            const service = document.getElementById('serviceSelect').value;
+            if (!selectedTime || !date) return;
+            document.getElementById('bookingConfirmDate').innerText = formatDate(date);
+            document.getElementById('bookingConfirmTime').innerText = selectedTime;
+            document.getElementById('bookingConfirmService').innerText = service;
+            toggleModal('modalConfirmBooking');
+        }
+
         async function createClientBooking() {
+            toggleModal('modalConfirmBooking');
             const date = document.getElementById('datePicker').value;
             const service = document.getElementById('serviceSelect').value;
             const { error } = await supabase.from('turnos').insert({
@@ -1356,14 +1445,50 @@
             backToPhone();
         }
 
-        // ── CAMBIAR PIN (desde dashboard) ──
+        // ── MI CUENTA (cliente) ──
+        function openClientAccount() {
+            // Separar nombre y apellido
+            const parts = (currentUser.nombre || '').trim().split(' ');
+            document.getElementById('accountFirstName').value = parts[0] || '';
+            document.getElementById('accountLastName').value  = parts.slice(1).join(' ') || '';
+            document.getElementById('accountPhone').value     = currentUser.celular || '';
+            document.getElementById('accountSubtitle').innerText = currentUser.celular || '';
+            // Limpiar campos PIN
+            document.getElementById('currentPin').value    = '';
+            document.getElementById('newPin').value        = '';
+            document.getElementById('confirmNewPin').value = '';
+            switchAccountTab('profile');
+            toggleModal('modalClientAccount');
+        }
+
+        function switchAccountTab(tab) {
+            const isProfile = tab === 'profile';
+            document.getElementById('accountPanelProfile').classList[isProfile ? 'remove' : 'add']('hidden');
+            document.getElementById('accountPanelPin').classList[isProfile ? 'add' : 'remove']('hidden');
+            document.getElementById('tabProfile').className = `flex-1 py-3 text-sm font-bold ${isProfile ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-primary'}`;
+            document.getElementById('tabPin').className     = `flex-1 py-3 text-sm font-bold ${!isProfile ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-primary'}`;
+        }
+
+        async function saveAccountProfile() {
+            const first = document.getElementById('accountFirstName').value.trim();
+            const last  = document.getElementById('accountLastName').value.trim();
+            if (!first) return showToast('El nombre no puede estar vacío.', true);
+            const fullName = last ? `${first} ${last}` : first;
+            const { error } = await supabase.from('clientes').update({ nombre: fullName }).eq('id', currentUser.id);
+            if (error) return showToast('Error al guardar: ' + error.message, true);
+            currentUser.nombre = fullName;
+            document.getElementById('clientNameDisplay').innerText = first;
+            showToast('Datos actualizados ✅');
+            toggleModal('modalClientAccount');
+        }
+
         async function changeClientPin() {
             const currentPinVal = document.getElementById('currentPin').value;
-            const newPinVal = document.getElementById('newPin').value;
+            const newPinVal     = document.getElementById('newPin').value;
             const confirmPinVal = document.getElementById('confirmNewPin').value;
-            const saveBtn = document.getElementById('btnSavePin');
+            const saveBtn       = document.getElementById('btnSavePin');
             if (currentPinVal.length !== 4) return showToast('El PIN actual debe tener 4 dígitos.', true);
-            if (newPinVal.length !== 4 || confirmPinVal.length !== 4) return showToast('Los nuevos PINs deben tener 4 dígitos.', true);
+            if (newPinVal.length !== 4 || confirmPinVal.length !== 4) return showToast('El nuevo PIN debe tener 4 dígitos.', true);
             if (newPinVal !== confirmPinVal) return showToast('Los PINs nuevos no coinciden.', true);
             saveBtn.disabled = true; saveBtn.innerText = 'Guardando...';
             try {
@@ -1374,21 +1499,17 @@
                     .update({ pin_permanente: newPinVal }).eq('id', currentUser.id);
                 if (updateError) throw new Error(updateError.message);
                 currentUser.pin_permanente = newPinVal;
-                showToast('¡PIN actualizado con éxito!');
-                toggleModal('modalChangePin');
-            } catch (error) {
-                showToast('Error al actualizar PIN: ' + error.message, true);
+                showToast('¡PIN actualizado! 🔒');
+                toggleModal('modalClientAccount');
+            } catch (err) {
+                showToast('Error: ' + err.message, true);
             } finally {
-                saveBtn.disabled = false; saveBtn.innerText = 'Guardar PIN';
+                saveBtn.disabled = false; saveBtn.innerText = 'Actualizar PIN';
             }
         }
 
-        function openChangePinModal() {
-            toggleModal('modalChangePin');
-            document.getElementById('currentPin').value = '';
-            document.getElementById('newPin').value = '';
-            document.getElementById('confirmNewPin').value = '';
-        }
+        // Dejamos esta función vacía por compatibilidad (ya no se usa directamente)
+        function openChangePinModal() { openClientAccount(); }
 
         const DAYS_ES = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
         function formatDate(d) {
