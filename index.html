@@ -2,2373 +2,1068 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content=" initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BarberSaaS - Cargando...</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: 'var(--color-primary)',
+                        occupied: '#e5e7eb',
+                        selected: 'var(--color-primary)',
+                    },
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
     <style>
-        :root { 
-            --color-primary: #8B4513; 
-            --color-primary-dark: #6b3410;
-            --color-primary-light: #c4722a;
-        }
-        * { box-sizing: border-box; }
+        :root { --color-primary: #8B4513; }
         html, body { overflow-x: hidden; width: 100%; position: relative; }
-        body {
-            background: #0f0f0f;
-            font-family: 'DM Sans', sans-serif;
-        }
-        .hidden { display: none !important; }
-        #loader { display: flex !important; }
-        #app { display: none; }
-        .flex { display: flex; }
-        .inline-flex { display: inline-flex; }
-        .inline-block { display: inline-block; }
-        .grid { display: grid; }
-        .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
-        .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
-        .flex-col { flex-direction: column; }
-        .flex-1 { flex: 1; }
-        .flex-grow { flex-grow: 1; }
-        .flex-shrink-0 { flex-shrink: 0; }
-        .items-center { align-items: center; }
-        .items-start { align-items: flex-start; }
-        .justify-center { justify-content: center; }
-        .justify-between { justify-content: space-between; }
-        .text-center { text-align: center; }
-        .relative { position: relative; }
-        .absolute { position: absolute; }
-        .fixed { position: fixed; }
-        .inset-0 { top:0; right:0; bottom:0; left:0; }
-        .z-50 { z-index: 50; }
-        .z-40 { z-index: 40; }
-        .z-10 { z-index: 10; }
-        .overflow-hidden { overflow: hidden; }
-        .overflow-x-auto { overflow-x: auto; }
-        .w-full { width: 100%; }
-        .min-h-screen { min-height: 100vh; }        .max-w-md { max-width: 28rem; }
-        .mx-auto { margin-left: auto; margin-right: auto; }
-        .gap-2 { gap: 0.5rem; }
-        .gap-3 { gap: 0.75rem; }
-        .gap-4 { gap: 1rem; }
-        .space-y-2 > * + * { margin-top: 0.5rem; }
-        .space-y-3 > * + * { margin-top: 0.75rem; }
-        .space-y-4 > * + * { margin-top: 1rem; }
-        .space-y-5 > * + * { margin-top: 1.25rem; }
-        .pb-20 { padding-bottom: 5rem; }
-        .border-b { border-bottom: 1px solid; }
-        .border-t { border-top: 1px solid; }
-        .text-white { color: #fff; }
-        .text-sm { font-size: 0.875rem; }
-        .text-xs { font-size: 0.75rem; }
-        .text-xl { font-size: 1.25rem; }
-        .text-2xl { font-size: 1.5rem; }
-        .text-3xl { font-size: 1.875rem; }
-        .font-bold { font-weight: 700; }
-        .font-semibold { font-weight: 600; }
-        .rounded-full { border-radius: 9999px; }
-        .rounded-xl { border-radius: 0.75rem; }
-        .transition { transition: all 0.2s; }
-        .opacity-50 { opacity: 0.5; }
-        .whitespace-nowrap { white-space: nowrap; }
-        .uppercase { text-transform: uppercase; }
-        .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0,0,0,.5); }
-
-        #app {
-            background: #0f0f0f;
-            min-height: 100vh;
-        }
-
-        #loader {
-            background: #0f0f0f;
-            position: fixed;
-            inset: 0;
-            z-index: 50;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 1rem;
-        }
-        .loader-ring {
-            width: 48px; height: 48px;
-            border: 3px solid rgba(255,255,255,0.1);
-            border-top-color: var(--color-primary);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .app-header {
-            background: linear-gradient(160deg, var(--color-primary-dark) 0%, var(--color-primary) 60%, var(--color-primary-light) 100%);
-            position: relative;
-            overflow: hidden;
-            padding: 1.5rem;
-            padding-bottom: 1.75rem;
-            color: white;
-            z-index: 10;
-        }
-        .app-header::before {
-            content: '';
-            position: absolute;
-            top: -40px; right: -40px;
-            width: 160px; height: 160px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 50%;
-        }
-        .app-header::after {
-            content: '';
-            position: absolute;
-            bottom: -20px; left: 20px;
-            width: 80px; height: 80px;
-            background: rgba(255,255,255,0.04);
-            border-radius: 50%;
-        }
-
-        .card {
-            background: #1a1a1a;
-            border: 1px solid #2a2a2a;
-            border-radius: 16px;
-        }
-        .card-light {
-            background: #222;
-            border: 1px solid #333;
-            border-radius: 16px;
-        }
-
-        .inp {
-            width: 100%;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 12px;
-            padding: 14px 16px;
-            color: #fff;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 15px;
-            outline: none;
-            transition: border-color 0.2s;        }
-        .inp:focus { border-color: var(--color-primary); }
-        .inp::placeholder { color: #555; }
-        select.inp option { background: #1a1a1a; }
-
-        .btn-primary {
-            width: 100%;
-            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
-            color: #fff;
-            border: none;
-            border-radius: 12px;
-            padding: 15px;
-            font-family: 'Outfit', sans-serif;
-            font-weight: 700;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.2s;
-            letter-spacing: 0.3px;
-        }
-        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
-        .btn-ghost {
-            background: transparent;
-            border: 1px solid #333;
-            border-radius: 12px;
-            padding: 12px;
-            color: #888;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .btn-ghost:hover { border-color: #555; color: #ccc; }
-
-        .btn-danger {
-            background: transparent;
-            border: 1px solid #ef444433;
-            border-radius: 8px;
-            padding: 6px 12px;
-            color: #ef4444;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .btn-danger:hover { background: #ef444411; }
-
-        .slot-btn {
-            border-radius: 10px;
-            padding: 12px 6px;            font-family: 'Outfit', sans-serif;
-            font-weight: 600;
-            font-size: 13px;
-            border: 1px solid #333;
-            cursor: pointer;
-            transition: all s;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        .slot-btn.available {
-            background: #1a1a1a;
-            color: #ddd;
-        }
-        .slot-btn.available:hover {
-            border-color: var(--color-primary);
-            background: #2a1a0f;
-            color: #fff;
-            transform: scale(1.03);
-        }
-        .slot-btn.selected {
-            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-            border-color: var(--color-primary-light);
-            color: #fff;
-            transform: scale(1.05);
-        }
-        .slot-btn.occupied {
-            background: #111;
-            border-color: #1f1f1f;
-            color: #333;
-            cursor: not-allowed;
-        }
-        .spots-badge {
-            position: absolute;
-            top: -5px; right: -5px;
-            background: #10B981;
-            color: #fff;
-            font-size: 9px;
-            padding: 2px 5px;
-            border-radius: 999px;
-            font-weight: 700;
-        }
-
-        .fade-in { animation: fadeIn 0.3s ease; }
-        .slide-up { animation: slideUp 0.35s ease; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-        .tab-btn {
-            flex: 1;
-            padding: 12px;
-            font-family: 'Outfit', sans-serif;
-            font-weight: 600;
-            font-size: 14px;
-            color: #555;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s;
-            background: transparent;
-            cursor: pointer;
-        }
-        .tab-btn.active {
-            color: var(--color-primary-light);
-            border-bottom-color: var(--color-primary-light);
-        }
-
-        .appt-card {
-            background: linear-gradient(135deg, #1a1a1a, #222);
-            border: 1px solid #333;
-            border-left: 4px solid var(--color-primary);
-            border-radius: 0 16px 16px 0;
-        }
-
-        .admin-appt {
-            background: #1a1a1a;
-            border: 1px solid #2a2a2a;
-            border-radius: 12px;
-            padding: 14px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: border-color 0.2s;
-        }
-        .admin-appt.cancelled {
-            opacity: 0.5;
-            border-left: 3px solid #ef4444;
-        }
-        .admin-appt.paused {
-            border-left: 3px solid #f59e0b;
-        }
-        .admin-appt.active {
-            border-left: 3px solid #10b981;
-        }
-
-        .badge {
-            font-size: 11px;
-            font-weight: 700;
-            padding: 3px 8px;
-            border-radius: 6px;            font-family: 'Outfit', sans-serif;
-        }
-        .badge-green { background: #10b98122; color: #10b981; }
-        .badge-red { background: #ef444422; color: #ef4444; }
-        .badge-yellow { background: #f59e0b22; color: #f59e0b; }
-
-        .occ-pill {
-            flex-shrink: 0;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 700;
-            font-family: 'Outfit', sans-serif;
-        }
-        .occ-full { background: #ef444422; color: #ef4444; }
-        .occ-partial { background: #10b98122; color: #10b981; }
-
-        .stat-card {
-            background: #1a1a1a;
-            border: 1px solid #2a2a2a;
-            border-radius: 14px;
-            padding: 16px;
-        }
-        .stat-number {
-            font-family: 'Outfit', sans-serif;
-            font-weight: 800;
-            font-size: 32px;
-            color: var(--color-primary-light);
-            line-height: 1;
-        }
-        .stat-label {
-            font-size: 12px;
-            color: #666;
-            margin-top: 4px;
-        }
-
-        .flatpickr-calendar {
-            background: #1a1a1a !important;
-            border: 1px solid #333 !important;
-            border-radius: 14px !important;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.8) !important;
-        }
-        .flatpickr-day {
-            color: #ccc !important;
-            border-radius: 8px !important;
-        }
-        .flatpickr-day:hover {
-            background: #2a2a2a !important;
-            border-color: transparent !important;
-        }        .flatpickr-day.flatpickr-disabled, .flatpickr-day.flatpickr-disabled:hover {
-            color: #333 !important;
-        }
-        .flatpickr-months .flatpickr-month,
-        .flatpickr-weekdays,
-        span.flatpickr-weekday {
-            background: #1a1a1a !important;
-            color: #888 !important;
-            fill: #888 !important;
-        }
-        .flatpickr-current-month {
-            color: #fff !important;
-        }
-        .flatpickr-current-month input.cur-year,
-        .flatpickr-current-month .flatpickr-monthDropdown-months {
-            color: #fff !important;
-        }
-        .flatpickr-day.selected,
-        .flatpickr-day.selected:hover {
+        .slot-btn { transition: all 0.2s; position: relative; }
+        .slot-btn.available:hover { transform: scale(1.05); border-color: var(--color-primary); }
+        .slot-btn.selected { background-color: var(--color-primary); color: white; border-color: var(--color-primary); }
+        .slot-btn.occupied { background-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; opacity: 0.7; }
+        .spots-badge { position: absolute; top: -5px; right: -5px; background-color: #10B981; color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 999px; font-weight: bold; }
+        /* Personalización del Calendario Flatpickr */
+        .flatpickr-calendar { border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: none; }
+        .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange, .flatpickr-day.selected.inRange, .flatpickr-day.startRange.inRange, .flatpickr-day.endRange.inRange, .flatpickr-day.selected:focus, .flatpickr-day.startRange:focus, .flatpickr-day.endRange:focus, .flatpickr-day.selected:hover, .flatpickr-day.startRange:hover, .flatpickr-day.endRange:hover, .flatpickr-day.selected.prevMonthDay, .flatpickr-day.startRange.prevMonthDay, .flatpickr-day.endRange.prevMonthDay, .flatpickr-day.selected.nextMonthDay, .flatpickr-day.startRange.nextMonthDay, .flatpickr-day.endRange.nextMonthDay {
             background: var(--color-primary) !important;
             border-color: var(--color-primary) !important;
-            color: #fff !important;
-        }
-        .flatpickr-day.today:not(.selected) {
-            border-color: var(--color-primary-light) !important;
-        }
-        .flatpickr-prev-month, .flatpickr-next-month {
-            fill: #888 !important;
-        }
-        .flatpickr-prev-month:hover svg, .flatpickr-next-month:hover svg {
-            fill: #fff !important;
-        }
-
-        .cfg-label {
-            font-size: 11px;
-            color: #666;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
-            display: block;
-            font-family: 'Outfit', sans-serif;
-        }
-        .cfg-input {
-            background: #1a1a1a;
-            border: 1px solid #2a2a2a;
-            border-radius: 10px;
-            padding: 10px 12px;
-            color: #fff;
-            font-family: 'DM Sans', sans-serif;            font-size: 14px;
-            outline: none;
-            transition: border-color 0.2s;
-            width: 100%;
-        }
-        .cfg-input:focus { border-color: var(--color-primary); }
-        .cfg-input::placeholder { color: #444; }
-        select.cfg-input option { background: #1a1a1a; }
-
-        .notice-banner {
-            background: #f59e0b11;
-            border-bottom: 1px solid #f59e0b22;
-            color: #f59e0b;
-            padding: 10px 16px;
-            font-size: 13px;
-            text-align: center;
-        }
-
-        .modal-overlay {
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(6px);
-        }
-        .modal-box {
-            background: #151515;
-            border: 1px solid #2a2a2a;
-            border-radius: 20px;
-            padding: 24px;
-        }
-
-        .step-indicator {
-            display: flex;
-            gap: 6px;
-            justify-content: center;
-            margin-bottom: 24px;
-        }
-        .step-dot {
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: #333;
-            transition: all 0.3s;
-        }
-        .step-dot.active {
-            width: 20px;
-            border-radius: 3px;
-            background: var(--color-primary);
-        }
-
-        .day-toggle {
-            display: flex;
-            flex-direction: column;            align-items: center;
-            gap: 4px;
-        }
-        .day-toggle input[type=checkbox] {
-            appearance: none;
-            width: 32px; height: 32px;
-            border: 1px solid #333;
-            border-radius: 8px;
-            background: #1a1a1a;
-            cursor: pointer;
-            transition: all 0.2s;
-            position: relative;
-        }
-        .day-toggle input[type=checkbox]:checked {
-            background: var(--color-primary);
-            border-color: var(--color-primary);
-        }
-        .day-toggle input[type=checkbox]:checked::after {
-            content: '✓';
-            position: absolute;
-            color: white;
-            font-size: 16px;
-            font-weight: bold;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        .day-toggle span {
-            font-size: 10px;
-            color: #666;
-            font-family: 'Outfit', sans-serif;
-            font-weight: 600;
-        }
-
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
-
-        #toastNotification {
-            font-family: 'Outfit', sans-serif;
-            font-weight: 600;
-            border-radius: 12px;
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 12px 24px;
-            z-index: 50;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-        }
-        .chart-container {
-            position: relative;
-            height: 180px;
-        }
-
-        #fabAdd {
-            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-            border-radius: 50%;
-            width: 56px; height: 56px;
-            box-shadow: 0 8px 24px rgba(139,69,19,0.4);
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            z-index: 40;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .section-title {
-            font-family: 'Outfit', sans-serif;
-            font-weight: 700;
-            font-size: 18px;
-            color: #fff;
-        }
-        .section-sub {
-            font-size: 13px;
-            color: #555;
-            margin-top: 2px;
-        }
-
-        .pin-input {
-            text-align: center;
-            font-size: 24px;
-            letter-spacing: 8px;
-            font-family: 'Outfit', sans-serif;
-        }
-
-        #rescheduleContainer {
-            background: #1a1a1a;
-            border: 1px solid #2a2a2a;
-            border-radius: 14px;
-            padding: 16px;
-            margin-top: 12px;
-        }
-        .admin-date-display {
-            font-family: 'Outfit', sans-serif;
-            font-weight: 700;
-            font-size: 20px;
-            color: #fff;
         }
     </style>
 </head>
-<body class="pb-10">
-
-    <!-- LOADER -->
-    <div id="loader">
-        <div class="loader-ring"></div>
-        <p style="color:#444; font-family:'Outfit',sans:13px;">Cargando...</p>
+<body class="bg-gray-100 min-h-screen text-gray-800 font-sans pb-10">
+    <div id="loader" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
     </div>
-
-    <!-- APP -->
-    <div id="app" class="max-w-md mx-auto min-h-screen relative flex flex-col w-full overflow-hidden">
-
-        <!-- HEADER -->
-        <header class="app-header">
-            <div class="flex justify-between items-start">
-                <div>
-                    <h1 id="shopName" class=" font-display font-800 tracking-tight leading-tight">Cargando...</h1>
-                    <p id="headerSub" class="text-sm opacity-70 mt-1 font-sans"></p>
-                </div>
-                <div id="adminDropdownContainer" class="relative">
-                    <button onclick="toggleDropdown('adminDropdown')" class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition">
-                        <i class="fas fa-cog text-sm"></i>
-                    </button>
-                    <div id="adminDropdown" class="hidden absolute right-0 mt-2 w-44 rounded-xl shadow-2xl py-1 z-50" style="background:#1a1a1a; border:1px solid #333;">
-                        <div id="adminOptions" class="hidden">
-                            <a href="#" onclick="openAccountSettingsAndCloseDropdown(event)" class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-white/5 transition" style="color:#ccc;">
-                                <i class="fas fa-user-circle" style="color:var(--color-primary-light)"></i> Cuenta
-                            </a>
-                            <a href="#" onclick="adminLogoutAndCloseDropdown(event)" class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-white/5 transition border-t" style="color:#ef4444; border-color:#2a2a2a;">
-                                <i class="fas fa-sign-out-alt"></i> Salir
-                            </a>
-                        </div>
-                        <div id="loginOption">
-                            <a href="#" onclick="openAdminLoginAndCloseDropdown(event)" class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-white/5 transition" style="color:var(--color-primary-light);">
-                                <i class="fas fa-sign-in-alt"></i> Admin
-                            </a>
-                        </div>
+    <div id="app" class="max-w-md mx-auto min-h-screen bg-white shadow-2xl relative hidden flex flex-col w-full overflow-hidden">
+        <header class="p-6 text-center bg-primary text-white rounded-b-3xl shadow-lg relative z-10 transition-colors duration-500">
+            <h1 id="shopName" class="text-3xl font-bold mb-1">Cargando...</h1>
+            <p id="headerSub" class="text-sm opacity-90"></p>
+            <div id="adminDropdownContainer" class="absolute top-4 right-4 text-white">
+                <button onclick="toggleDropdown('adminDropdown')" class="opacity-60 hover:opacity-100 transition relative">
+                    <i class="fas fa-cog text-xl"></i>
+                </button>
+                <div id="adminDropdown" class="hidden absolute right-0 mt-3 w-40 bg-white rounded-lg shadow-xl py-1 text-gray-800 text-sm z-50">
+                    <div id="adminOptions" class="hidden">
+                        <a href="#" onclick="openAccountSettingsAndCloseDropdown(event)" class="block px-4 py-2 hover:bg-gray-100 font-medium">
+                            <i class="fas fa-user-circle mr-2"></i> Cuenta
+                        </a>
+                        <a href="#" onclick="adminLogoutAndCloseDropdown(event)" class="block px-4 py-2 hover:bg-gray-100 text-red-500 font-medium border-t mt-1 pt-1">
+                            <i class="fas fa-sign-out-alt mr-2"></i> Salir
+                        </a>
+                    </div>
+                    <div id="loginOption">
+                        <a href="#" onclick="openAdminLoginAndCloseDropdown(event)" class="block px-4 py-2 hover:bg-gray-100 font-medium text-primary">
+                            <i class="fas fa-sign-in-alt mr-2"></i> Ingresar
+                        </a>
                     </div>
                 </div>
             </div>
         </header>
-
-        <!-- NOTICE -->        <div id="shopNotice" class="hidden notice-banner">
-            <i class="fas fa-bullhorn mr-1.5 opacity-70"></i>
-            <span id="shopNoticeText"></span>
+        <div id="shopNotice" class="hidden bg-yellow-100 text-yellow-800 px-4 py-2 text-sm text-center border-b border-yellow-200">
+            <i class="fas fa-bullhorn mr-1"></i> <span id="shopNoticeText"></span>
         </div>
-
-        <main class="p-5 flex-grow">
-
-            <!-- ═══════════════════════════════ LOGIN ═══════════════════════════════ -->
+        <main class="p-6 flex-grow">
             <section id="viewLogin" class="fade-in">
-                <div class="text-center mb-8 mt-2">
-                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style="background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));">
-                        <i class="fas fa-cut text-white text-2xl"></i>
-                    </div>
-                    <h2 class="section-title text-2xl">Reservá tu turno</h2>
-                    <p class="section-sub mt-1">Rápido, sin llamadas, sin esperas.</p>
+                <div class="text-center mb-8 mt-4">
+                    <h2 class="text-2xl font-bold text-gray-800">Reserva tu turno</h2>
+                    <p class="text-gray-500">Rápido, fácil y sin esperas.</p>
                 </div>
-
-                <!-- STEP INDICATOR -->
-                <div class="step-indicator">
-                    <div class="step-dot active" id="dot1"></div>
-                    <div class="step-dot" id="dot2"></div>
-                    <div class="step-dot" id="dot3"></div>
-                </div>
-
-                <div class="space-y-4">
-                    <!-- STEP 1: PHONE -->
-                    <div id="stepPhone">
-                        <label class="cfg-label">Tu número de celular</label>
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Celular (Ej: 099 123 456)</label>
                         <div class="relative">
-                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg">🇺🇾</span>
-                            <input type="tel" id="loginPhone" placeholder="099 123 456"
-                                class="inp pl-11" maxlength="11"
-                                oninput="maskPhone(this)" autocomplete="off">
+                            <span class="absolute left-3 top-3.5 text-gray-400">🇺🇾</span>
+                            <input type="tel" id="loginPhone" placeholder="099 123 456" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none text-lg" maxlength="11" oninput="maskPhone(this)" autocomplete="off">
                         </div>
-                        <p id="phoneError" class="text-xs mt-2 hidden" style="color:#ef4444;"></p>
+                        <p id="phoneError" class="text-xs text-red-500 mt-1 hidden">Número de celular inválido.</p>
                     </div>
-
-                    <!-- STEP 2: NAME (only new users) -->
-                    <div id="nameSection" class="hidden slide-up">
-                        <label class="cfg-label">Tu nombre</label>
-                        <input type="text" id="loginName" placeholder="¿Cómo te llamás?" class="inp" autocomplete="off">
+                    <div id="nameSection" class="hidden fade-in">
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Nombre</label>
+                        <input type="text" id="loginName" placeholder="Tu nombre" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none" autocomplete="off">
                     </div>
-
-                    <!-- STEP 2b: PIN (existing users) -->
-                    <div id="pinSection" class="hidden slide-up">
-                        <label class="cfg-label" id="pinLabel">PIN de acceso</label>
-                        <input type="tel" inputmode="numeric" id="loginPin"
-                            placeholder="••••"
-                            class="inp pin-input" maxlength="4" autocomplete="new-password">
-                        <p id="pinHint" class="text-xs mt-2 text-center" style="color:#555;"></p>                        <p id="attemptsWarning" class="text-xs mt-1 text-center hidden" style="color:#f59e0b;"></p>
+                    <div id="pinSection" class="hidden fade-in">
+                        <label class="block text-sm font-bold text-gray-700 mb-1">PIN de Acceso SMS</label>
+                        <div class="relative">
+                            <input type="tel" inputmode="numeric" id="loginPin" placeholder="****" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none text-center text-2xl tracking-widest" maxlength="4" autocomplete="new-password">
+                        </div>
+                        <p id="pinHint" class="text-xs text-gray-400 mt-2 text-center"></p>
                     </div>
-
-                    <button id="btnActionLogin" onclick="handleLoginFlow()" class="btn-primary mt-2">
-                        Continuar
-                    </button>
-
-                    <button id="btnResendPin" onclick="resendSmsPin()" class="hidden w-full py-2 text-sm text-center transition" style="color:#555;">
-                        ¿No recibiste el SMS? <span style="color:var(--color-primary-light);">Reenviar</span>
-                    </button>
+                    <button id="btnActionLogin" onclick="handleLoginFlow()" class="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-md hover:opacity-90 transition mt-2">Solicitar PIN</button>
+                    <button id="btnResendPin" onclick="requestPin(phoneToVerify, document.getElementById('btnActionLogin'))" class="w-full py-2 text-gray-500 text-sm hover:text-primary hidden">Reenviar PIN</button>
                 </div>
             </section>
-
-            <!-- ═══════════════════════════════ CLIENTE ═══════════════════════════════ -->
             <section id="viewClient" class="hidden fade-in">
                 <div class="flex justify-between items-center mb-6">
-                    <div>
-                        <h2 class="section-title">Hola, <span id="clientNameDisplay" style="color:var(--color-primary-light)"></span> 👋</h2>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="openChangePinModal()" class="text-xs px-3 py-1.5 rounded-lg transition" style="color:var(--color-primary-light); border:1px solid #333;">PIN</button>
-                        <button onclick="logout()" class="text-xs px-3 py-1.5 rounded-lg transition" style="color:#555; border:1px solid #222;">Salir</button>
+                    <h2 class="font-bold text-xl">Hola, <span id="clientNameDisplay" class="text-primary"></span> 👋</h2>
+                    <!-- Botón Cambiar PIN añadido aquí -->
+                    <div class="flex space-x-2">
+                        <button onclick="openChangePinModal()" class="text-sm text-primary underline mr-2">Cambiar PIN</button>
+                        <button onclick="logout()" class="text-sm text-gray-500 underline">Salir</button>
                     </div>
                 </div>
-
-                <!-- ACTIVE APPOINTMENT -->
-                <div id="activeAppointmentCard" class="hidden appt-card p-5 mb-6 slide-up">
+                <div id="activeAppointmentCard" class="hidden bg-white border-l-4 border-primary shadow-md rounded-r-xl p-5 mb-8">
                     <div class="flex justify-between items-start">
                         <div>
-                            <p class="text-xs uppercase tracking-widest mb-2" style="color:var(--color-primary-light); font-family:'Outfit',sans-serif; font-weight:700;">Tu turno activo</p>
-                            <p id="activeDate" class="text-sm" style="color:#888;">...</p>
-                            <p id="activeTime" class="text-3xl font-display font-800 text-white my-1">...</p>
-                            <p id="activeService" class="text-sm" style="color:#666;">...</p>
+                            <p class="text-xs text-gray-500 uppercase tracking-wide font-bold">Tu turno</p>
+                            <h3 id="activeDate" class="text-lg font-bold text-gray-800 mt-1">...</h3>
+                            <p id="activeTime" class="text-2xl font-bold text-primary my-1">...</h3>
+                            <p id="activeService" class="text-sm text-gray-600">...</p>
                         </div>
-                        <div class="flex flex-col gap-2">
-                            <button onclick="openReschedule()" class="btn-ghost text-xs px-3 py-1.5">
-                                <i class="fas fa-calendar-alt mr-1"></i> Cambiar
-                            </button>
-                            <button onclick="cancelMyAppointment()" class="btn-danger text-xs px-3 py-1.5">
-                                <i class="fas fa-times mr-1"></i> Cancelar
-                            </button>
-                        </div>
+                        <button onclick="cancelMyAppointment()" class="text-red-500 text-xs border border-red-200 px-3 py-1 rounded hover:bg-red-50">Cancelar</button>
                     </div>
-                    <!-- RESCHEDULE PANEL -->
-                    <div id="rescheduleContainer" class="hidden mt-4">
-                        <p class="text-xs uppercase tracking-widest mb-3" style="color:#555; font-family:'Outfit',sans-serif; font-weight:700;">Nueva fecha/hora</p>
-                        <input type="text" id="rescheduleDatePicker" class="inp mb-3" placeholder="Seleccioná una fecha">
-                        <div id="rescheduleGrid" class="grid grid-cols-3 gap-2 mb-3"></div>
-                        <button onclick="confirmReschedule()" id="btnReschedule" class="btn-primary" disabled>Confirmar cambio</button>
-                    </div>                </div>
-
-                <!-- NEW BOOKING -->
+                </div>
                 <div id="newBookingContainer">
-                    <div class="flex items-center justify-between mb-4">
-                        <h-title text-base">Nuevo turno</h3>
-                        <i class="fas fa-calendar-plus" style="color:var(--color-primary-light);"></i>
+                    <h3 class="font-bold text-gray-700 mb-4 text-lg">📅 Nuevo Turno</h3>
+                    <input type="text" id="datePicker" class="w-full px-4 py-3 border border-gray-300 rounded-xl mb-6 focus:ring-2 focus:ring-primary outline-none bg-white" placeholder="Selecciona una fecha">
+                    <div id="closedMessage" class="hidden text-center text-red-500 py-4 bg-red-50 rounded-xl mb-6">
+                        El local permanece cerrado este día.
                     </div>
-                    <input type="text" id="datePicker" class="inp mb-5" placeholder="Seleccioná una fecha">
-                    <div id="closedMessage" class="hidden text-center py-4 mb-5" style="background:#1a1a1a; border:1px solid #2a2a2a; border-radius:14px; color:#ef4444;">
-                        <i class="fas fa-store-slash mb-2 text-2xl opacity-50"></i>
-                        <p class="text-sm">El local permanece cerrado este día.</p>
+                    <div id="slotsGrid" class="grid grid-cols-3 gap-3 mb-6"></div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Servicio</label>
+                        <select id="serviceSelect" class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white"></select>
                     </div>
-                    <div id="slotsGrid" class="grid grid-cols-3 gap-2.5 mb-5"></div>
-                    <div class="mb-5">
-                        <label class="cfg-label">Servicio</label>
-                        <select id="serviceSelect" class="inp"></select>
-                    </div>
-                    <button id="btnConfirmBooking" class="btn-primary" disabled>
-                        <i class="fas fa-check mr-2"></i>Confirmar turno
-                    </button>
+                    <button id="btnConfirmBooking" class="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>Confirmar</button>
                 </div>
             </section>
-
-            <!-- ═══════════════════════════════ ADMIN ═══════════════════════════════ -->
             <section id="viewBarber" class="hidden fade-in h-full">
-                <div class="flex border-b mb-5" style="border-color:#2a2a2a;">
-                    <button onclick="switchAdminTab('agenda')" id="tabAgenda" class="tab-btn active">Agenda</button>
-                    <button onclick="switchAdminTab('stats')" id="tabStats" class="tab-btn">Estadísticas</button>
-                    <button onclick="switchAdminTab('config')" id="tabConfig" class="tab-btn">Config</button>
+                <div class="flex border-b mb-6">
+                    <button onclick="switchAdminTab('agenda')" id="tabAgenda" class="flex-1 py-3 font-bold text-primary border-b-2 border-primary">Agenda</button>
+                    <button onclick="switchAdminTab('config')" id="tabConfig" class="flex-1 py-3 text-gray-500 hover:text-primary">Configuración</button>
                 </div>
-
-                <!-- AGENDA PANEL -->
                 <div id="panelAgenda">
                     <div class="flex justify-between items-center mb-4">
-                        <input type="text" id="barberDatePicker" class="inp text-sm text-center" style="max-width:180px;">
-                        <button onclick="logout()" class="text-xs" style="color:#555;">
-                            <i class="fas fa-sign-out-alt mr-1"></i>Salir
-                        </button>
+                        <input type="text" id="barberDatePicker" class="px-3 py-2 border rounded-lg text-sm bg-white font-medium w-40 text-center">
+                        <button onclick="logout()" class="text-gray-400 hover:text-red-500 text-sm"><i class="fas fa-sign-out-alt"></i> Salir</button>
                     </div>
-                    <div id="occupancySummary" class="flex gap-2 mb-4 overflow-x-auto pb-2"></div>
-                    <div id="barberAppointmentsList" class="space-y-2.5 pb-20"></div>
+                    <div id="occupancySummary" class="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide"></div>
+                    <div id="barberAppointmentsList" class="space-y-3 pb-20"></div>
                 </div>
-
-                <!-- STATS PANEL -->
-                <div id="panelStats" class="hidden pb-20">
-                    <div class="grid grid-cols-2 gap-3 mb-5">
-                        <div class="stat-card">
-                            <div class="stat-number" id="statWeekTotal">—</div>
-                            <div class="stat-label">Turnos esta semana</div>                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="statTodayTotal">—</div>
-                            <div class="stat-label">Turnos hoy</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="statMonthTotal">—</div>
-                            <div class="stat-label">Turnos este mes</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="statCancelRate">—</div>
-                            <div class="stat-label">Cancelaciones (mes)</div>
-                        </div>
-                    </div>
-                    <div class="card p-4 mb-4">
-                        <p class="text-xs uppercase tracking-widest mb-3" style="color:#555; font-family:'Outfit',sans-serif; font-weight:700;">Turnos últimos 7 días</p>
-                        <div class="chart-container">
-                            <canvas id="chartWeek"></canvas>
-                        </div>
-                    </div>
-                    <div class="card p-4">
-                        <p class="text-xs uppercase tracking-widest mb-3" style="color:#555; font-family:'Outfit',sans-serif; font-weight:700;">Servicios más pedidos</p>
-                        <div id="servicesRanking" class="space-y-2"></div>
-                    </div>
-                </div>
-
-                <!-- CONFIG PANEL -->
-                <div id="panelConfig" class="hidden pb-20 space-y-5">
-                    <div>
-                        <p class="section-title text-base mb-4">🏢 Horarios</p>
-                        <div class="grid grid-cols-2 gap-3">
+                <div id="panelConfig" class="hidden pb-20">
+                    <h3 class="font-bold text-lg mb-4 text-gray-800">🏢 Datos del Local</h3>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="cfg-label">Apertura</label>
-                                <input type="tel" inputmode="numeric" id="cfgOpen" placeholder="09:00" maxlength="5" class="cfg-input text-center font-mono" oninput="maskTime(this)">
+                                <label class="text-xs text-gray-500 block">Apertura</label>
+                                <input type="tel" inputmode="numeric" id="cfgOpen" placeholder="09:00" maxlength="5" class="w-full p-2 border rounded text-center font-mono time-mask" oninput="maskTime(this)">
                             </div>
                             <div>
-                                <label class="cfg-label">Cierre</label>
-                                <input type="tel" inputmode="numeric" id="cfgClose" placeholder="20:00" maxlength="5" class="cfg-input text-center font-mono" oninput="maskTime(this)">
+                                <label class="text-xs text-gray-500 block">Cierre</label>
+                                <input type="tel" inputmode="numeric" id="cfgClose" placeholder="20:00" maxlength="5" class="w-full p-2 border rounded text-center font-mono time-mask" oninput="maskTime(this)">
                             </div>
                         </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs text-gray-500 block">Duración Turno (min)</label>
+                                <select id="cfgInterval" class="w-full p-2 border rounded bg-white">
+                                    <option value="30">30 min</option>
+                                    <option value="45">45 min</option>
+                                    <option value="60">60 min</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 block">Barberos (Sillas)</label>
+                                <input type="tel" inputmode="numeric" id="cfgChairs" class="w-full p-2 border rounded" min="1" onchange="renderBarberBreaks()">
+                            </div>
+                        </div>
                         <div>
-                            <label class="cfg-label">Duración turno</label>
-                            <select id="cfgInterval" class="cfg-input">
-                                <option value="30">30 min</option>
-                                <option value="45">45 min</option>
-                                <option value="60">60 min</option>
-                            </select>
-                        </div>                        <div>
-                            <label class="cfg-label">Barberos (sillas)</label>
-                            <input type="tel" inputmode="numeric" id="cfgChairs" class="cfg-input text-center" min="1" onchange="renderBarberBreaks()">
+                            <label class="text-xs text-gray-500 block mb-2">Días Abiertos</label>
+                            <div class="flex justify-between gap-1">
+                                <label class="cursor-pointer flex flex-col items-center"><input type="checkbox" name="workday" value="1"><span class="text-xs mt-1">Lun</span></label>
+                                <label class="cursor-pointer flex flex-col items-center"><input type="checkbox" name="workday" value="2"><span class="text-xs mt-1">Mar</span></label>
+                                <label class="cursor-pointer flex flex-col items-center"><input type="checkbox" name="workday" value="3"><span class="text-xs mt-1">Mié</span></label>
+                                <label class="cursor-pointer flex flex-col items-center"><input type="checkbox" name="workday" value="4"><span class="text-xs mt-1">Jue</span></label>
+                                <label class="cursor-pointer flex flex-col items-center"><input type="checkbox" name="workday" value="5"><span class="text-xs mt-1">Vie</span></label>
+                                <label class="cursor-pointer flex flex-col items-center"><input type="checkbox" name="workday" value="6"><span class="text-xs mt-1">Sáb</span></label>
+                                <label class="cursor-pointer flex flex-col items-center"><input type="checkbox" name="workday" value="0"><span class="text-xs mt-1">Dom</span></label>
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <label class="cfg-label mb-3">Días abiertos</label>
-                        <div class="flex justify-between">
-                            <label class="day-toggle"><input type="checkbox" name="workday" value="1"><span>Lun</span></label>
-                            <label class="day-toggle"><input type="checkbox" name="workday" value="2"><span>Mar</span></label>
-                            <label class="day-toggle"><input type="checkbox" name="workday" value="3"><span>Mié</span></label>
-                            <label class="day-toggle"><input type="checkbox" name="workday" value="4"><span>Jue</span></label>
-                            <label class="day-toggle"><input type="checkbox" name="workday" value="5"><span>Vie</span></label>
-                            <label class="day-toggle"><input type="checkbox" name="workday" value="6"><span>Sáb</span></label>
-                            <label class="day-toggle"><input type="checkbox" name="workday" value="0"><span>Dom</span></label>
+                        <h3 class="font-bold text-sm text-gray-800 pt-4">🕒 Pausas Individuales</h3>
+                        <p class="text-xs text-gray-400 mb-2">Escribe la hora (ej: 1300)</p>
+                        <div id="barberBreaksContainer" class="space-y-3 p-3 border rounded-lg bg-gray-50"></div>
+                        <div>
+                            <label class="text-xs text-gray-500 block mb-2">Servicios y Precios</label>
+                            <div id="servicesList" class="space-y-2 mb-2"></div>
+                            <div class="flex gap-2 items-center">
+                                <input type="text" id="newSvcName" placeholder="Nombre" class="flex-1 min-w-0 p-2 border rounded text-sm">
+                                <input type="tel" inputmode="numeric" id="newSvcPrice" placeholder="$" class="w-20 flex-shrink-0 p-2 border rounded text-sm">
+                                <button onclick="addServiceDOM()" class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-gray-200 text-gray-800 rounded hover:bg-gray-300 font-bold text-xl">+</button>
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <label class="cfg-label mb-2">Pausas por barbero</label>
-                        <p class="text-xs mb-3" style="color:#444;">Horario de pausa individual (ej: 13:00)</p>
-                        <div id="barberBreaksContainer" class="space-y-2"></div>
-                    </div>
-                    <div>
-                        <label class="cfg-label mb-2">Servicios y precios</label>
-                        <div id="servicesList" class="space-y-2 mb-3"></div>
-                        <div class="flex gap-2">
-                            <input type="text" id="newSvcName" placeholder="Nombre" class="cfg-input flex-1">
-                            <input type="tel" inputmode="numeric" id="newSvcPrice" placeholder="$" class="cfg-input w-20 flex-shrink-0 text-center">
-                            <button onclick="addServiceDOM()" class="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-lg text-white text-lg font-bold" style="background:var(--color-primary);">+</button>
+                        <div>
+                            <label class="text-xs text-gray-500 block">Mensaje de Aviso</label>
+                            <input type="text" id="cfgMsg" placeholder="Ej: Vuelvo el martes" class="w-full p-2 border rounded">
                         </div>
-                    </div>
-                    <div>
-                        <label class="cfg-label">Mensaje de aviso</label>
-                        <input type="text" id="cfgEj: Vuelvo el martes" class="cfg-input">
-                    </div>
-                    <div class="flex items-center gap-3 p-3 rounded-xl" style="background:#1a1a1a; border:1px solid #2a2a2a;">
-                        <input type="checkbox" id="cfgShowWpp" class="w-5 h-5 accent-orange-700 rounded">
-                        <div class="flex-1">
-                            <label class="text-sm font-semibold text-white">Mostrar WhatsApp</label>
-                            <input type="tel" inputmode="numeric" id="cfgWppNumber" placeholder="099123456" class="w-full text-sm mt-1 bg-transparent border-b outline-none pb-0.5" style="color:#888; border-color:#333;">
+                        <div class="flex items-center gap-3 border p-3 rounded-lg">
+                            <input type="checkbox" id="cfgShowWpp" class="w-5 h-5">
+                            <div class="flex-1">
+                                <label class="text-sm font-bold block">Mostrar WhatsApp</label>
+                                <input type="tel" inputmode="numeric" id="cfgWppNumber" placeholder="099123456" class="w-full text-sm border-b outline-none">
+                            </div>
                         </div>
+                        <button onclick="saveConfig()" class="w-full bg-primary text-white py-3 rounded-xl font-bold shadow-lg mt-4">Guardar Cambios</button>
                     </div>
-                    <button onclick="saveConfig()" class="btn-primary">
-                        <i class="fas fa-save mr-2"></i>Guardar cambios
-                    </button>
                 </div>
             </section>
-
-            <!-- FOOTER WHATSAPP -->
-            <footer id="footerWpp" class="hidden mt-6 text-center pb-4">                <a id="wppLink" href="#" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold text-sm transition" style="background:#10b98122; color:#10b981; border:1px solid #10b98133;">
-                    <i class="fab fa-whatsapp text-lg"></i> Contáctanos por WhatsApp
+            <footer id="footerWpp" class="hidden mt-auto pt-6 text-center pb-4">
+                <a id="wppLink" href="#" target="_blank" class="inline-flex items-center gap-2 text-green-600 font-bold bg-green-50 px-4 py-2 rounded-full hover:bg-green-100 transition">
+                    <i class="fab fa-whatsapp text-xl"></i> Contáctanos
                 </a>
             </footer>
+            <button id="fabAdd" onclick="toggleModal('modalManualBooking')" class="hidden fixed bottom-6 right-6 bg-primary text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-2xl hover:scale-110 transition z-40">
+                <i class="fas fa-plus"></i>
+            </button>
         </main>
-
-        <!-- FAB -->
-        <button id="fabAdd" onclick="toggleModal('modalManualBooking')" class="hidden">
-            <i class="fas fa-plus"></i>
-        </button>
     </div>
-
-    <!-- ═══════════════════════════════ MODALS ═══════════════════════════════ -->
-
-    <!-- ADMIN LOGIN -->
-    <div id="modalBarberLogin" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center px-4">
-        <div class="modal-box w-full max-w-sm">
-            <h3 class="font-display font-700 text-xl mb-1 text-white">Acceso Admin</h3>
-            <p class="text-sm mb-5" style="color:#555;">Solo para propietarios y staff.</p>
-            <input type="text" id="adminUsername" placeholder="Usuario" class="inp mb-3" autocomplete="off">
-            <input type="password" id="adminPass" placeholder="Contraseña" class="inp mb-5">
+    <div id="modalBarberLogin" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center px-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <h3 class="font-bold text-xl mb-4 text-center text-primary">Acceso Admin</h3>
+            <input type="text" id="adminUsername" placeholder="Nombre de Usuario" class="w-full mb-3 px-4 py-3 border rounded-xl" autocomplete="off">
+            <input type="password" id="adminPass" placeholder="Contraseña" class="w-full mb-6 px-4 py-3 border rounded-xl">
             <div class="flex gap-3">
-                <button onclick="toggleModal('modalBarberLogin')" class="btn-ghost flex-1">Cancelar</button>
-                <button onclick="loginBarber()" class="btn-primary flex-1">Entrar</button>
+                <button onclick="toggleModal('modalBarberLogin')" class="flex-1 py-3 text-gray-500">Cancelar</button>
+                <button onclick="loginBarber()" class="flex-1 py-3 bg-primary text-white rounded-xl font-bold">Entrar</button>
             </div>
         </div>
     </div>
-
-    <!-- MANUAL BOOKING -->
-    <div id="modalManualBooking" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center px-4">
-        <div class="modal-box w-full max-w-sm">
-            <div class="flex justify-between items-center mb-5">
-                <h3 class="font-display font-700 text-xl text-white">Agendar turno</h3>
-                <button onclick="toggleModal('modalManualBooking')" style="color:#555;">✕</button>
+    <div id="modalManualBooking" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center px-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-xl text-primary">Agendar Turno</h3>
+                <button onclick="toggleModal('modalManualBooking')" class="text-gray-400">✕</button>
             </div>
             <div class="space-y-3">
-                <input type="tel" id="manualPhone" placeholder="Celular (Opcional)" class="inp">
-                <input type="text" id="manualName" placeholder="Nombre" class="inp">
-                <div class="grid grid-cols-2 gap-3">
-                    <input type="text" id="manualDate" class="inp text-center" placeholder="Fecha">
-                    <input type="tel" inputmode="numeric" id="manualTime" placeholder="09:00" maxlength="5" class="inp text-center font-mono" oninput="maskTime(this)">
+                <input type="tel" id="manualPhone" placeholder="Celular (Opcional)" class="w-full px-4 py-3 border rounded-xl" autocomplete="off">
+                <input type="text" id="manualName" placeholder="Nombre" class="w-full px-4 py-3 border rounded-xl" autocomplete="off">
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" id="manualDate" class="px-4 py-3 border rounded-xl text-center" placeholder="Fecha">
+                    <input type="tel" inputmode="numeric" id="manualTime" placeholder="Hora (09:00)" maxlength="5" class="w-full px-4 py-3 border rounded-xl font-mono text-center time-mask" oninput="maskTime(this)">
                 </div>
-                <select id="manualService" class="inp"></select>
-                <button onclick="createManualBooking()" class="btn-primary">Guardar turno</button>
+                <select id="manualService" class="w-full px-4 py-3 border rounded-xl"></select>
+                <button onclick="createManualBooking()" class="w-full bg-primary text-white py-3 rounded-xl font-bold mt-2">Guardar</button>
             </div>
         </div>
     </div>
-
-    <!-- ACCOUNT SETTINGS -->
-    <div id="modalAccountSettings" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center px-4">        <div class="modal-box w-full max-w-sm">
-            <div class="flex justify-between items-center mb-5">
-                <h3 class="font-display font-700 text-xl text-white">🔑 Configuración de Cuenta</h3>
-                <button onclick="toggleModal('modalAccountSettings')" style="color:#555;">✕</button>
+    <div id="modalAccountSettings" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center px-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-bold text-xl text-primary">🔑 Configuración de Cuenta</h3>
+                <button onclick="toggleModal('modalAccountSettings')" class="text-gray-400">✕</button>
             </div>
-            <p class="cfg-label mb-3">Cambiar contraseña admin</p>
-            <div class="space-y-3">
-                <input type="password" id="currentPass" placeholder="Contraseña actual" class="inp">
-                <input type="password" id="newPass" placeholder="Nueva contraseña" class="inp">
-                <input type="password" id="confirmNewPass" placeholder="Confirmar contraseña" class="inp">
-                <button onclick="changeAdminPassword()" class="btn-primary" style="background:linear-gradient(135deg,#3b82f6,#6366f1);">Actualizar contraseña</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- CHANGE PIN (cliente) -->
-    <div id="modalChangePin" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center px-4">
-        <div class="modal-box w-full max-w-sm">
-            <div class="flex justify-between items-center mb-2">
-                <h3 class="font-display font-700 text-xl text-white">🔒 Cambiar PIN</h3>
-                <button onclick="toggleModal('modalChangePin')" style="color:#555;">✕</button>
-            </div>
-            <p class="text-sm mb-5" style="color:#555;">Elegí un PIN de 4 dígitos que solo vos conozcas.</p>
-            <div class="space-y-3">
-                <div>
-                    <label class="cfg-label">PIN actual</label>
-                    <input type="tel" id="currentPin" placeholder="••••" class="inp pin-input" maxlength="4">
-                </div>
-                <div>
-                    <label class="cfg-label">Nuevo PIN</label>
-                    <input type="tel" id="newPin" placeholder="••••" class="inp pin-input" maxlength="4">
-                </div>
-                <div>
-                    <label class="cfg-label">Confirmar nuevo PIN</label>
-                    <input type="tel" id="confirmNewPin" placeholder="••••" class="inp pin-input" maxlength="4">
-                </div>
-                <button id="btnSavePin" onclick="changeClientPin()" class="btn-primary" style="background:linear-gradient(135deg,#3b82f6,#6366f1);">Guardar PIN</button>
+            <div class="space-y-4 p-4 border rounded-xl bg-gray-50">
+                <p class="text-sm text-gray-600 font-bold border-b pb-2">Cambiar Contraseña</p>
+                <input type="password" id="currentPass" placeholder="Contraseña Actual" class="w-full p-3 border rounded-xl text-sm">
+                <input type="password" id="newPass" placeholder="Nueva Contraseña" class="w-full p-3 border rounded-xl text-sm">
+                <input type="password" id="confirmNewPass" placeholder="Confirmar Nueva Contraseña" class="w-full p-3 border rounded-xl text-sm">
+                <button onclick="changeAdminPassword()" class="w-full bg-blue-500 text-white py-3 rounded-xl font-bold shadow-md hover:bg-blue-600 transition">Actualizar Contraseña</button>
             </div>
         </div>
     </div>
-
-    <!-- SET PERMANENT PIN (first time) -->
-    <div id="modalSetPermanentPin" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center px-4">
-        <div class="modal-box w-full max-w-sm">
-            <div class="text-center mb-5">
-                <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-3" style="background:linear-gradient(135deg,var(--color-primary-dark),var(--color-primary));">
-                    <i class="fas fa-shield-alt text-white text-xl"></i>
-                </div>
-                <h3 class="font-display font-700 text-xl text-white">Creá tu PIN seguro</h3>
-                <p class="text-sm mt-2" style="color:#555;">Este PIN lo usarás cada vez que quieras entrar. Elegí uno que recuerdes.</p>            </div>
-            <div class="space-y-3">
-                <div>
-                    <label class="cfg-label">Tu nuevo PIN (4 dígitos)</label>
-                    <input type="tel" id="permanentPin1" placeholder="••••" class="inp pin-input" maxlength="4">
-                </div>
-                <div>
-                    <label class="cfg-label">Confirmá el PIN</label>
-                    <input type="tel" id="permanentPin2" placeholder="••••" class="inp pin-input" maxlength="4">
-                </div>
-                <button onclick="savePermanentPin()" class="btn-primary">
-                    <i class="fas fa-lock mr-2"></i>Guardar y entrar
-                </button>
+    <!-- Modal para Cambiar PIN -->
+    <div id="modalChangePin" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center px-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-bold text-xl text-primary">🔒 Cambiar PIN</h3>
+                <button onclick="toggleModal('modalChangePin')" class="text-gray-400">✕</button>
+            </div>
+            <div class="space-y-4 p-4 border rounded-xl bg-gray-50">
+                <input type="tel" id="currentPin" placeholder="PIN Actual" class="w-full p-3 border rounded-xl text-center text-2xl tracking-widest" maxlength="4" autocomplete="off">
+                <input type="tel" id="newPin" placeholder="Nuevo PIN" class="w-full p-3 border rounded-xl text-center text-2xl tracking-widest" maxlength="4" autocomplete="new-password">
+                <input type="tel" id="confirmNewPin" placeholder="Confirmar Nuevo PIN" class="w-full p-3 border rounded-xl text-center text-2xl tracking-widest" maxlength="4" autocomplete="new-password">
+                <button id="btnSavePin" onclick="changeClientPin()" class="w-full bg-blue-500 text-white py-3 rounded-xl font-bold shadow-md hover:bg-blue-600 transition">Guardar PIN</button>
             </div>
         </div>
     </div>
-
-    <!-- CONFIRM MODAL -->
-    <div id="confirmationModal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center px-4">
-        <div class="modal-box w-full max-w-sm text-center">
-            <i id="confirmIcon" class="fas fa-exclamation-triangle text-3xl mb-4" style="color:#f59e0b;"></i>
-            <h3 id="confirmTitle" class="font-display font-700 text-xl mb-2 text-white">Confirmación</h3>
-            <p id="confirmMessage" class="text-sm mb-6" style="color:#888;">¿Estás seguro de continuar?</p>
+    <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center px-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center">
+            <i id="confirmIcon" class="fas fa-exclamation-triangle text-3xl text-red-500 mb-4"></i>
+            <h3 id="confirmTitle" class="font-bold text-xl mb-3 text-gray-800">Confirmación</h3>
+            <p id="confirmMessage" class="text-gray-600 mb-6">¿Estás seguro de continuar?</p>
             <div class="flex gap-3">
-                <button id="confirmBtnCancel" class="btn-ghost flex-1">Cancelar</button>
-                <button id="confirmBtnAccept" class="flex-1 py-3 rounded-xl font-display font-700" style="background:#ef444422; color:#ef4444; border:1px solid #ef444433;">Aceptar</button>
+                <button id="confirmBtnCancel" class="flex-1 py-3 text-gray-500 border border-gray-300 rounded-xl hover:bg-gray-100 transition">Cancelar</button>
+                <button id="confirmBtnAccept" class="flex-1 py-3 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition">Aceptar</button>
             </div>
         </div>
     </div>
-
-    <!-- TOAST -->
-    <div id="toastNotification" class="hidden">
+    <div id="toastNotification" class="fixed top-5 left-1/2 -translate-x-1/2 px-6 py-3 bg-green-500 text-white font-bold rounded-lg shadow-xl z-50 hidden transition-all duration-300 transform opacity-0">
         Turno confirmado 👍
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-    // ═══════════════════════════════════════════════════════════════════════════════
-    //  CONFIGURACIÓN
-    // ═══════════════════════════════════════════════════════════════════════════════
-    const SUPABASE_URL = 'https://hqoyjsngydafaagsrzlg.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhxb3lqc25neWRhZmFhZ3NyemxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MDI5MDQsImV4cCI6MjA3OTk3ODkwNH0.WyTlANZLTRd6IlhxuDlQai8Zz6dgexGPvwXmBr7HsZs';
-    const SUPABASE_FUNCTIONS_URL = `${SUPABASE_URL}/functions/v1/send-pin`;
-    const CONTACT_EMAIL = 'elkratosss@gmail.com';
-    const MAX_PIN_ATTEMPTS = 3;
-    const BLOCK_MINUTES = 15;
-    let supabase = null;
+        // --- Reemplaza estos placeholders con tus valores reales de Supabase ---
+        const SUPABASE_URL = 'https://hqoyjsngydafaagsrzlg.supabase.co'; // Ej: 'https://hqoyjsngydafaagsrzlg.supabase.co'
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhxb3lqc25neWRhZmFhZ3NyemxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MDI5MDQsImV4cCI6MjA3OTk3ODkwNH0.WyTlANZLTRd6IlhxuDlQai8Zz6dgexGPvwXmBr7HsZs'; // Ej: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+        // ---------------------------------------------------------------
+        // URL para la función de Supabase que envía el SMS
+        const SUPABASE_FUNCTIONS_URL = `${SUPABASE_URL}/functions/v1/send-pin`;
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // !!! ATENCIÓN: REEMPLAZA ESTE EMAIL CON EL TUYO REAL PARA EL BLOQUEO DE PRUEBA
+        const CONTACT_EMAIL = 'elkratosss@gmail.com'; 
+        let currentShop = null;
+        let currentUser = null; 
+        let selectedTime = null;
+        let shopConfig = {}; 
+        let generatedHours = []; 
+        let calendarInstance = null;
+        let adminCalendarInstance = null;
+        let manualCalendarInstance = null;
+        const CLIENT_STORAGE_KEY = 'barbersaas_client_id';
+        const ADMIN_STORAGE_KEY = 'barbersaas_admin_id';
+        // Variables para el nuevo flujo de login de cliente
+        let loginStep = 1; // 1: Solicitar PIN, 2: Ingresar PIN
+        let phoneToVerify = null; // Almacena el número validado
+        // Configuración común de Flatpickr
+        const flatpickrConfig = {
+            locale: "es",
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "j \\de F, Y",
+            disableMobile: true, 
+            minDate: "today",
+            theme: "material_orange"
+        };
+        function maskTime(input) {
+            let v = input.value.replace(/\D/g, ''); 
+            if (v.length > 4) v = v.slice(0, 4);
+            if (v.length >= 3) {
+                v = v.slice(0, 2) + ':' + v.slice(2);
+            }
+            input.value = v;
+        }
+        // Máscara y validación para el formato de celular UY (09X XXX XXX) - ACTUALIZADA
+        function maskPhone(input) {
+            let v = input.value.replace(/\D/g, ''); // Elimina todo lo que no sea dígito
 
-    // ═══════════════════════════════════════════════════════════════════════════════
-    //  ESTADO GLOBAL
-    // ═══════════════════════════════════════════════════════════════════════════════
-    let currentShop = null;
-    let currentUser = null;
-    let selectedTime = null;
-    let shopConfig = {};
-    let generatedHours = [];
-    let calendarInstance = null;
-    let adminCalendarInstance = null;
-    let manualCalendarInstance = null;
-    let rescheduleCalendarInstance = null;
-    let rescheduleSelectedTime = null;
-    let weekChartInstance = null;
-
-    const CLIENT_STORAGE_KEY = 'barbersaas_client_id';
-    const ADMIN_STORAGE_KEY  = 'barbersaas_admin_id';
-
-    // Estados del login
-    let loginStep = 1;
-    let loginIsNewUser = false;
-    let phoneToVerify = null;
-
-    // ═══════════════════════════════════════════════════════════════════════════════
-    //  CONFIG FLATPICKR
-    // ═══════════════════════════════════════════════════════════════════════════════
-    const fpBase = {
-        locale: 'es',
-        dateFormat: 'Y-m-d',
-        altInput: true,
-        altFormat: 'j \\de F',
-        disableMobile: true,
-        minDate: 'today',
-    };
-
-    // ═══════════════════════════════════════════════════════════════════════════════
-    //  INICIALIZACIÓN
-    // ═══════════════════════════════════════════════════════════════════════════════
-    function showLoader(show) {
-        const loader = document.getElementById('loader');
-        const app = document.getElementById('app');
-        if (show) {
-            loader.style.display = 'flex';
-            app.style.display = 'none';
-        } else {
-            loader.style.display = 'none';
-            app.style.display = 'flex';
-        }    }
-
-    function showErrorScreen(msg) {
-        showLoader(false);
-        document.getElementById('viewLogin').innerHTML =
-            '<div style="text-align:center;margin-top:60px;padding:0 24px;">' +
-            '<div style="font-size:48px;margin-bottom:16px;">⚠️</div>' +
-            '<p style="color:#fff;font-weight:700;font-size:18px;margin-bottom:8px;">Error al cargar</p>' +
-            '<p style="color:#666;font-size:14px;margin-bottom:24px;">' + msg + '</p>' +
-            '<button onclick="location.reload()" class="btn-primary" style="max-width:200px;margin:0 auto;">Reintentar</button>' +
-            '</div>';
-        document.getElementById('viewClient').classList.add('hidden');
-        document.getElementById('viewBarber').classList.add('hidden');
-    }
-
-    // Capturar errores globales
-    window.onerror = function(msg, url, line) {
-        console.error('Error:', msg, 'Linea:', line);
-        return false;
-    };
-
-    window.addEventListener('load', async () => {
-        try {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            
-            // Safety timeout
-            const safetyTimeout = setTimeout(() => {
-                showErrorScreen('Tiempo de espera agotado. Verificá tu conexión.');
-            }, 10000);
-
-            const params = new URLSearchParams(window.location.search);
-            const slug = params.get('barberia') || 'elite';
-
-            const { data: shop, error } = await supabase
-                .from('barberias')
-                .select('*')
-                .eq('slug', slug)
-                .single();
-
-            clearTimeout(safetyTimeout);
-
-            if (error || !shop) {
-                showErrorScreen('Barbería no encontrada. Verificá la URL.');
-                return;
+            // Si el usuario olvidó el 0 inicial, se lo agregamos automáticamente si tiene 8 dígitos y comienza con 9
+            if (v.length === 8 && v.startsWith('9')) {
+                v = '0' + v;
             }
 
+            // Si el número tiene más de 9 dígitos, lo truncamos.
+            if (v.length > 9) {
+                v = v.slice(0, 9);
+            }
+
+            // Formatear como "09X XXX XXX"
+            let formatted = '';
+            if (v.length > 0) {
+                if (v.length <= 3) {
+                    formatted = v;
+                } else if (v.length <= 6) {
+                    formatted = v.slice(0, 3) + ' ' + v.slice(3);
+                } else {
+                    formatted = v.slice(0, 3) + ' ' + v.slice(3, 6) + ' ' + v.slice(6);
+                }
+            }
+
+            input.value = formatted;
+
+            // VALIDACIÓN ESTRUCTURADA (esto es clave)
+            const isValid = v.length === 9 && v.startsWith('09');
+            const phoneError = document.getElementById('phoneError');
+
+            if (!isValid) {
+                phoneError.innerText = 'Número inválido. Debe ser 9 dígitos y empezar con "09" (Ej: 099 123 456).';
+                phoneError.classList.remove('hidden');
+            } else {
+                phoneError.classList.add('hidden');
+            }
+        }
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toastNotification');
+            toast.innerText = message;
+            toast.classList.remove('bg-green-500', 'bg-red-500');
+            toast.classList.add(isError ? 'bg-red-500' : 'bg-green-500');
+            toast.classList.remove('hidden', 'opacity-0', 'scale-90');
+            toast.classList.add('opacity-100', 'scale-100');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'scale-100');
+                toast.classList.add('opacity-0', 'scale-90');
+                setTimeout(() => toast.classList.add('hidden'), 300); 
+            }, 3000); 
+        }
+        function togglePinVisibility() {
+            const pinInput = document.getElementById('loginPin');
+            const pinIcon = document.getElementById('pinToggleIcon');
+            if (pinInput.type === 'password') {
+                pinInput.type = 'text'; pinIcon.classList.remove('fa-eye'); pinIcon.classList.add('fa-eye-slash');
+            } else {
+                pinInput.type = 'password'; pinIcon.classList.remove('fa-eye-slash'); pinIcon.classList.add('fa-eye');
+            }
+        }
+        function showConfirmationModal(message, onAccept, onCancel) {
+            const modal = document.getElementById('confirmationModal');
+            document.getElementById('confirmMessage').innerText = message;
+            const acceptBtn = document.getElementById('confirmBtnAccept');
+            const cancelBtn = document.getElementById('confirmBtnCancel');
+            acceptBtn.onclick = () => { onAccept(); modal.classList.add('hidden'); };
+            cancelBtn.onclick = () => { onCancel(); modal.classList.add('hidden'); };
+            modal.classList.remove('hidden');
+        }
+        document.addEventListener('DOMContentLoaded', async () => {
+            const params = new URLSearchParams(window.location.search);
+            const slug = params.get('barberia') || 'elite'; 
+            const { data: shop, error } = await supabase.from('barberias').select('*').eq('slug', slug).single();
+            if (error || !shop) return alert('Barbería no encontrada.');
             currentShop = shop;
-            shopConfig = shop.config || {};
-            if (!shopConfig.barber_breaks) shopConfig.barber_breaks = [];
-            // Verificar trial
+            // =========================================================
+            // === INICIO DEL BLOQUEO AUTOMÁTICO DE PRUEBA (14 DÍAS) ===
+            // =========================================================
             if (currentShop.fecha_fin_prueba) {
-                const trialEnd = new Date(currentShop.fecha_fin_prueba + 'T00:00:00');
+                // Añadimos 'T00:00:00' para que la comparación sea fiable
+                const trialEnd = new Date(currentShop.fecha_fin_prueba + 'T00:00:00'); 
                 const today = new Date();
-                today.setHours(0,0,0,0);
+                today.setHours(0,0,0,0); 
                 if (today > trialEnd) {
+                    document.title = currentShop.nombre + " - Prueba Finalizada";
+                    document.getElementById('loader').classList.add('hidden');
+                    document.getElementById('app').classList.remove('hidden');
                     document.getElementById('viewLogin').innerHTML = `
                         <div class="p-6 text-center mt-10">
-                            <i class="fas fa-calendar-times text-6xl mb-4" style="color:#ef4444;"></i>
-                            <h2 class="text-2xl font-bold mb-4" style="color:#ef4444;">Prueba Finalizada</h2>
-                            <p class="mb-6" style="color:#888;">La prueba de 14 días de ${currentShop.nombre} ha expirado.</p>
-                            <a href="mailto:${CONTACT_EMAIL}" class="btn-primary" style="display:inline-block;text-decoration:none;">
+                            <i class="fas fa-calendar-times text-6xl text-red-500 mb-4"></i>
+                            <h2 class="text-2xl font-bold text-red-600 mb-4">Prueba Gratuita Finalizada</h2>
+                            <p class="text-gray-700 mb-6">Gracias por probar BarberSaaS. La prueba de 14 días de ${currentShop.nombre} ha expirado.</p>
+                            <a href="mailto:${CONTACT_EMAIL}" class="mt-4 inline-block bg-primary text-white py-3 px-6 rounded-xl font-bold hover:opacity-90 transition">
                                 <i class="fas fa-crown mr-2"></i> Quiero Seguir Usándolo
                             </a>
                         </div>`;
                     document.getElementById('viewClient').classList.add('hidden');
                     document.getElementById('viewBarber').classList.add('hidden');
-                    showLoader(false);
-                    return;
+                    return; 
                 }
             }
-
-            document.title = currentShop.nombre + ' - Turnos';
+            // =========================================================
+            // === FIN DEL BLOQUEO AUTOMÁTICO DE PRUEBA ==============
+            // =========================================================
+            shopConfig = shop.config || {};
+            if (!shopConfig.barber_breaks) shopConfig.barber_breaks = [];
+            document.title = currentShop.nombre + " - Agendamiento";
             generatedHours = generateTimeSlots(shop.apertura, shop.cierre, shop.intervalo);
             applyTheme();
-            setupCalendars();
-            renderServiceOptions();
-
-            showLoader(false);
-
-            // Auto-login
+            setupInputs();
+            renderServiceOptions(); 
+            document.getElementById('loader').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
             const storedClientId = localStorage.getItem(CLIENT_STORAGE_KEY);
-            const storedAdminId  = localStorage.getItem(ADMIN_STORAGE_KEY);
-
+            const storedAdminId = localStorage.getItem(ADMIN_STORAGE_KEY);
             if (storedClientId && storedClientId !== 'null') {
-                const { data: client } = await supabase
-                    .from('clientes')
-                    .select('*')
-                    .eq('id', storedClientId)
-                    .single();
-                if (client) { 
-                    currentUser = client; 
-                    return showClientDashboard(); 
-                }
+                const { data: client } = await supabase.from('clientes').select('*').eq('id', storedClientId).single();
+                if (client) { currentUser = client; return showClientDashboard(); }
             } else if (storedAdminId && storedAdminId !== 'null') {
-                const { data: admin } = await supabase
-                    .from('barberos')
-                    .select('*')
-                    .eq('id', storedAdminId)
-                    .single();                if (admin) { 
-                    currentUser = admin; 
-                    return showAdminDashboard(); 
-                }
+                 const { data: admin } = await supabase.from('barberos').select('*').eq('id', storedAdminId).single();
+                if (admin) { currentUser = admin; return showAdminDashboard(); }
             }
-
             updateAdminDropdownVisibility(false);
-            resetLoginView();
-
-        } catch(err) {
-            console.error('Init error:', err);
-            showErrorScreen(err.message || 'Error desconocido');
-        }
-    });
-
-    // ═══════════════════════════════════════════════════════════════════════════════
-    //  HELPERS
-    // ═══════════════════════════════════════════════════════════════════════════════
-    function generateTimeSlots(startStr, endStr, intervalMins) {
-        const slots = [];
-        let [h, m] = startStr.split(':').map(Number);
-        let [eH, eM] = endStr.split(':').map(Number);
-        let cur = new Date(); 
-        cur.setHours(h, m, 0, 0);
-        let end = new Date(); 
-        end.setHours(eH, eM, 0, 0);
-        while (cur < end) {
-            slots.push(cur.toLocaleTimeString('es-UY', {hour:'2-digit', minute:'2-digit', hour12:false}));
-            cur.setMinutes(cur.getMinutes() + intervalMins);
-        }
-        return slots;
-    }
-
-    function applyTheme() {
-        document.getElementById('shopName').innerText = currentShop.nombre;
-        document.getElementById('headerSub').innerText = 
-            `${currentShop.sillas} ${currentShop.sillas === 1 ? 'barbero' : 'barberos'} · Abre ${currentShop.apertura.slice(0,5)}`;
-        
-        document.documentElement.style.setProperty('--color-primary', currentShop.color_primary);
-        const hex = currentShop.color_primary;
-        document.documentElement.style.setProperty('--color-primary-dark', adjustColor(hex, -30));
-        document.documentElement.style.setProperty('--color-primary-light', adjustColor(hex, 30));
-
-        if (shopConfig.mensaje_aviso) {
-            document.getElementById('shopNotice').classList.remove('hidden');
-            document.getElementById('shopNoticeText').innerText = shopConfig.mensaje_aviso;
-        } else {
-            document.getElementById('shopNotice').classList.add('hidden');
-        }
-        if (shopConfig.mostrar_whatsapp && shopConfig.whatsapp) {
-            document.getElementById('footerWpp').classList.remove('hidden');
-            document.getElementById('wppLink').href = 
-                `https://wa.me/598${shopConfig.whatsapp.replace(/\D/g,'').slice(-9)}`;
-            document.getElementById('footerWpp').classList.add('hidden');
-        }
-    }
-
-    function adjustColor(hex, amount) {
-        let r = parseInt(hex.slice(1,3), 16);
-        let g = parseInt(hex.slice(3,5), 16);
-        let b = parseInt(hex.slice(516);
-        r = Math.max(0, Math.min(255, r + amount));
-        g = Math.max(0, Math.min(255, g + amount));
-        b = Math.max(0, Math.min(255, b + amount));
-        return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
-    }
-
-    function setupCalendars() {
-        const today = new Date().toISOString().split('T')[0];
-
-        calendarInstance = flatpickr('#datePicker', {
-            ...fpBase, 
-            defaultDate: today,
-            onChange: () => loadSlots()
+            resetLoginView(); // Asegura la vista de login en Paso 1
         });
-
-        adminCalendarInstance = flatpickr('#barberDatePicker', {
-            ...fpBase, 
-            defaultDate: today,
-            onChange: () => loadBarberDashboard()
-        });
-
-        manualCalendarInstance = flatpickr('#manualDate', {
-            ...fpBase, 
-            defaultDate: today
-        });
-
-        document.getElementById('btnConfirmBooking').addEventListener('click', createClientBooking);
-    }
-
-    function renderServiceOptions() {
-        const services = shopConfig.servicios || [{nombre: 'Corte', precio: 0}];
-        ['serviceSelect', 'manualService'].forEach(id => {
-            const sel = document.getElementById(id);
-            if (!sel) return;
-            sel.innerHTML = '';
-            services.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s.nombre;                opt.innerText = `${s.nombre} ($${s.precio})`;
-                sel.appendChild(opt);
+        function generateTimeSlots(startStr, endStr, intervalMins) {
+            const slots = [];
+            let [h, m] = startStr.split(':').map(Number);
+            let [endH, endM] = endStr.split(':').map(Number);
+            let current = new Date(); current.setHours(h, m, 0, 0);
+            let end = new Date(); end.setHours(endH, endM, 0, 0);
+            while (current < end) {
+                const timeString = current.toLocaleTimeString('es-UY', {hour: '2-digit', minute:'2-digit', hour12: false});
+                slots.push(timeString);
+                current.setMinutes(current.getMinutes() + intervalMins);
+            }
+            return slots;
+        }
+        function applyTheme() {
+            document.getElementById('shopName').innerText = currentShop.nombre;
+            document.getElementById('headerSub').innerText = `${currentShop.sillas} Prof. • Abrimos ${currentShop.apertura.slice(0,5)}`;
+            document.documentElement.style.setProperty('--color-primary', currentShop.color_primary);
+            if(shopConfig.mensaje_aviso) {
+                document.getElementById('shopNotice').classList.remove('hidden');
+                document.getElementById('shopNoticeText').innerText = shopConfig.mensaje_aviso;
+            } else document.getElementById('shopNotice').classList.add('hidden');
+            if(shopConfig.mostrar_whatsapp && shopConfig.whatsapp) {
+                document.getElementById('footerWpp').classList.remove('hidden');
+                document.getElementById('wppLink').href = `https://wa.me/598${shopConfig.whatsapp.replace(/\D/g,'').slice(-9)}`;
+            } else document.getElementById('footerWpp').classList.add('hidden');
+        }
+        function setupInputs() {
+            const today = new Date().toISOString().split('T')[0];
+            calendarInstance = flatpickr("#datePicker", {
+                ...flatpickrConfig,
+                defaultDate: today,
+                onChange: function(selectedDates, dateStr, instance) {
+                    loadSlots();
+                }
             });
-        });
-    }
-
-    function maskTime(input) {
-        let v = input.value.replace(/\D/g, '');
-        if (v.length > 4) v = v.slice(0, 4);
-        if (v.length >= 3) v = v.slice(0,2) + ':' + v.slice(2);
-        input.value = v;
-    }
-
-    function maskPhone(input) {
-        let v = input.value.replace(/\D/g, '');
-        if (v.length === 8 && v.startsWith('9')) v = '0' + v;
-        if (v.length > 9) v = v.slice(0, 9);
-        
-        let formatted = '';
-        if (v.length <= 3) formatted = v;
-        else if (v.length <= 6) formatted = v.slice(0,3) + ' ' + v.slice(3);
-        else formatted = v.slice(0,3) + ' ' + v.slice(3,6) + ' ' + v.slice(6);
-        
-        input.value = formatted;
-        
-        const isValid = v.length === 9 && v.startsWith('09');
-        const err = document.getElementById('phoneError');
-        if (!isValid && v.length > 0) {
-            err.innerText = 'Formato incorrecto. Debe ser 09X XXX XXX.';
-            err.classList.remove('hidden');
-        } else {
-            err.classList.add('hidden');
+            adminCalendarInstance = flatpickr("#barberDatePicker", {
+                ...flatpickrConfig,
+                defaultDate: today,
+                onChange: function(selectedDates, dateStr, instance) {
+                    loadBarberDashboard();
+                }
+            });
+            manualCalendarInstance = flatpickr("#manualDate", {
+                ...flatpickrConfig,
+                defaultDate: today
+            });
+            document.getElementById('btnConfirmBooking').addEventListener('click', createClientBooking);
         }
-    }
-
-    function showToast(message, isError = false) {
-        const toast = document.getElementById('toastNotification');
-        toast.innerText = message;
-        toast.style.background = isError ? '#ef4444' : '#10b981';
-        toast.style.color = '#fff';
-        toast.classList.remove('hidden');
-        
-        // Force reflow
-        void toast.offsetWidth;
-        
-        toast.style.opacity = '1';
-        toast.style.transform = 'translateX(-50%) scale(1)';
-        
-        setTimeout(() => {
-            toast.style.opacity = '0';            toast.style.transform = 'translateX(-50%) scale(0.9)';
-            setTimeout(() => toast.classList.add('hidden'), 300);
-        }, 3000);
-    }
-
-    function showConfirmationModal(message, onAccept, onCancel = () => {}) {
-        const modal = document.getElementById('confirmationModal');
-        document.getElementById('confirmMessage').innerText = message;
-        document.getElementById('confirmBtnAccept').onclick = () => { 
-            onAccept(); 
-            modal.classList.add('hidden'); 
-        };
-        document.getElementById('confirmBtnCancel').onclick = () => { 
-            onCancel(); 
-            modal.classList.add('hidden'); 
-        };
-        modal.classList.remove('hidden');
-    }
-
-    function toggleModal(id) { 
-        document.getElementById(id).classList.toggle('hidden'); 
-    }
-    
-    function toggleDropdown(id) { 
-        document.getElementById(id).classList.toggle('hidden'); 
-    }
-
-    function updateAdminDropdownVisibility(isAdmin) {
-        document.getElementById('adminOptions').classList.toggle('hidden', !isAdmin);
-        document.getElementById('loginOption').classList.toggle('hidden', isAdmin);
-    }
-
-    function openAdminLoginAndCloseDropdown(e) { 
-        e.preventDefault(); 
-        toggleDropdown('adminDropdown'); 
-        toggleModal('modalBarberLogin'); 
-    }
-    
-    function openAccountSettingsAndCloseDropdown(e) { 
-        e.preventDefault(); 
-        toggleDropdown('adminDropdown'); 
-        toggleModal('modalAccountSettings'); 
-    }
-    
-    function adminLogoutAndCloseDropdown(e) { 
-        e.preventDefault(); 
-        toggleDropdown('adminDropdown'); 
-        logout(); 
-    }
-    const DAYS_ES = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-    function formatDate(d) {
-        const date = new Date(d + 'T00:00:00');
-        return `${DAYS_ES[date.getDay()]}, ${date.toLocaleDateString('es-UY', {day:'numeric', month:'long'})}`;
-    }
-
-    function setLoginStep(step) {
-        loginStep = step;
-        [1,2,3].forEach(i => {
-            const dot = document.getElementById('dot' + i);
-            if (dot) dot.classList.toggle('active', i <= step);
-        });
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════════
-    //  FLUJO DE LOGIN SEGURO (SMS solo para nuevos, PIN permanente para existentes)
-    // ═══════════════════════════════════════════════════════════════════════════════
-    async function handleLoginFlow() {
-        const phoneRaw = document.getElementById('loginPhone').value.replace(/\D/g,'');
-        const btn = document.getElementById('btnActionLogin');
-
-        if (phoneRaw.length !== 9 || !phoneRaw.startsWith('09')) {
-            document.getElementById('phoneError').innerText = 'Ingresá un celular válido (09X XXX XXX).';
-            document.getElementById('phoneError').classList.remove('hidden');
-            return;
+        function renderServiceOptions() {
+            const services = shopConfig.servicios || [{nombre: 'Corte', precio: 0}];
+            const selects = [document.getElementById('serviceSelect'), document.getElementById('manualService')];
+            selects.forEach(sel => {
+                sel.innerHTML = '';
+                services.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.nombre;
+                    opt.innerText = `${s.nombre} ($${s.precio})`;
+                    sel.appendChild(opt);
+                });
+            });
         }
-
-        btn.disabled = true;
-        btn.innerText = 'Verificando...';
-
-        if (loginStep === 1) {
-            await checkUserAndProceed(phoneRaw, btn);
-        } else if (loginStep === 2) {
-            await verifyPinAndLogin(phoneToVerify, btn);
+        function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); }
+        function toggleDropdown(id) { document.getElementById(id).classList.toggle('hidden'); }
+        function updateAdminDropdownVisibility(isAdmin) {
+            if (isAdmin) {
+                document.getElementById('adminOptions').classList.remove('hidden');
+                document.getElementById('loginOption').classList.add('hidden');
+            } else {
+                document.getElementById('adminOptions').classList.add('hidden');
+                document.getElementById('loginOption').classList.remove('hidden');
+            }
         }
-    }
-
-    async function checkUserAndProceed(phone, btn) {
-        try {
-            const { data: client, error } = await supabase
-                .from('clientes')
+        function openAdminLoginAndCloseDropdown(e) { e.preventDefault(); toggleDropdown('adminDropdown'); toggleModal('modalBarberLogin'); }
+        function openAccountSettingsAndCloseDropdown(e) { e.preventDefault(); toggleDropdown('adminDropdown'); toggleModal('modalAccountSettings'); }
+        function adminLogoutAndCloseDropdown(e) { e.preventDefault(); toggleDropdown('adminDropdown'); logout(); }
+        // --- CLIENTE LOGIN (Flujo de 2 pasos con PIN SEGURO) ---
+        // Paso 1: Solicitar PIN / Paso 2: Verificar PIN
+        async function handleLoginFlow() {
+            const phoneInput = document.getElementById('loginPhone');
+            const phone = phoneInput.value.replace(/\D/g, ''); // Número limpio (9 dígitos)
+            const btn = document.getElementById('btnActionLogin');
+            document.getElementById('phoneError').classList.add('hidden');
+            // Validación de formato: Debe ser 9 dígitos y empezar con '09'
+            if (phone.length !== 9 || !phone.startsWith('09')) {
+                document.getElementById('phoneError').innerText = 'El celular debe tener 9 dígitos (Ej: 099123456).';
+                document.getElementById('phoneError').classList.remove('hidden');
+                return;
+            }
+            btn.disabled = true;
+            if (loginStep === 1) {
+                await requestPin(phone, btn);
+            } else if (loginStep === 2) {
+                // Validación adicional en el paso 2
+                const phoneError = document.getElementById('phoneError');
+                if (!phoneToVerify || phoneToVerify.length !== 9 || !phoneToVerify.startsWith('09')) {
+                    showToast("Número de verificación inválido. Vuelve a solicitar el PIN.", true);
+                    resetLoginView();
+                    btn.disabled = false;
+                    return;
+                }
+                await verifyPinAndLogin(phoneToVerify, btn); // Usamos el número almacenado
+            }
+        }
+        // Lógica de Solicitud de PIN (Paso 1) - **ACTUALIZADA PARA TWILIO**
+        async function requestPin(phone, btn) {
+            const min = 1000;
+            const max = 9999;
+            const randomPin = (Math.floor(Math.random() * (max - min + 1)) + min).toString();
+            phoneToVerify = phone;
+            // 1. Búsqueda y configuración de interfaz
+            let { data: client, error: searchError } = await supabase.from('clientes').select('*').eq('barberia_id', currentShop.id).eq('celular', phone).single();
+            if (searchError && searchError.code !== 'PGRST116') { 
+                showToast("Error en la búsqueda.", true);
+                btn.disabled = false;
+                return;
+            }
+            let isNewUser = !client;
+            if (isNewUser) {
+                document.getElementById('nameSection').classList.remove('hidden');
+                document.getElementById('pinHint').innerText = "Ingresa el PIN enviado a tu celular.";
+            } else {
+                document.getElementById('nameSection').classList.add('hidden');
+                document.getElementById('loginName').value = client.nombre; 
+                document.getElementById('pinHint').innerText = "Ingresa el PIN enviado a tu celular.";
+            }
+            // 2. Guardar PIN temporalmente en la base de datos
+            const { error: pinUpdateError } = await supabase.from('clientes').upsert({ 
+                barberia_id: currentShop.id, 
+                celular: phone, 
+                nombre: isNewUser ? 'PENDIENTE' : client.nombre,
+                pin: randomPin 
+            }, { onConflict: ['barberia_id', 'celular'] });
+            if (pinUpdateError) {
+                showToast("Error al generar PIN: " + pinUpdateError.message, true);
+                btn.disabled = false;
+                return;
+            }
+            // =========================================================
+            // 3. LLAMADA SEGURA AL BACKEND (TWILIO EDGE FUNCTION)
+            // =========================================================
+            const twilioUrl = SUPABASE_FUNCTIONS_URL; // Usamos la URL directa de la función
+            const smsResponse = await fetch(twilioUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${SUPABASE_KEY}` // Usa la llave anon
+                },
+                body: JSON.stringify({
+                    to: phone.replace(/\D/g, ''), // Enviamos el número limpio de 9 dígitos
+                    pin: randomPin
+                }),
+            });
+            const smsData = await smsResponse.json();
+            if (!smsResponse.ok || smsData.success === false) {
+                // Si Twilio falla, mostramos un error genérico (por seguridad)
+                console.error("Error completo de SMS:", smsData); 
+                showToast("Error al enviar PIN por SMS. Intenta de nuevo.", true);
+                btn.disabled = false;
+                return;
+            }
+            // 4. Transición de la interfaz al Paso 2 (Solo si el SMS fue exitoso)
+            showToast(`PIN enviado correctamente al ${phone.slice(0, 3)}...`, false);
+            document.getElementById('loginPhone').disabled = true;
+            document.getElementById('pinSection').classList.remove('hidden');
+            document.getElementById('btnResendPin').classList.remove('hidden');
+            btn.innerText = "Ingresar";
+            btn.disabled = false;
+            loginStep = 2;
+        }
+        // Lógica de Verificación de PIN y Login Final (Paso 2)
+        async function verifyPinAndLogin(phone, btn) {
+            const pin = document.getElementById('loginPin').value;
+            const name = document.getElementById('loginName').value;
+            if (pin.length !== 4) { showToast("El PIN debe tener 4 dígitos.", true); btn.disabled = false; return; }
+            const { data: client, error: searchError } = await supabase.from('clientes')
                 .select('*')
                 .eq('barberia_id', currentShop.id)
                 .eq('celular', phone)
+                .eq('pin', pin) // El pin guardado es el PIN temporal
                 .single();
-
-            if (error && error.code !== 'PGRST116') {
-                showToast('Error de conexión. Intentá de nuevo.', true);
-                btn.disabled = false; 
-                btn.innerText = 'Continuar';                return;
-            }
-
-            phoneToVerify = phone;
-
-            // CORREGIDO: Verificar si tiene PIN permanente válido (4 dígitos)
-            if (client && client.pin_permanente && client.pin_permanente.length === 4) {
-                // USUARIO EXISTENTE CON PIN PERMANENTE → No enviar SMS
-                loginIsNewUser = false;
-                document.getElementById('stepPhone').classList.add('opacity-50');
-                document.getElementById('pinSection').classList.remove('hidden');
-                document.getElementById('pinLabel').innerText = 'Tu PIN de acceso';
-                document.getElementById('pinHint').innerText = 'Ingresá tu PIN de 4 dígitos';
-                document.getElementById('nameSection').classList.add('hidden');
-                document.getElementById('btnResendPin').classList.add('hidden');
-                setLoginStep(2);
+            if (searchError) {
+                showToast("PIN incorrecto o expirado. Solicítalo de nuevo.", true);
                 btn.disabled = false;
-                btn.innerText = 'Ingresar';
-                document.getElementById('loginPin').focus();
-            } else {
-                // USUARIO NUEVO o SIN PIN PERMANENTE → Enviar SMS
-                loginIsNewUser = !client;
-                if (loginIsNewUser) {
-                    document.getElementById('nameSection').classList.remove('hidden');
-                }
-                await requestSmsPIN(phone, btn);
-            }
-        } catch (err) {
-            console.error('Error en checkUserAndProceed:', err);
-            showToast('Error inesperado. Intentá de nuevo.', true);
-            btn.disabled = false;
-            btn.innerText = 'Continuar';
-        }
-    }
-
-    async function requestSmsPIN(phone, btn) {
-        const pin = (Math.floor(Math.random() * 9000) + 1000).toString();
-
-        // CORREGIDO: Usar pin_temporal en lugar de pin
-        const upsertData = { 
-            barberia_id: currentShop.id, 
-            celular: phone, 
-            pin_temporal: pin,
-            pin_permanente: null
-        };
-        
-        if (loginIsNewUser) {
-            upsertData.nombre = 'PENDIENTE';
-        }
-        const { error: upsertErr } = await supabase
-            .from('clientes')
-            .upsert(upsertData, { onConflict: ['barberia_id', 'celular'] });
-
-        if (upsertErr) {
-            console.error('Error upErr);
-            showToast('Error al generar PIN.', true);
-            btn.disabled = false; 
-            btn.innerText = 'Continuar';
-            return;
-        }
-
-        // Enviar SMS
-        try {
-            const smsRes = await fetch(SUPABASE_FUNCTIONS_URL, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json', 
-                    'Authorization': `Bearer ${SUPABASE_KEY}` 
-                },
-                body: JSON.stringify({ to: phone, pin })
-            });
-
-            if (!smsRes.ok) {
-                throw new Error('SMS failed: ' + smsRes.status);
-            }
-        } catch (e) {
-            console.error('SMS error:', e);
-            showToast('Error al enviar SMS. Intentá de nuevo.', true);
-            btn.disabled = false; 
-            btn.innerText = 'Continuar';
-            return;
-        }
-
-        showToast(`PIN enviado a ***${phone.slice(-3)}`, false);
-        document.getElementById('stepPhone').classList.add('opacity-50');
-        document.getElementById('pinSection').classList.remove('hidden');
-        document.getElementById('pinLabel').innerText = 'PIN recibido por SMS';
-        document.getElementById('pinHint').innerText = 'Ingresá el código de 4 dígitos que te enviamos.';
-        document.getElementById('btnResendPin').classList.remove('hidden');
-        setLoginStep(2);
-        btn.disabled = false;
-        btn.innerText = loginIsNewUser ? 'Crear cuenta' : 'Ingresar';
-        document.getElementById('loginPin').focus();
-    }
-
-    async function resendSmsPin() {
-        if (!phoneToVerify) return;
-        const btn = document.getElementById('btnActionLogin');
-        btn.disabled = true;        await requestSmsPIN(phoneToVerify, btn);
-    }
-
-    async function verifyPinAndLogin(phone, btn) {
-        const pin = document.getElementById('loginPin').value;
-        const name = document.getElementById('loginName').value.trim();
-
-        if (pin.length !== 4) {
-            showToast('El PIN debe tener 4 dígitos.', true);
-            btn.disabled = false; 
-            btn.innerText = 'Ingresar';
-            return;
-        }
-
-        try {
-                        // Verificar si está bloqueado
-            const { data: clientCheck } = await supabase.from('clientes').select('*')
-                .eq('barberia_id', currentShop.id).eq('celular', phone).single();
-
-            if (clientCheck?.pin_bloqueado_hasta) {
-                const blockedUntil = new Date(clientCheck.pin_bloqueado_hasta);
-                if (new Date() < blockedUntil) {
-                    const mins = Math.ceil((blockedUntil - new Date()) / 60000);
-                    showToast(`Demasiados intentos. Esperá ${mins} minuto${mins > 1 ? 's' : ''}.`, true);
-                    btn.disabled = false; 
-                    btn.innerText = 'Ingresar';
-                    return;
-                }
-            }
-
-            // CORREGIDO: Verificar PIN según el tipo de usuario
-            let pinCorrecto = false;
-            
-            if (loginIsNewUser || !clientCheck?.pin_permanente) {
-                // Usuario nuevo o sin PIN permanente: verificar contra pin_temporal
-                pinCorrecto = clientCheck?.pin_temporal === pin;
-            } else {
-                // Usuario existente con PIN permanente
-                pinCorrecto = clientCheck?.pin_permanente === pin;
-            }
-
-            if (!pinCorrecto) {
-                // Incrementar intentos
-                const attempts = (clientCheck?.pin_intentos || 0) + 1;
-                const updateData = { pin_intentos: attempts };
-
-                if (attempts >= MAX_PIN_ATTEMPTS) {
-                    updateData.pin_bloqueado_hasta = new Date(Date.now() + BLOCK_MINUTES * 60000).toISOString();
-                    updateData.pin_intentos = 0;
-                    showToast(`PIN incorrecto. Cuenta bloqueada por ${BLOCK_MINUTES} minutos.`, true);                } else {
-                    const remaining = MAX_PIN_ATTEMPTS - attempts;
-                    document.getElementById('attemptsWarning').innerText = 
-                        `PIN incorrecto. ${remaining} intento${remaining !== 1 ? 's' : ''} restante${remaining !== 1 ? 's' : ''}.`;
-                    document.getElementById('attemptsWarning').classList.remove('hidden');
-                    showToast(`PIN incorrecto. ${remaining} intentos restantes.`, true);
-                }
-
-                if (clientCheck) {
-                    await supabase.from('clientes').update(updateData).eq('id', clientCheck.id);
-                }
-
-                btn.disabled = false; 
-                btn.innerText = 'Ingresar';
                 return;
             }
-
-            // PIN correcto → limpiar intentos
-            await supabase.from('clientes').update({ 
-                pin_intentos: 0, 
-                pin_bloqueado_hasta: null 
-            }).eq('id', clientCheck.id);
-
-            if (loginIsNewUser) {
-                // Nuevo usuario: necesita nombre + crear PIN permanente
-                if (!name) {
-                    showToast('Ingresá tu nombre.', true);
-                    btn.disabled = false; 
-                    btn.innerText = 'Crear cuenta';
-                    return;
-                }
-                await supabase.from('clientes').update({ nombre: name }).eq('id', clientCheck.id);
-                clientCheck.nombre = name;
-                currentUser = clientCheck;
-                localStorage.setItem(CLIENT_STORAGE_KEY, currentUser.id);
-                localStorage.removeItem(ADMIN_STORAGE_KEY);
-                resetLoginView();
-                
-                // Mostrar modal para crear PIN permanente
-                document.getElementById('permanentPin1').value = '';
-                document.getElementById('permanentPin2').value = '';
-                document.getElementById('modalSetPermanentPin').classList.remove('hidden');
-                
-            } else if (!clientCheck.pin_permanente) {
-                // Usuario existente sin PIN permanente aún
-                currentUser = clientCheck;
-                localStorage.setItem(CLIENT_STORAGE_KEY, currentUser.id);
-                localStorage.removeItem(ADMIN_STORAGE_KEY);
-                resetLoginView();
-                document.getElementById('permanentPin1').value = '';                document.getElementById('permanentPin2').value = '';
-                document.getElementById('modalSetPermanentPin').classList.remove('hidden');
-                
+            // Si el nombre está pendiente (nuevo usuario), lo guardamos.
+            if (client.nombre === 'PENDIENTE') {
+                if (!name) { showToast("Por favor, ingresa tu nombre.", true); btn.disabled = false; return; }
+                await supabase.from('clientes').update({ nombre: name, pin: null }).eq('id', client.id);
+                client.nombre = name;
             } else {
-                // Login normal con PIN permanente
-                currentUser = clientCheck;
-                localStorage.setItem(CLIENT_STORAGE_KEY, currentUser.id);
-                localStorage.removeItem(ADMIN_STORAGE_KEY);
-                resetLoginView();
-                showClientDashboard();
+                // Si es usuario existente, limpiamos el PIN de la base de datos
+                await supabase.from('clientes').update({ pin: null }).eq('id', client.id);
             }
-
-            btn.disabled = false;
-
-        } catch (err) {
-            console.error('Error en verifyPinAndLogin:', err);
-            showToast('Error inesperado. Intentá de nuevo.', true);
-            btn.disabled = false;
-            btn.innerText = 'Ingresar';
-        }
-    }
-
-    async function savePermanentPin() {
-        const pin1 = document.getElementById('permanentPin1').value;
-        const pin2 = document.getElementById('permanentPin2').value;
-
-        if (pin1.length !== 4 || pin2.length !== 4) {
-            showToast('El PIN debe tener 4 dígitos.', true); 
-            return;
-        }
-        if (pin1 !== pin2) {
-            showToast('Los PINs no coinciden.', true); 
-            return;
-        }
-
-        try {
-            // Guardar en pin_permanente, limpiar pin_temporal
-            const { error } = await supabase.from('clientes').update({ 
-                pin_permanente: pin1,
-                pin_temporal: null,
-                pin_intentos: 0, 
-                pin_bloqueado_hasta: null 
-            }).eq('id', currentUser.id);
-            
-            if (error) throw error;
-
-            currentUser.pin_permanente = pin1;
-            currentUser.pin_temporal = null;
-
-            document.getElementById('modalSetPermanentPin').classList.add('hidden');            showToast('¡PIN creado! Bienvenido/a 🎉');
+            // Login Exitoso
+            currentUser = client; 
+            localStorage.setItem(CLIENT_STORAGE_KEY, currentUser.id); 
+            localStorage.removeItem(ADMIN_STORAGE_KEY);
             showClientDashboard();
-        } catch (err) {
-            console.error('Error guardando PIN:', err);
-            showToast('Error al guardar PIN. Intentá de nuevo.', true);
+            resetLoginView();
         }
-    }
-
-    function resetLoginView() {
-        setLoginStep(1);
-        loginIsNewUser = false;
-        phoneToVerify = null;
-        document.getElementById('loginPhone').disabled = false;
-        document.getElementById('loginPhone').value = '';
-        document.getElementById('loginPin').value = '';
-        document.getElementById('loginName').value = '';
-        document.getElementById('nameSection').classList.add('hidden');
-        document.getElementById('pinSection').classList.add('hidden');
-        document.getElementById('stepPhone').classList.remove('opacity-50');
-        document.getElementById('btnActionLogin').innerText = 'Continuar';
-        document.getElementById('btnActionLogin').disabled = false;
-        document.getElementById('btnResendPin').classList.add('hidden');
-        document.getElementById('phoneError').classList.add('hidden');
-        document.getElementById('attemptsWarning').classList.add('hidden');
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════════
-    //  CLIENT DASHBOARD
-    // ═══════════════════════════════════════════════════════════════════════════════
-    async function showClientDashboard() {
-        document.getElementById('viewLogin').classList.add('hidden');
-        document.getElementById('viewClient').classList.remove('hidden');
-        document.getElementById('viewBarber').classList.add('hidden');
-        document.getElementById('fabAdd').classList.add('hidden');
-        document.getElementById('clientNameDisplay').innerText = currentUser.nombre.split(' ')[0];
-        document.title = currentShop.nombre + ' - Turnos';
-        updateAdminDropdownVisibility(false);
-
-        const todayISO = new Date().toISOString().split('T')[0];
-        const { data: appt } = await supabase.from('turnos').select('*')
-            .eq('barberia_id', currentShop.id)
-            .eq('cliente_id', currentUser.id)
-            .eq('estado', 'pendiente')
-            .gte('fecha', todayISO)
-            .order('fecha', {ascending: true})
-            .limit(1)
-            .single();
-
-        if (appt) {
-            document.getElementById('activeAppointmentCard').classList.remove('hidden');            document.getElementById('newBookingContainer').classList.add('hidden');
-            document.getElementById('activeDate').innerText = formatDate(appt.fecha);
-            document.getElementById('activeTime').innerText = appt.hora.slice(0,5);
-            document.getElementById('activeService').innerText = appt.servicio;
-            currentUser.activeApptId = appt.id;
-            currentUser.activeAppt = appt;
-            document.getElementById('rescheduleContainer').classList.add('hidden');
-        } else {
-            document.getElementById('activeAppointmentCard').classList.add('hidden');
-            document.getElementById('newBookingContainer').classList.remove('hidden');
-            loadSlots();
+        // Función de reseteo de la vista
+        function resetLoginView() {
+            loginStep = 1;
+            document.getElementById('loginPhone').disabled = false;
+            document.getElementById('loginPhone').value = '';
+            document.getElementById('loginPin').value = '';
+            document.getElementById('loginName').value = '';
+            document.getElementById('nameSection').classList.add('hidden');
+            document.getElementById('pinSection').classList.add('hidden');
+            document.getElementById('btnActionLogin').innerText = 'Solicitar PIN';
+            document.getElementById('btnResendPin').classList.add('hidden');
+            document.getElementById('phoneError').classList.add('hidden');
         }
-    }
-
-    async function loadSlots() {
-        const dateStr = document.getElementById('datePicker').value;
-        if (!dateStr) return;
-        
-        const dateObj = new Date(dateStr + 'T00:00:00');
-        const dayOfWeek = dateObj.getDay();
-        const openDays = shopConfig.dias_laborables || [1,2,3,4,5,6];
-
-        if (!openDays.includes(dayOfWeek)) {
-            document.getElementById('slotsGrid').innerHTML = '';
-            document.getElementById('closedMessage').classList.remove('hidden');
-            return;
-        }
-        document.getElementById('closedMessage').classList.add('hidden');
-
-        const grid = document.getElementById('slotsGrid');
-        grid.innerHTML = '<p class="col-span-3 text-center text-sm py-4" style="color:#444;">Cargando horarios...</p>';
-        selectedTime = null;
-        document.getElementById('btnConfirmBooking').disabled = true;
-
-        const { data: turnos } = await supabase.from('turnos').select('hora')
-            .eq('barberia_id', currentShop.id).eq('fecha', dateStr).neq('estado', 'cancelado');
-
-        const occupation = {};
-        turnos.forEach(t => { 
-            const h = t.hora.slice(0,5); 
-            occupation[h] = (occupation[h]||0) + 1; 
-        });
-        
-        const capacity = currentShop.sillas || 1;
-        const breaks = shopConfig.barber_breaks || [];
-
-        grid.innerHTML = '';
-        generatedHours.forEach(time => {
-            let cap = capacity;
-            breaks.forEach(b => {                 if (b.start && b.end && time >= b.start && time < b.end) cap--; 
-            });
-            const count = occupation[time] || 0;
-            const spots = Math.max(0, cap) - count;
-            const isAvailable = spots > 0;
-
-            const btn = document.createElement('button');
-            btn.className = `slot-btn ${isAvailable ? 'available' : 'occupied'}`;
-            btn.innerHTML = time + (isAvailable && spots <= 2 ? `<span class="spots-badge">${spots}</span>` : '');
-
-            if (isAvailable) {
-                btn.onclick = () => {
-                    document.querySelectorAll('.slot-btn.available, .slot-btn.selected').forEach(b => {
-                        b.classList.remove('selected');
-                        b.classList.add('available');
-                    });
-                    btn.classList.remove('available');
-                    btn.classList.add('selected');
-                    selectedTime = time;
-                    document.getElementById('btnConfirmBooking').disabled = false;
-                };
+        async function showClientDashboard() {
+            document.getElementById('viewLogin').classList.add('hidden');
+            document.getElementById('viewClient').classList.remove('hidden');
+            document.getElementById('viewBarber').classList.add('hidden');
+            document.getElementById('fabAdd').classList.add('hidden');
+            document.getElementById('clientNameDisplay').innerText = currentUser.nombre.split(' ')[0];
+            document.title = currentShop.nombre + " - Agendamiento";
+            updateAdminDropdownVisibility(false);
+            const todayISO = new Date().toISOString().split('T')[0];
+            const { data: appt } = await supabase.from('turnos').select('*').eq('barberia_id', currentShop.id).eq('cliente_id', currentUser.id).eq('estado', 'pendiente').gte('fecha', todayISO).order('fecha', {ascending: true}).single();
+            if (appt) {
+                document.getElementById('activeAppointmentCard').classList.remove('hidden');
+                document.getElementById('newBookingContainer').classList.add('hidden');
+                document.getElementById('activeDate').innerText = formatDate(appt.fecha);
+                document.getElementById('activeTime').innerText = appt.hora.slice(0,5);
+                document.getElementById('activeService').innerText = appt.servicio;
+                currentUser.activeApptId = appt.id;
+            } else {
+                document.getElementById('activeAppointmentCard').classList.add('hidden');
+                document.getElementById('newBookingContainer').classList.remove('hidden');
+                loadSlots();
             }
-            grid.appendChild(btn);
-        });
-    }
-
-    async function createClientBooking() {
-        const date = document.getElementById('datePicker').value;
-        const service = document.getElementById('serviceSelect').value;
-        const btn = document.getElementById('btnConfirmBooking');
-        
-        btn.disabled = true; 
-        btn.innerText = 'Confirmando...';
-
-        const { error } = await supabase.from('turnos').insert({
-            barberia_id: currentShop.id,
-            cliente_id: currentUser.id date, 
-            hora: selectedTime, 
-            servicio: service
-        });
-
-        btn.innerText = 'Confirmar turno';
-        if (!error) { 
-            showToast('¡Turno confirmado! ✅'); 
-            showClientDashboard(); 
-        } else { 
-            showToast('Error: ' + error.message, true); 
-            btn.disabled = false; 
         }
-    }
-    async function cancelMyAppointment() {
-        showConfirmationModal('¿Querés CANCELAR tu turno?', async () => {
-            await supabase.from('turnos').update({estado:'cancelado'}).eq('id', currentUser.activeApptId);
-            showToast('Turno cancelado.', true);
-            showClientDashboard();
-        });
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════════
-    //  RESCHEDULE
-    // ═══════════════════════════════════════════════════════════════════════════════
-    function openReschedule() {
-        const container = document.getElementById('rescheduleContainer');
-        container.classList.toggle('hidden');
-
-        if (!container.classList.contains('hidden') && !rescheduleCalendarInstance) {
-            const today = new Date().toISOString().split('T')[0];
-            rescheduleCalendarInstance = flatpickr('#rescheduleDatePicker', {
-                ...fpBase, 
-                defaultDate: today,
-                onChange: () => loadRescheduleSlots()
-            });
-            loadRescheduleSlots();
-        }
-    }
-
-    async function loadRescheduleSlots() {
-        const dateStr = document.getElementById('rescheduleDatePicker').value;
-        if (!dateStr) return;
-
-        const dateObj = new Date(dateStr + 'T00:00:00');
-        const dayOfWeek = dateObj.getDay();
-        const openDays = shopConfig.dias_laborables || [1,2,3,4,5,6];
-
-        const grid = document.getElementById('rescheduleGrid');
-        grid.innerHTML = '';
-        rescheduleSelectedTime = null;
-        document.getElementById('btnReschedule').disabled = true;
-
-        if (!openDays.includes(dayOfWeek)) {
-            grid.innerHTML = '<p class="col-span-3 text-xs text-center py-2" style="color:#ef4444;">Cerrado este día.</p>';
-            return;
-        }
-
-        const { data: turnos } = await supabase.from('turnos').select('hora')
-            .eq('barberia_id', currentShop.id).eq('fecha', dateStr).neq('estado', 'cancelado');
-
-        const occupation = {};
-        turnos.forEach(t => {             const h = t.hora.slice(0,5); 
-            occupation[h] = (occupation[h]||0) + 1; 
-        });
-        
-        const capacity = currentShop.sillas || 1;
-        const breaks = shopConfig.barber_breaks || [];
-
-        generatedHours.forEach(time => {
-            let cap = capacity;
-            breaks.forEach(b => { 
-                if (b.start && b.end && time >= b.start && time < b.end) cap--; 
-            });
-            const count = occupation[time] || 0;
-            const spots = Math.max(0, cap) - count;
-            const isAvailable = spots > 0;
-
-            const btn = document.createElement('button');
-            btn.className = `slot-btn text-xs ${isAvailable ? 'available' : 'occupied'}`;
-            btn.style.padding = '8px 4px';
-            btn.innerText = time;
-
-            if (isAvailable) {
-                btn.onclick = () => {
-                    document.querySelectorAll('#rescheduleGrid .slot-btn').forEach(b => {
-                        b.classList.remove('selected'); 
-                        b.classList.add('available');
-                    });
-                    btn.classList.remove('available'); 
-                    btn.classList.add('selected');
-                    rescheduleSelectedTime = time;
-                    document.getElementById('btnReschedule').disabled = false;
-                };
-            }
-            grid.appendChild(btn);
-        });
-    }
-
-    async function confirmReschedule() {
-        const newDate = document.getElementById('rescheduleDatePicker').value;
-        if (!newDate || !rescheduleSelectedTime) return;
-
-        const btn = document.getElementById('btnReschedule');
-        btn.disabled = true; 
-        btn.innerText = 'Guardando...';
-
-        const { error } = await supabase.from('turnos')
-            .update({ fecha: newDate, hora: rescheduleSelectedTime })
-            .eq('id', currentUser.activeApptId);
-
-        btn.innerText = 'Confirmar cambio';        if (!error) {
-            showToast('Turno reprogramado ✅');
-            rescheduleCalendarInstance = null;
-            showClientDashboard();
-        } else {
-            showToast('Error al reagendar.', true);
-            btn.disabled = false;
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════════
-    //  CHANGE PIN (client)
-    // ═══════════════════════════════════════════════════════════════════════════════
-    function openChangePinModal() {
-        document.getElementById('currentPin').value = '';
-        document.getElementById('newPin').value = '';
-        document.getElementById('confirmNewPin').value = '';
-        toggleModal('modalChangePin');
-    }
-
-    async function changeClientPin() {
-        const cur  = document.getElementById('currentPin').value;
-        const nw   = document.getElementById('newPin').value;
-        const conf = document.getElementById('confirmNewPin').value;
-        const btn  = document.getElementById('btnSavePin');
-
-        if (cur.length !== 4) { 
-            showToast('PIN actual inválido.', true); 
-            return; 
-        }
-        if (nw.length !== 4 || conf.length !== 4) { 
-            showToast('El nuevo PIN debe tener 4 dígitos.', true); 
-            return; 
-        }
-        if (nw !== conf) { 
-            showToast('Los PINs nuevos no coinciden.', true); 
-            return; 
-        }
-
-        btn.disabled = true; 
-        btn.innerText = 'Guardando...';
-
-        try {
-            // CORREGIDO: Verificar contra pin_permanente
-            const { data: check } = await supabase.from('clientes')
-                .select('pin_permanente')
-                .eq('id', currentUser.id)
-                .single();
-
-            if (!check || check.pin_permanente !== cur) {                showToast('PIN actual incorrecto.', true);
-                btn.disabled = false; 
-                btn.innerText = 'Guardar PIN';
+        async function loadSlots() {
+            const dateStr = document.getElementById('datePicker').value;
+            const dateObj = new Date(dateStr + 'T00:00:00'); 
+            const dayOfWeek = dateObj.getDay(); 
+            const openDays = shopConfig.dias_laborables || [1,2,3,4,5,6];
+            if (!openDays.includes(dayOfWeek)) {
+                document.getElementById('slotsGrid').innerHTML = '';
+                document.getElementById('closedMessage').classList.remove('hidden');
                 return;
             }
-
-            // CORREGIDO: Actualizar pin_permanente
-            const { error } = await supabase.from('clientes').update({ 
-                pin_permanente: nw 
-            }).eq('id', currentUser.id);
-
-            if (error) throw error;
-
-            currentUser.pin_permanente = nw;
-            showToast('PIN actualizado ✅');
-            toggleModal('modalChangePin');
-        } catch (err) {
-            console.error('Error cambiando PIN:', err);
-            showToast('Error al actualizar PIN.', true);
-        } finally {
-            btn.disabled = false; 
-            btn.innerText = 'Guardar PIN';
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════════
-    //  ADMIN
-    // ═══════════════════════════════════════════════════════════════════════════════
-    function showAdminDashboard() {
-        document.getElementById('viewLogin').classList.add('hidden');
-        document.getElementById('viewClient').classList.add('hidden');
-        document.getElementById('viewBarber').classList.remove('hidden');
-        document.getElementById('fabAdd').classList.remove('hidden');
-        document.title = currentShop.nombre + ' - Admin';
-        updateAdminDropdownVisibility(true);
-        loadBarberDashboard();
-    }
-
-    function switchAdminTab(tab) {
-        ['agenda','stats','config'].forEach(t => {
-            const tabBtn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
-            const panel = document.getElementById('panel' + t.charAt(0).toUpperCase() + t.slice(1));
-            if (tabBtn) tabBtn.classList.toggle('active', t === tab);
-            if (panel) panel.classList.toggle('hidden', t !== tab);
-        });
-        
-        if (tab === 'agenda') loadBarberDashboard();
-        if (tab === 'stats') loadStats();
-        if (tab === 'config') loadConfigForm();
-    }
-    async function loginBarber() {
-        const username = document.getElementById('adminUsername').value;
-        const pass = document.getElementById('adminPass').value;
-        
-        const { data: barber } = await supabase.from('barberos').select('*')
-            .eq('barberia_id', currentShop.id)
-            .eq('email', username)
-            .eq('password', pass)
-            .single();
-            
-        if (barber) {
-            currentUser = barber;
-            localStorage.setItem(ADMIN_STORAGE_KEY, currentUser.id);
-            localStorage.removeItem(CLIENT_STORAGE_KEY);
-            document.getElementById('modalBarberLogin').classList.add('hidden');
-            showAdminDashboard();
-        } else {
-            showToast('Datos incorrectos', true);
-        }
-    }
-
-    async function loadBarberDashboard() {
-        const date = document.getElementById('barberDatePicker').value;
-        const list = document.getElementById('barberAppointmentsList');
-        const summary = document.getElementById('occupancySummary');
-        
-        list.innerHTML = '<p class="text-center py-8 text-sm" style="color:#444;">Cargando...</p>';
-
-        const { data: appts } = await supabase.from('turnos')
-            .select(`id, hora, servicio, estado, clientes (nombre, celular)`)
-            .eq('barberia_id', currentShop.id)
-            .eq('fecha', date)
-            .order('hora');
-
-        list.innerHTML = ''; 
-        summary.innerHTML = '';
-
-        if (!appts || !appts.length) {
-            list.innerHTML = '<div class="text-center py-12"><p class="text-2xl mb-2">🏖️</p><p class="text-sm" style="color:#444;">Agenda libre</p></div>';
-        }
-
-        const occupation = {};
-        appts.forEach(a => { 
-            if(a.estado!=='cancelado') 
-                occupation[a.hora.slice(0,5)] = (occupation[a.hora.slice(0,5)]||0)+1; 
-        });
-
-        generatedHours.forEach(h => {
-            const count = occupation[h] || 0;            if (count > 0) {
-                const div = document.createElement('div');
-                div.className = `occ-pill ${count >= currentShop.sillas ? 'occ-full' : 'occ-partial'}`;
-                div.innerText = `${h}: ${count}/${currentShop.sillas}`;
-                summary.appendChild(div);
-            }
-        });
-
-        appts.forEach(a => {
-            const isBlocked = a.clientes.nombre === 'PAUSA';
-            const isCancelled = a.estado === 'cancelado';
-
-            const cardClass = isCancelled ? 'cancelled' : isBlocked ? 'paused' : 'active';
-            let badge = isCancelled
-                ? '<span class="badge badge-red">CANCELADO</span>'
-                : isBlocked
-                    ? '<span class="badge badge-yellow">PAUSA</span>'
-                    : '<span class="badge badge-green">EN ESPERA</span>';
-
-            let action = isCancelled
-                ? `<button onclick="deleteAppt(${a.id})" class="text-sm px-3 py-1.5 rounded-lg transition" style="color:#555; border:1px solid #222;" title="Borrar"><i class="fas fa-trash-alt"></i></button>`
-                : `<button onclick="barberCancel(${a.id})" class="btn-danger" title="Cancelar"><i class="fas fa-times"></i></button>`;
-
-            const item = document.createElement('div');
-            item.className = `admin-appt ${cardClass}`;
-            item.innerHTML = `
-                <div>
-                    <div class="flex items-center gap-2 mb-1">
-                        <span class="font-display font-700 text-lg text-white">${a.hora.slice(0,5)}</span>
-                        ${badge}
-                    </div>
-                    <div class="text-sm font-medium" style="color:${isBlocked ? '#f59e0b' : '#ddd'};">${a.clientes.nombre}</div>
-                    <div class="text-xs mt-0.5" style="color:#555;">${a.servicio}</div>
-                </div>
-                ${action}
-            `;
-            list.appendChild(item);
-        });
-    }
-
-    async function barberCancel(id) {
-        showConfirmationModal('¿Cancelar este turno?', async () => {
-            await supabase.from('turnos').update({estado:'cancelado'}).eq('id', id);
-            showToast('Turno cancelado.');
-            loadBarberDashboard();
-        });
-    }
-
-    async function deleteAppt(id) {
-        showConfirmationModal('¿Borrar definitivamente del historial?', async () => {            const { error } = await supabase.from('turnos').delete().eq('id', id);
-            if (!error) { 
-                showToast('Registro eliminado.'); 
-                loadBarberDashboard(); 
-            } else {
-                showToast('Error al borrar', true);
-            }
-        });
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════════
-    //  STATS
-    // ═══════════════════════════════════════════════════════════════════════════════
-    async function loadStats() {
-        const today = new Date();
-        const todayISO = today.toISOString().split('T')[0];
-
-        const weekAgo = new Date(today);
-        weekAgo.setDate(today.getDate() - 6);
-        const weekAgoISO = weekAgo.toISOString().split('T')[0];
-
-        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
-
-        const { data: monthData } = await supabase.from('turnos').select('fecha, estado, servicio')
-            .eq('barberia_id', currentShop.id)
-            .gte('fecha', monthStart)
-            .lte('fecha', todayISO);
-
-        if (!monthData) return;
-
-        const todayCount = monthData.filter(t => t.fecha === todayISO && t.estado !== 'cancelado').length;
-        document.getElementById('statTodayTotal').innerText = todayCount;
-
-        const weekData = monthData.filter(t => t.fecha >= weekAgoISO && t.estado !== 'cancelado');
-        document.getElementById('statWeekTotal').innerText = weekData.length;
-
-        const monthConfirmed = monthData.filter(t => t.estado !== 'cancelado').length;
-        document.getElementById('statMonthTotal').innerText = monthConfirmed;
-
-        const cancelCount = monthData.filter(t => t.estado === 'cancelado').length;
-        document.getElementById('statCancelRate').innerText = cancelCount;
-
-        // Chart
-        const labels = [];
-        const values = [];
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date(today);
-            d.setDate(today.getDate() - i);
-            const dISO = d.toISOString().split('T')[0];
-            labels.push(DAYS_ES[d.getDay()]);            values.push(monthData.filter(t => t.fecha === dISO && t.estado !== 'cancelado').length);
-        }
-
-        if (weekChartInstance) weekChartInstance.destroy();
-        const ctx = document.getElementById('chartWeek').getContext('2dInstance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels,
-                datasets: [{
-                    data: values,
-                    backgroundColor: currentShop.color_primary + '66',
-                    borderColor: currentShop.color_primary,
-                    borderWidth: 2,
-                    borderRadius: 6,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { 
-                        grid: { color: '#2a2a2a' }, 
-                        ticks: { color: '#666', font: { family: 'Outfit', size: 11 } } 
-                    },
-                    y: { 
-                        grid: { color: '#2a2a2a' }, 
-                        ticks: { color: '#666', font: { family: 'Outfit', size: 11 }, stepSize: 1 }, 
-                        beginAtZero: true 
+            document.getElementById('closedMessage').classList.add('hidden');
+            const grid = document.getElementById('slotsGrid');
+            grid.innerHTML = '<p class="col-span-3 text-center">Cargando...</p>';
+            selectedTime = null;
+            document.getElementById('btnConfirmBooking').disabled = true;
+            const { data: turnos } = await supabase.from('turnos').select('hora').eq('barberia_id', currentShop.id).eq('fecha', dateStr).neq('estado', 'cancelado');
+            const occupation = {};
+            turnos.forEach(t => { const h = t.hora.slice(0,5); occupation[h] = (occupation[h] || 0) + 1; });
+            const capacity = currentShop.sillas || 1;
+            grid.innerHTML = '';
+            const barberBreaks = shopConfig.barber_breaks || [];
+            generatedHours.forEach(time => {
+                let currentCapacity = capacity;
+                barberBreaks.forEach(breakTime => {
+                    if (breakTime.start && breakTime.end) {
+                        if (time >= breakTime.start && time < breakTime.end) currentCapacity--;
+                    }
+                });
+                const currentCount = occupation[time] || 0;
+                const isAvailable = (Math.max(0, currentCapacity) - currentCount) > 0;
+                const btn = document.createElement('button');
+                btn.className = `slot-btn border rounded-lg py-3 font-medium text-sm flex flex-col items-center justify-center ${ !isAvailable ? 'occupied' : 'available bg-white border-gray-200 text-gray-700' }`;
+                let spotsLeft = Math.max(0, currentCapacity) - currentCount;
+                let badgeHtml = (isAvailable && spotsLeft <= 2) ? `<span class="spots-badge">${spotsLeft}</span>` : '';
+                btn.innerHTML = `${time}${badgeHtml}`;
+                if (isAvailable) {
+                    btn.onclick = () => {
+                        document.querySelectorAll('.slot-btn').forEach(b => {
+                            if (b.classList.contains('available')) {
+                                b.classList.remove('selected', 'bg-primary', 'text-white');
+                                b.classList.add('bg-white', 'text-gray-700');
+                            }
+                        });
+                        btn.classList.remove('bg-white', 'text-gray-700');
+                        btn.classList.add('selected', 'bg-primary', 'text-white');
+                        selectedTime = time;
+                        document.getElementById('btnConfirmBooking').disabled = false;
                     }
                 }
-            }
-        });
-
-        // Services ranking
-        const serviceCounts = {};
-        monthData.filter(t => t.estado !== 'cancelado').forEach(t => {
-            serviceCounts[t.servicio] = (serviceCounts[t.servicio] || 0) + 1;
-        });
-        const sorted = Object.entries(serviceCounts).sort((a,b) => b[1]-a[1]);
-        const maxCount = sorted[0]?.[1] || 1;
-        const rankingEl = document.getElementById('servicesRanking');
-        rankingEl.innerHTML = '';
-
-        if (!sorted.length) {
-            rankingEl.innerHTML = '<p class="text-sm" style="color:#444;">Sin datos este mes.</p>';
-            return;
-        }
-
-        sorted.forEach(([name, count], i) => {            const pct = (count / maxCount) * 100;
-            const div = document.createElement('div');
-            div.innerHTML = `
-                <div class="flex justify-between items-center mb-1">
-                    <span class="text-sm text-white">${i+1}. ${name}</span>
-                    <span class="text-xs font-display font-700" style="color:var(--color-primary-light);">${count}</span>
-                </div>
-                <div class="h-1.5 rounded-full" style="background:#2a2a2a;">
-                    <div class="h-1.5 rounded-full transition-all" style="width:${pct}%; background:var(--color-primary);"></div>
-                </div>
-            `;
-            rankingEl.appendChild(div);
-        });
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════════
-    //  CONFIG
-    // ═══════════════════════════════════════════════════════════════════════════════
-    function loadConfigForm() {
-        document.getElementById('cfgOpen').value = currentShop.apertura.slice(0,5);
-        document.getElementById('cfgClose').value = currentShop.cierre.slice(0,5);
-        document.getElementById('cfgInterval').value = currentShop.intervalo;
-        document.getElementById('cfgChairs').value = currentShop.sillas;
-        document.getElementById('cfgMsg').value = shopConfig.mensaje_aviso || '';
-        document.getElementById('cfgShowWpp').checked = shopConfig.mostrar_whatsapp || false;
-        document.getElementById('cfgWppNumber').value = shopConfig.whatsapp || '';
-        
-        const days = shopConfig.dias_laborables || [];
-        document.querySelectorAll('input[name="workday"]').forEach(cb => {
-            cb.checked = days.includes(parseInt(cb.value));
-        });
-        
-        renderServicesListDOM();
-        renderBarberBreaks();
-    }
-
-    function renderBarberBreaks() {
-        const container = document.getElementById('barberBreaksContainer');
-        container.innerHTML = '';
-        const chairs = parseInt(document.getElementById('cfgChairs').value) || 1;
-        
-        while (shopConfig.barber_breaks.length < chairs) 
-            shopConfig.barber_breaks.push({ id: shopConfig.barber_breaks.length + 1, start: '', end: '' });
-        shopConfig.barber_breaks = shopConfig.barber_breaks.slice(0, chairs);
-        
-        shopConfig.barber_breaks.forEach((br, i) => {
-            const div = document.createElement('div');
-            div.className = 'flex gap-2 items-center';
-            div.innerHTML = `
-                <label class="text-xs font-semibold w-20 flex-shrink-0" style="color:#666;">Barbero ${i+1}</label>                <input type="tel" inputmode="numeric" class="cfg-input text-center text-sm font-mono" placeholder="Inicio" data-barber-id="${i}" data-time-type="start" value="${br.start||''}" oninput="maskTime(this)">
-                <span style="color:#444;">—</span>
-                <input type="="numeric" class="cfg-input text-center text-sm font-mono" placeholder="Fin" data-barber-id="${i}" data-time-type="end" value="${br.end||''}" oninput="maskTime(this)">
-            `;
-            container.appendChild(div);
-        });
-        
-        container.querySelectorAll('input').forEach(input => {
-            input.addEventListener('change', e => {
-                const id = parseInt(e.target.dataset.barberId);
-                const type = e.target.dataset.timeType;
-                shopConfig.barber_breaks[id][type] = e.target.value;
+                grid.appendChild(btn);
             });
-        });
-    }
-
-    function renderServicesListDOM() {
-        const container = document.getElementById('servicesList');
-        container.innerHTML = '';
-        
-        (shopConfig.servicios || []).forEach((s, i) => {
-            const div = document.createElement('div');
-            div.className = 'flex justify-between items-center p-2.5 rounded-lg';
-            div.style.cssText = 'background:#1a1a1a; border:1px solid #2a2a2a;';
-            div.innerHTML = `
-                <span class="text-sm text-white">${s.nombre}</span>
-                <div class="flex items-center gap-3">
-                    <span class="text-sm font-display font-700" style="color:var(--color-primary-light);">$${s.precio}</span>
-                    <button onclick="removeService(${i})" style="color:#ef4444; font-size:16px; line-height:1;">×</button>
-                </div>
-            `;
-            container.appendChild(div);
-        });
-    }
-
-    function addServiceDOM() {
-        const name = document.getElementById('newSvcName').value.trim();
-        const price = document.getElementById('newSvcPrice').value;
-        if (!name || !price) return;
-        if (!shopConfig.servicios) shopConfig.servicios = [];
-        shopConfig.servicios.push({nombre: name, precio: parseInt(price)});
-        document.getElementById('newSvcName').value = '';
-        document.getElementById('newSvcPrice').value = '';
-        renderServicesListDOM();
-    }
-
-    function removeService(i) { 
-        shopConfig.servicios.splice(i, 1); 
-        renderServicesListDOM(); 
-    }
-    async function saveConfig() {
-        const newOpen = document.getElementById('cfgOpen').value;
-        const newClose = document.getElementById('cfgClose').value;
-        const newInterval = parseInt(document.getElementById('cfgInterval').value);
-        const newChairs = parseInt(document.getElementById('cfgChairs').value);
-        const activeDays = Array.from(document.querySelectorAll('input[name="workday"]:checked'))
-            .map(cb => parseInt(cb.value));
-
-        shopConfig.dias_laborables = activeDays;
-        shopConfig.mensaje_aviso = document.getElementById('cfgMsg').value;
-        shopConfig.mostrar_whatsapp = document.getElementById('cfgShowWpp').checked;
-        shopConfig.whatsapp = document.getElementById('cfgWppNumber').value;
-        shopConfig.barber_breaks = shopConfig.barber_breaks.filter(b => b.start && b.end);
-
-        const { error } = await supabase.from('barberias').update({
-            apertura: newOpen, 
-            cierre: newClose, 
-            intervalo: newInterval, 
-            sillas: newChairs, 
-            config: shopConfig
-        }).eq('id', currentShop.id);
-
-        if (!error) {
-            showToast('Configuración guardada ✅');
-            currentShop.apertura = newOpen; 
-            currentShop.cierre = newClose;
-            currentShop.intervalo = newInterval; 
-            currentShop.sillas = newChairs;
-            generatedHours = generateTimeSlots(currentShop.apertura, currentShop.cierre, currentShop.intervalo);
-            applyTheme();
-            renderServiceOptions();
-            showAdminDashboard();
-            switchAdminTab('config');
-        } else {
-            showToast('Error: ' + error.message, true);
         }
-    }
-
-    async function changeAdminPassword() {
-        const cur  = document.getElementById('currentPass').value;
-        const nw   = document.getElementById('newPass').value;
-        const conf = document.getElementById('confirmNewPass').value;
-        
-        if (!cur || !nw || !conf) return showToast('Faltan datos', true);
-        if (nw !== conf) return showToast('Las contraseñas no coinciden', true);
-        if (cur !== currentUser.password) return showToast('Contraseña actual incorrecta', true);
-        
-        const { error } = await supabase.from('barberos').update({password: nw}).eq('id', currentUser.id);
-        if (!error) {             currentUser.password = nw; 
-            showToast('Contraseña actualizada ✅'); 
-            toggleModal('modalAccountSettings'); 
-        } else {
-            showToast('Error', true);
+        async function createClientBooking() {
+            const date = document.getElementById('datePicker').value;
+            const service = document.getElementById('serviceSelect').value;
+            const { error } = await supabase.from('turnos').insert({ barberia_id: currentShop.id, cliente_id: currentUser.id, fecha: date, hora: selectedTime, servicio: service });
+            if (!error) { showToast("¡Turno confirmado! 👍"); showClientDashboard(); }
+            else showToast("Error: " + error.message, true);
         }
-    }
-
-    async function createManualBooking() {
-        const phone   = document.getElementById('manualPhone').value;
-        const name    = document.getElementById('manualName').value;
-        const date    = document.getElementById('manualDate').value;
-        const time    = document.getElementById('manualTime').value;
-        const service = document.getElementById('manualService').value;
-
-        if (!name || !date || !time) return showToast('Faltan datos', true);
-
-        let clientId;
-        const { data: existing } = await supabase.from('clientes').select('id')
-            .eq('barberia_id', currentShop.id)
-            .eq('celular', phone || '000000000')
-            .single();
-
-        if (existing) {
-            clientId = existing.id;
-        } else {
-            const { data: newC } = await supabase.from('clientes')
-                .insert({ 
-                    barberia_id: currentShop.id, 
-                    celular: phone || '000000000', 
-                    nombre: name, 
-                    pin_temporal: null,
-                    pin_permanente: null 
-                })
-                .select()
-                .single();
-            clientId = newC.id;
+        async function cancelMyAppointment() {
+            showConfirmationModal("¿Estás seguro de que quieres CANCELAR tu turno?", 
+                async () => {
+                    await supabase.from('turnos').update({ estado: 'cancelado' }).eq('id', currentUser.activeApptId);
+                    showToast("Turno cancelado.", true);
+                    showClientDashboard();
+                }, () => {} );
+        }
+        // --- ADMIN ---
+        function showAdminDashboard() {
+            document.getElementById('viewLogin').classList.add('hidden');
+            document.getElementById('viewClient').classList.add('hidden');
+            document.getElementById('viewBarber').classList.remove('hidden');
+            document.getElementById('fabAdd').classList.remove('hidden');
+            document.title = currentShop.nombre + " - Administración";
+            updateAdminDropdownVisibility(true);
+            loadBarberDashboard();
+        }
+        function switchAdminTab(tabName) {
+            const tabA = document.getElementById('tabAgenda'); const tabC = document.getElementById('tabConfig');
+            const panA = document.getElementById('panelAgenda'); const panC = document.getElementById('panelConfig');
+            if(tabName === 'agenda') {
+                tabA.classList.add('text-primary', 'border-b-2'); tabA.classList.remove('text-gray-500');
+                tabC.classList.remove('text-primary', 'border-b-2'); tabC.classList.add('text-gray-500');
+                panA.classList.remove('hidden'); panC.classList.add('hidden');
+                loadBarberDashboard();
+            } else {
+                tabC.classList.add('text-primary', 'border-b-2'); tabC.classList.remove('text-gray-500');
+                tabA.classList.remove('text-primary', 'border-b-2'); tabA.classList.add('text-gray-500');
+                panC.classList.remove('hidden'); panA.classList.add('hidden');
+                loadConfigForm();
+            }
+        }
+        async function loginBarber() {
+            const username = document.getElementById('adminUsername').value;
+            const pass = document.getElementById('adminPass').value;
+            const { data: barber } = await supabase.from('barberos').select('*').eq('barberia_id', currentShop.id).eq('email', username).eq('password', pass).single();
+            if (barber) {
+                currentUser = barber;
+                localStorage.setItem(ADMIN_STORAGE_KEY, currentUser.id); localStorage.removeItem(CLIENT_STORAGE_KEY);
+                document.getElementById('modalBarberLogin').classList.add('hidden');
+                showAdminDashboard();
+            } else showToast("Datos incorrectos", true);
+        }
+        async function loadBarberDashboard() {
+            const date = document.getElementById('barberDatePicker').value;
+            const list = document.getElementById('barberAppointmentsList');
+            const summary = document.getElementById('occupancySummary');
+            list.innerHTML = '<p class="text-center text-gray-400">Cargando...</p>';
+            const { data: appts } = await supabase.from('turnos').select(`id, hora, servicio, estado, clientes (nombre, celular)`).eq('barberia_id', currentShop.id).eq('fecha', date).order('hora');
+            list.innerHTML = ''; summary.innerHTML = '';
+            if (!appts.length) list.innerHTML = '<p class="text-center text-gray-400 py-10">Agenda libre 🏖️</p>';
+            const occupation = {};
+            appts.forEach(a => { if(a.estado!=='cancelado') occupation[a.hora.slice(0,5)] = (occupation[a.hora.slice(0,5)]||0)+1; });
+            generatedHours.forEach(h => {
+                const count = occupation[h] || 0;
+                if(count > 0) {
+                    const div = document.createElement('div');
+                    div.className = `flex-shrink-0 px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap ${count >= currentShop.sillas ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`;
+                    div.innerText = `${h}: ${count}/${currentShop.sillas}`;
+                    summary.appendChild(div);
+                }
+            });
+            appts.forEach(a => {
+                const isBlocked = a.clientes.nombre === 'PAUSA'; 
+                let cardClass = 'bg-white shadow-sm border-l-4 border-green-500';
+                let statusLabel = `<span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">✅ EN ESPERA</span>`;
+                let actionBtn = `<button onclick="barberCancel(${a.id})" class="text-red-500 p-2 hover:bg-red-100 rounded-full transition" title="Cancelar Turno"><i class="fas fa-times"></i></button>`;
+                if (a.estado === 'cancelado') {
+                    cardClass = 'bg-red-50 border-l-4 border-red-300 opacity-75';
+                    statusLabel = `<span class="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded">❌ CANCELADO</span>`;
+                    actionBtn = `<button onclick="deleteAppt(${a.id})" class="text-gray-500 p-2 hover:bg-gray-200 rounded-full transition" title="Borrar Definitivamente"><i class="fas fa-trash-alt"></i></button>`;
+                } else if (isBlocked) {
+                    cardClass = 'bg-yellow-50 border-l-4 border-yellow-400';
+                    statusLabel = `<span class="text-xs font-bold text-yellow-700 bg-yellow-100 px-2 py-1 rounded">⏸️ PAUSA</span>`;
+                }
+                const item = document.createElement('div');
+                item.className = `border rounded-xl p-4 flex justify-between items-center ${cardClass}`;
+                item.innerHTML = `
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="font-bold text-lg text-gray-800">${a.hora.slice(0,5)}</span>
+                            ${statusLabel}
+                        </div>
+                        <div class="text-sm font-medium ${isBlocked ? 'text-yellow-700' : 'text-gray-700'}">${a.clientes.nombre}</div>
+                        <div class="text-xs text-gray-500">${a.servicio}</div>
+                    </div>
+                    ${actionBtn}
+                `;
+                list.appendChild(item);
+            });
+        }
+        async function barberCancel(id) {
+            showConfirmationModal("¿Cancelar este turno?", 
+                async () => {
+                    await supabase.from('turnos').update({estado:'cancelado'}).eq('id', id);
+                    showToast("Turno cancelado.");
+                    loadBarberDashboard();
+                }, () => {});
+        }
+        async function deleteAppt(id) {
+            showConfirmationModal("¿Borrar definitivamente del historial?", 
+                async () => {
+                    const { error } = await supabase.from('turnos').delete().eq('id', id);
+                    if(!error) {
+                        showToast("Registro eliminado.");
+                        loadBarberDashboard();
+                    } else showToast("Error al borrar", true);
+                }, () => {});
+        }
+        // --- CONFIG ---
+        function loadConfigForm() {
+            document.getElementById('cfgOpen').value = currentShop.apertura.slice(0,5);
+            document.getElementById('cfgClose').value = currentShop.cierre.slice(0,5);
+            document.getElementById('cfgInterval').value = currentShop.intervalo;
+            document.getElementById('cfgChairs').value = currentShop.sillas;
+            document.getElementById('cfgMsg').value = shopConfig.mensaje_aviso || '';
+            document.getElementById('cfgShowWpp').checked = shopConfig.mostrar_whatsapp || false;
+            document.getElementById('cfgWppNumber').value = shopConfig.whatsapp || '';
+            const days = shopConfig.dias_laborables || [];
+            document.querySelectorAll('input[name="workday"]').forEach(cb => { cb.checked = days.includes(parseInt(cb.value)); });
+            renderServicesListDOM();
+            renderBarberBreaks();
+        }
+        function renderBarberBreaks() {
+            const container = document.getElementById('barberBreaksContainer');
+            container.innerHTML = '';
+            const chairs = parseInt(document.getElementById('cfgChairs').value) || 1;
+            while (shopConfig.barber_breaks.length < chairs) shopConfig.barber_breaks.push({ id: shopConfig.barber_breaks.length + 1, start: '', end: '' });
+            shopConfig.barber_breaks = shopConfig.barber_breaks.slice(0, chairs);
+            shopConfig.barber_breaks.forEach((breakTime, index) => {
+                const div = document.createElement('div');
+                div.className = 'flex gap-2 items-center';
+                div.innerHTML = `
+                    <label class="text-sm font-medium w-16">Barbero ${index + 1}:</label>
+                    <input type="tel" inputmode="numeric" class="p-1 border rounded w-full text-sm text-center time-mask" placeholder="Inicio" data-barber-id="${index}" data-time-type="start" value="${breakTime.start || ''}" oninput="maskTime(this)">
+                    <span class="text-xs">-</span>
+                    <input type="tel" inputmode="numeric" class="p-1 border rounded w-full text-sm text-center time-mask" placeholder="Fin" data-barber-id="${index}" data-time-type="end" value="${breakTime.end || ''}" oninput="maskTime(this)">
+                `;
+                container.appendChild(div);
+            });
+            container.querySelectorAll('input').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const id = parseInt(e.target.dataset.barberId);
+                    const type = e.target.dataset.timeType;
+                    shopConfig.barber_breaks[id][type] = e.target.value;
+                });
+            });
+        }
+        function renderServicesListDOM() {
+            const container = document.getElementById('servicesList'); container.innerHTML = '';
+            (shopConfig.servicios || []).forEach((s, index) => {
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center bg-gray-50 p-2 rounded border';
+                div.innerHTML = `<span class="text-sm">${s.nombre} - $${s.precio}</span><button onclick="removeService(${index})" class="text-red-500 font-bold px-2">×</button>`;
+                container.appendChild(div);
+            });
+        }
+        function addServiceDOM() {
+            const name = document.getElementById('newSvcName').value; const price = document.getElementById('newSvcPrice').value;
+            if(!name || !price) return;
+            if(!shopConfig.servicios) shopConfig.servicios = [];
+            shopConfig.servicios.push({nombre: name, precio: parseInt(price)});
+            document.getElementById('newSvcName').value = ''; document.getElementById('newSvcPrice').value = '';
+            renderServicesListDOM();
+        }
+        function removeService(index) { shopConfig.servicios.splice(index, 1); renderServicesListDOM(); }
+        async function changeAdminPassword() {
+            const currentPass = document.getElementById('currentPass').value; const newPass = document.getElementById('newPass').value; const confirmPass = document.getElementById('confirmNewPass').value;
+            if (!currentPass || !newPass || !confirmPass) return showToast("Faltan datos", true);
+            if (newPass !== confirmPass) return showToast("No coinciden", true);
+            if (currentPass !== currentUser.password) return showToast("Contraseña actual mal", true);
+            const { error } = await supabase.from('barberos').update({ password: newPass }).eq('id', currentUser.id);
+            if (!error) { currentUser.password = newPass; showToast("Actualizado"); toggleModal('modalAccountSettings'); } 
+            else showToast("Error", true);
+        }
+        async function saveConfig() {
+            const newOpen = document.getElementById('cfgOpen').value;
+            const newClose = document.getElementById('cfgClose').value;
+            const newInterval = parseInt(document.getElementById('cfgInterval').value);
+            const newChairs = parseInt(document.getElementById('cfgChairs').value);
+            const activeDays = Array.from(document.querySelectorAll('input[name="workday"]:checked')).map(cb => parseInt(cb.value));
+            shopConfig.dias_laborables = activeDays;
+            shopConfig.mensaje_aviso = document.getElementById('cfgMsg').value;
+            shopConfig.mostrar_whatsapp = document.getElementById('cfgShowWpp').checked;
+            shopConfig.whatsapp = document.getElementById('cfgWppNumber').value;
+            shopConfig.barber_breaks = shopConfig.barber_breaks.filter(b => b.start && b.end); 
+            const { error } = await supabase.from('barberias').update({
+                apertura: newOpen, cierre: newClose, intervalo: newInterval, sillas: newChairs, config: shopConfig
+            }).eq('id', currentShop.id);
+            if(!error) {
+                showToast("Guardado");
+                currentShop.apertura = newOpen; currentShop.cierre = newClose; currentShop.intervalo = newInterval; currentShop.sillas = newChairs;
+                generatedHours = generateTimeSlots(currentShop.apertura, currentShop.cierre, currentShop.intervalo);
+                renderServiceOptions(); showAdminDashboard(); switchAdminTab('config'); 
+            } else showToast("Error: " + error.message, true);
+        }
+        async function createManualBooking() {
+            const phone = document.getElementById('manualPhone').value; const name = document.getElementById('manualName').value;
+            const date = document.getElementById('manualDate').value; const time = document.getElementById('manualTime').value; const service = document.getElementById('manualService').value;
+            if (!name || !date || !time) return showToast("Faltan datos", true);
+            let clientId;
+            const { data: existing } = await supabase.from('clientes').select('id').eq('barberia_id', currentShop.id).eq('celular', phone || '000000000').single();
+            if (existing) clientId = existing.id;
+            else {
+                const { data: newC } = await supabase.from('clientes').insert({ barberia_id: currentShop.id, celular: phone || '000000000', nombre: name, pin: '0000' }).select().single();
+                clientId = newC.id;
+            }
+            const { error } = await supabase.from('turnos').insert({ barberia_id: currentShop.id, cliente_id: clientId, fecha: date, hora: time, servicio: service });
+            if(!error) { showToast("Agendado"); toggleModal('modalManualBooking'); loadBarberDashboard(); }
+            else showToast(error.message, true);
+        }
+        const DAYS_ES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+        function formatDate(d) {
+            const date = new Date(d + 'T00:00:00'); 
+            return `${DAYS_ES[date.getDay()]}, ${date.toLocaleDateString('es-UY', { day: 'numeric', month: 'long' })}`;
+        }
+        function logout() { 
+            currentUser = null; localStorage.removeItem(CLIENT_STORAGE_KEY); localStorage.removeItem(ADMIN_STORAGE_KEY);
+            document.title = currentShop.nombre + " - Agendamiento"; updateAdminDropdownVisibility(false);
+            document.getElementById('viewBarber').classList.add('hidden'); document.getElementById('viewClient').classList.add('hidden');
+            document.getElementById('viewLogin').classList.remove('hidden'); document.getElementById('fabAdd').classList.add('hidden');
+            resetLoginView();
         }
 
-        const { error } = await supabase.from('turnos').insert({
-            barberia_id: currentShop.id, 
-            cliente_id: clientId,
-            fecha: date, 
-            hora: time, 
-            servicio: service
-        });
+        // --- FUNCIONES ADICIONALES PARA CAMBIO DE PIN ---
+        async function changeClientPin() {
+            const currentPinInput = document.getElementById('currentPin');
+            const newPinInput = document.getElementById('newPin');
+            const confirmPinInput = document.getElementById('confirmNewPin');
+            const saveBtn = document.getElementById('btnSavePin');
 
-        if (!error) { 
-            showToast('Turno agendado ✅'); 
-            toggleModal('modalManualBooking');             loadBarberDashboard(); 
-        } else {
-            showToast(error.message, true);
+            const currentPin = currentPinInput.value;
+            const newPin = newPinInput.value;
+            const confirmPin = confirmPinInput.value;
+
+            // Validaciones
+            if (currentPin.length !== 4) {
+                showToast("El PIN actual debe tener 4 dígitos.", true);
+                return;
+            }
+            if (newPin.length !== 4 || confirmPin.length !== 4) {
+                showToast("Los nuevos PINs deben tener 4 dígitos.", true);
+                return;
+            }
+            if (newPin !== confirmPin) {
+                showToast("Los PINs nuevos no coinciden.", true);
+                return;
+            }
+
+            saveBtn.disabled = true;
+            saveBtn.innerText = "Guardando...";
+
+            try {
+                // Verificar que el PIN actual sea correcto
+                const { data: client, error: verifyError } = await supabase.from('clientes')
+                    .select('*')
+                    .eq('id', currentUser.id)
+                    .eq('pin', currentPin) // Comparamos con el pin actual
+                    .single();
+
+                if (verifyError || !client) {
+                    showToast("PIN actual incorrecto.", true);
+                    saveBtn.disabled = false;
+                    saveBtn.innerText = "Guardar PIN";
+                    return;
+                }
+
+                // Actualizar el PIN en la base de datos
+                const { error: updateError } = await supabase.from('clientes')
+                    .update({ pin: newPin }) // Guardamos el nuevo PIN como permanente
+                    .eq('id', currentUser.id);
+
+                if (updateError) {
+                    throw new Error(updateError.message);
+                }
+
+                // Actualizamos el currentUser local
+                currentUser.pin = newPin;
+
+                showToast("¡PIN actualizado con éxito!");
+                toggleModal('modalChangePin'); // Cierra el modal
+                // Opcional: reinicia la vista de login si quieres que el usuario vuelva a iniciar sesión con su nuevo PIN
+                // resetLoginView();
+
+            } catch (error) {
+                showToast("Error al actualizar PIN: " + error.message, true);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerText = "Guardar PIN";
+            }
         }
-    }
 
-    function logout() {
-        currentUser = null;
-        localStorage.removeItem(CLIENT_STORAGE_KEY);
-        localStorage.removeItem(ADMIN_STORAGE_KEY);
-        document.title = currentShop.nombre + ' - Turnos';
-        updateAdminDropdownVisibility(false);
-        document.getElementById('viewBarber').classList.add('hidden');
-        document.getElementById('viewClient').classList.add('hidden');
-        document.getElementById('viewLogin').classList.remove('hidden');
-        document.getElementById('fabAdd').classList.add('hidden');
-        rescheduleCalendarInstance = null;
-        resetLoginView();
-    }
+        // Función para abrir el modal de cambio de PIN
+        function openChangePinModal() {
+            toggleModal('modalChangePin');
+            document.getElementById('currentPin').value = '';
+            document.getElementById('newPin').value = '';
+            document.getElementById('confirmNewPin').value = '';
+        }
     </script>
 </body>
-    </html>
+                    </html>
