@@ -35,12 +35,80 @@
         .slot-btn.selected { background-color: var(--color-primary); color: white; border-color: var(--color-primary); }
         .slot-btn.occupied { background-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; opacity: 0.7; }
         .spots-badge { position: absolute; top: -5px; right: -5px; background-color: #10B981; color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 999px; font-weight: bold; }
-        /* Personalización del Calendario Flatpickr */
         .flatpickr-calendar { border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: none; }
         .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange, .flatpickr-day.selected.inRange, .flatpickr-day.startRange.inRange, .flatpickr-day.endRange.inRange, .flatpickr-day.selected:focus, .flatpickr-day.startRange:focus, .flatpickr-day.endRange:focus, .flatpickr-day.selected:hover, .flatpickr-day.startRange:hover, .flatpickr-day.endRange:hover, .flatpickr-day.selected.prevMonthDay, .flatpickr-day.startRange.prevMonthDay, .flatpickr-day.endRange.prevMonthDay, .flatpickr-day.selected.nextMonthDay, .flatpickr-day.startRange.nextMonthDay, .flatpickr-day.endRange.nextMonthDay {
             background: var(--color-primary) !important;
             border-color: var(--color-primary) !important;
         }
+
+        /* ── Estilos para el nuevo flujo de PIN ── */
+        .pin-step { transition: opacity 0.25s ease, transform 0.25s ease; }
+        .pin-step.hidden { display: none; }
+        .pin-dot-row { display: flex; gap: 10px; justify-content: center; margin-bottom: 6px; }
+        .pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #d1d5db; background: transparent; transition: background 0.15s, border-color 0.15s; }
+        .pin-dot.filled { background: var(--color-primary); border-color: var(--color-primary); }
+        .pin-input-hidden {
+            position: absolute;
+            opacity: 0;
+            width: 1px;
+            height: 1px;
+            pointer-events: none;
+        }
+        .pin-visual-input {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            cursor: pointer;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            background: #f9fafb;
+            transition: border-color 0.2s;
+        }
+        .pin-visual-input:focus-within,
+        .pin-visual-input.focused { border-color: var(--color-primary); background: #fff; }
+        .pin-char {
+            width: 32px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            border-bottom: 2px solid #d1d5db;
+            transition: border-color 0.15s;
+        }
+        .pin-char.active { border-color: var(--color-primary); }
+        .pin-char.filled { border-color: var(--color-primary); }
+        .forgot-link {
+            display: inline-block;
+            color: #6b7280;
+            font-size: 0.78rem;
+            margin-top: 10px;
+            text-decoration: underline;
+            cursor: pointer;
+            text-align: center;
+            width: 100%;
+        }
+        .forgot-link:hover { color: var(--color-primary); }
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: #9ca3af;
+            margin-bottom: 4px;
+        }
+        .step-indicator .step-num {
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            color: #6b7280;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.7rem;
+        }
+        .step-indicator .step-num.active { background: var(--color-primary); color: #fff; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800 font-sans pb-10">
@@ -72,43 +140,149 @@
                 </div>
             </div>
         </header>
+
         <div id="shopNotice" class="hidden bg-yellow-100 text-yellow-800 px-4 py-2 text-sm text-center border-b border-yellow-200">
             <i class="fas fa-bullhorn mr-1"></i> <span id="shopNoticeText"></span>
         </div>
+
         <main class="p-6 flex-grow">
+
+            <!-- ══════════════════════════════════════════════
+                 SECCIÓN LOGIN — flujo renovado
+            ══════════════════════════════════════════════ -->
             <section id="viewLogin" class="fade-in">
+
                 <div class="text-center mb-8 mt-4">
                     <h2 class="text-2xl font-bold text-gray-800">Reserva tu turno</h2>
                     <p class="text-gray-500">Rápido, fácil y sin esperas.</p>
                 </div>
-                <div class="space-y-5">
+
+                <!-- PASO 1 — Celular -->
+                <div id="loginStepPhone" class="pin-step space-y-5">
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-1">Celular (Ej: 099 123 456)</label>
                         <div class="relative">
                             <span class="absolute left-3 top-3.5 text-gray-400">🇺🇾</span>
-                            <input type="tel" id="loginPhone" placeholder="099 123 456" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none text-lg" maxlength="11" oninput="maskPhone(this)" autocomplete="off">
+                            <input type="tel" id="loginPhone" placeholder="099 123 456"
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none text-lg"
+                                maxlength="11" oninput="maskPhone(this)" autocomplete="off">
                         </div>
                         <p id="phoneError" class="text-xs text-red-500 mt-1 hidden">Número de celular inválido.</p>
                     </div>
-                    <div id="nameSection" class="hidden fade-in">
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Nombre</label>
-                        <input type="text" id="loginName" placeholder="Tu nombre" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none" autocomplete="off">
-                    </div>
-                    <div id="pinSection" class="hidden fade-in">
-                        <label class="block text-sm font-bold text-gray-700 mb-1">PIN de Acceso SMS</label>
-                        <div class="relative">
-                            <input type="tel" inputmode="numeric" id="loginPin" placeholder="****" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none text-center text-2xl tracking-widest" maxlength="4" autocomplete="new-password">
-                        </div>
-                        <p id="pinHint" class="text-xs text-gray-400 mt-2 text-center"></p>
-                    </div>
-                    <button id="btnActionLogin" onclick="handleLoginFlow()" class="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-md hover:opacity-90 transition mt-2">Solicitar PIN</button>
-                    <button id="btnResendPin" onclick="requestPin(phoneToVerify, document.getElementById('btnActionLogin'))" class="w-full py-2 text-gray-500 text-sm hover:text-primary hidden">Reenviar PIN</button>
+                    <button id="btnSendPin" onclick="handlePhoneSubmit()"
+                        class="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-md hover:opacity-90 transition">
+                        Continuar
+                    </button>
                 </div>
+
+                <!-- PASO 2a — Usuario existente: ingresa PIN permanente -->
+                <div id="loginStepPermanentPin" class="pin-step hidden space-y-4">
+                    <div class="step-indicator">
+                        <div class="step-num active">2</div>
+                        <span>Ingresa tu PIN</span>
+                    </div>
+                    <p class="text-sm text-gray-600">Hola 👋 Ingresa tu PIN de 4 dígitos para entrar.</p>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">PIN</label>
+                        <div class="pin-visual-input" id="permPinVisual" onclick="document.getElementById('permPinReal').focus()">
+                            <div class="pin-char" id="ppc0">·</div>
+                            <div class="pin-char" id="ppc1">·</div>
+                            <div class="pin-char" id="ppc2">·</div>
+                            <div class="pin-char" id="ppc3">·</div>
+                        </div>
+                        <input type="tel" inputmode="numeric" id="permPinReal" class="pin-input-hidden" maxlength="4" autocomplete="new-password">
+                    </div>
+                    <button onclick="verifyPermanentPin()"
+                        class="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-md hover:opacity-90 transition">
+                        Ingresar
+                    </button>
+                    <div style="text-align:center;">
+                        <span class="forgot-link" onclick="startForgotPin()">¿Olvidaste tu PIN? Recuperar por SMS</span>
+                    </div>
+                    <button onclick="backToPhone()" class="w-full py-2 text-gray-400 text-sm hover:text-primary">← Cambiar número</button>
+                </div>
+
+                <!-- PASO 2b — Usuario nuevo O recuperación: ingresa PIN temporal del SMS -->
+                <div id="loginStepTempPin" class="pin-step hidden space-y-4">
+                    <div class="step-indicator">
+                        <div class="step-num active">2</div>
+                        <span id="tempPinStepLabel">Verifica tu número</span>
+                    </div>
+                    <p id="tempPinDesc" class="text-sm text-gray-600">
+                        Enviamos un PIN de un solo uso a tu celular. Ingrésalo para continuar.
+                    </p>
+
+                    <!-- Solo aparece para usuarios nuevos -->
+                    <div id="nameFieldWrap" class="hidden">
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Tu nombre</label>
+                        <input type="text" id="loginName" placeholder="¿Cómo te llamás?"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none" autocomplete="off">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">PIN SMS (4 dígitos)</label>
+                        <div class="pin-visual-input" id="tempPinVisual" onclick="document.getElementById('tempPinReal').focus()">
+                            <div class="pin-char" id="tpc0">·</div>
+                            <div class="pin-char" id="tpc1">·</div>
+                            <div class="pin-char" id="tpc2">·</div>
+                            <div class="pin-char" id="tpc3">·</div>
+                        </div>
+                        <input type="tel" inputmode="numeric" id="tempPinReal" class="pin-input-hidden" maxlength="4" autocomplete="new-password">
+                        <p class="text-xs text-gray-400 mt-2 text-center">Este PIN es de un solo uso y expira en 10 minutos.</p>
+                    </div>
+
+                    <button onclick="verifyTempPin()"
+                        class="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-md hover:opacity-90 transition">
+                        Verificar
+                    </button>
+                    <button onclick="resendTempPin()" class="w-full py-2 text-gray-500 text-sm hover:text-primary">Reenviar PIN por SMS</button>
+                    <button onclick="backToPhone()" class="w-full py-2 text-gray-400 text-sm hover:text-primary">← Cambiar número</button>
+                </div>
+
+                <!-- PASO 3 — Crear / cambiar PIN permanente (post verificación SMS) -->
+                <div id="loginStepSetPin" class="pin-step hidden space-y-4">
+                    <div class="step-indicator">
+                        <div class="step-num active">3</div>
+                        <span id="setPinStepLabel">Creá tu PIN</span>
+                    </div>
+                    <p id="setPinDesc" class="text-sm text-gray-600">
+                        Elegí un PIN de 4 dígitos que vayas a recordar. Lo usarás cada vez que quieras reservar un turno.
+                    </p>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">PIN nuevo</label>
+                        <div class="pin-visual-input" id="newPinVisual1" onclick="document.getElementById('newPinReal1').focus()">
+                            <div class="pin-char" id="np1c0">·</div>
+                            <div class="pin-char" id="np1c1">·</div>
+                            <div class="pin-char" id="np1c2">·</div>
+                            <div class="pin-char" id="np1c3">·</div>
+                        </div>
+                        <input type="tel" inputmode="numeric" id="newPinReal1" class="pin-input-hidden" maxlength="4" autocomplete="new-password">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Repetir PIN</label>
+                        <div class="pin-visual-input" id="newPinVisual2" onclick="document.getElementById('newPinReal2').focus()">
+                            <div class="pin-char" id="np2c0">·</div>
+                            <div class="pin-char" id="np2c1">·</div>
+                            <div class="pin-char" id="np2c2">·</div>
+                            <div class="pin-char" id="np2c3">·</div>
+                        </div>
+                        <input type="tel" inputmode="numeric" id="newPinReal2" class="pin-input-hidden" maxlength="4" autocomplete="new-password">
+                    </div>
+
+                    <button onclick="savePermanentPin()"
+                        class="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-md hover:opacity-90 transition">
+                        Guardar PIN y Entrar
+                    </button>
+                </div>
+
             </section>
+            <!-- FIN viewLogin -->
+
             <section id="viewClient" class="hidden fade-in">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="font-bold text-xl">Hola, <span id="clientNameDisplay" class="text-primary"></span> 👋</h2>
-                    <!-- Botón Cambiar PIN añadido aquí -->
                     <div class="flex space-x-2">
                         <button onclick="openChangePinModal()" class="text-sm text-primary underline mr-2">Cambiar PIN</button>
                         <button onclick="logout()" class="text-sm text-gray-500 underline">Salir</button>
@@ -119,7 +293,7 @@
                         <div>
                             <p class="text-xs text-gray-500 uppercase tracking-wide font-bold">Tu turno</p>
                             <h3 id="activeDate" class="text-lg font-bold text-gray-800 mt-1">...</h3>
-                            <p id="activeTime" class="text-2xl font-bold text-primary my-1">...</h3>
+                            <p id="activeTime" class="text-2xl font-bold text-primary my-1">...</p>
                             <p id="activeService" class="text-sm text-gray-600">...</p>
                         </div>
                         <button onclick="cancelMyAppointment()" class="text-red-500 text-xs border border-red-200 px-3 py-1 rounded hover:bg-red-50">Cancelar</button>
@@ -139,6 +313,7 @@
                     <button id="btnConfirmBooking" class="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>Confirmar</button>
                 </div>
             </section>
+
             <section id="viewBarber" class="hidden fade-in h-full">
                 <div class="flex border-b mb-6">
                     <button onclick="switchAdminTab('agenda')" id="tabAgenda" class="flex-1 py-3 font-bold text-primary border-b-2 border-primary">Agenda</button>
@@ -218,16 +393,20 @@
                     </div>
                 </div>
             </section>
+
             <footer id="footerWpp" class="hidden mt-auto pt-6 text-center pb-4">
                 <a id="wppLink" href="#" target="_blank" class="inline-flex items-center gap-2 text-green-600 font-bold bg-green-50 px-4 py-2 rounded-full hover:bg-green-100 transition">
                     <i class="fab fa-whatsapp text-xl"></i> Contáctanos
                 </a>
             </footer>
+
             <button id="fabAdd" onclick="toggleModal('modalManualBooking')" class="hidden fixed bottom-6 right-6 bg-primary text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-2xl hover:scale-110 transition z-40">
                 <i class="fas fa-plus"></i>
             </button>
         </main>
     </div>
+
+    <!-- Modal Admin Login -->
     <div id="modalBarberLogin" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center px-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
             <h3 class="font-bold text-xl mb-4 text-center text-primary">Acceso Admin</h3>
@@ -239,6 +418,8 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Manual Booking -->
     <div id="modalManualBooking" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center px-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
             <div class="flex justify-between items-center mb-4">
@@ -257,6 +438,8 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Account Settings -->
     <div id="modalAccountSettings" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center px-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative">
             <div class="flex justify-between items-center mb-6">
@@ -272,7 +455,8 @@
             </div>
         </div>
     </div>
-    <!-- Modal para Cambiar PIN -->
+
+    <!-- Modal Cambiar PIN (desde dashboard cliente) -->
     <div id="modalChangePin" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center px-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative">
             <div class="flex justify-between items-center mb-6">
@@ -287,6 +471,8 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Confirmación -->
     <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center px-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center">
             <i id="confirmIcon" class="fas fa-exclamation-triangle text-3xl text-red-500 mb-4"></i>
@@ -298,89 +484,81 @@
             </div>
         </div>
     </div>
+
+    <!-- Toast -->
     <div id="toastNotification" class="fixed top-5 left-1/2 -translate-x-1/2 px-6 py-3 bg-green-500 text-white font-bold rounded-lg shadow-xl z-50 hidden transition-all duration-300 transform opacity-0">
         Turno confirmado 👍
     </div>
+
     <script>
-        // --- Reemplaza estos placeholders con tus valores reales de Supabase ---
-        const SUPABASE_URL = 'https://hqoyjsngydafaagsrzlg.supabase.co'; // Ej: 'https://hqoyjsngydafaagsrzlg.supabase.co'
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhxb3lqc25neWRhZmFhZ3NyemxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MDI5MDQsImV4cCI6MjA3OTk3ODkwNH0.WyTlANZLTRd6IlhxuDlQai8Zz6dgexGPvwXmBr7HsZs'; // Ej: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
-        // ---------------------------------------------------------------
-        // URL para la función de Supabase que envía el SMS
+        const SUPABASE_URL = 'https://hqoyjsngydafaagsrzlg.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhxb3lqc25neWRhZmFhZ3NyemxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MDI5MDQsImV4cCI6MjA3OTk3ODkwNH0.WyTlANZLTRd6IlhxuDlQai8Zz6dgexGPvwXmBr7HsZs';
         const SUPABASE_FUNCTIONS_URL = `${SUPABASE_URL}/functions/v1/send-pin`;
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        // !!! ATENCIÓN: REEMPLAZA ESTE EMAIL CON EL TUYO REAL PARA EL BLOQUEO DE PRUEBA
-        const CONTACT_EMAIL = 'elkratosss@gmail.com'; 
+        const CONTACT_EMAIL = 'elkratosss@gmail.com';
+
         let currentShop = null;
-        let currentUser = null; 
+        let currentUser = null;
         let selectedTime = null;
-        let shopConfig = {}; 
-        let generatedHours = []; 
+        let shopConfig = {};
+        let generatedHours = [];
         let calendarInstance = null;
         let adminCalendarInstance = null;
         let manualCalendarInstance = null;
+
         const CLIENT_STORAGE_KEY = 'barbersaas_client_id';
-        const ADMIN_STORAGE_KEY = 'barbersaas_admin_id';
-        // Variables para el nuevo flujo de login de cliente
-        let loginStep = 1; // 1: Solicitar PIN, 2: Ingresar PIN
-        let phoneToVerify = null; // Almacena el número validado
-        // Configuración común de Flatpickr
+        const ADMIN_STORAGE_KEY  = 'barbersaas_admin_id';
+
+        // ── Estado del flujo de login ──
+        let loginState = {
+            phone: null,           // número limpio (9 dígitos)
+            isNewUser: false,
+            isForgot: false,       // true cuando viene de "Olvidé mi PIN"
+            tempPin: null,         // PIN temporal generado localmente
+            clientData: null       // datos del cliente existente
+        };
+
+        // ── Configuración Flatpickr ──
         const flatpickrConfig = {
             locale: "es",
             dateFormat: "Y-m-d",
             altInput: true,
             altFormat: "j \\de F, Y",
-            disableMobile: true, 
+            disableMobile: true,
             minDate: "today",
-            theme: "material_orange"
         };
+
+        // ════════════════════════════════════════════
+        //  HELPERS GENERALES
+        // ════════════════════════════════════════════
         function maskTime(input) {
-            let v = input.value.replace(/\D/g, ''); 
+            let v = input.value.replace(/\D/g, '');
             if (v.length > 4) v = v.slice(0, 4);
-            if (v.length >= 3) {
-                v = v.slice(0, 2) + ':' + v.slice(2);
-            }
+            if (v.length >= 3) v = v.slice(0, 2) + ':' + v.slice(2);
             input.value = v;
         }
-        // Máscara y validación para el formato de celular UY (09X XXX XXX) - ACTUALIZADA
+
         function maskPhone(input) {
-            let v = input.value.replace(/\D/g, ''); // Elimina todo lo que no sea dígito
-
-            // Si el usuario olvidó el 0 inicial, se lo agregamos automáticamente si tiene 8 dígitos y comienza con 9
-            if (v.length === 8 && v.startsWith('9')) {
-                v = '0' + v;
-            }
-
-            // Si el número tiene más de 9 dígitos, lo truncamos.
-            if (v.length > 9) {
-                v = v.slice(0, 9);
-            }
-
-            // Formatear como "09X XXX XXX"
+            let v = input.value.replace(/\D/g, '');
+            if (v.length === 8 && v.startsWith('9')) v = '0' + v;
+            if (v.length > 9) v = v.slice(0, 9);
             let formatted = '';
             if (v.length > 0) {
-                if (v.length <= 3) {
-                    formatted = v;
-                } else if (v.length <= 6) {
-                    formatted = v.slice(0, 3) + ' ' + v.slice(3);
-                } else {
-                    formatted = v.slice(0, 3) + ' ' + v.slice(3, 6) + ' ' + v.slice(6);
-                }
+                if (v.length <= 3)      formatted = v;
+                else if (v.length <= 6) formatted = v.slice(0,3) + ' ' + v.slice(3);
+                else                    formatted = v.slice(0,3) + ' ' + v.slice(3,6) + ' ' + v.slice(6);
             }
-
             input.value = formatted;
-
-            // VALIDACIÓN ESTRUCTURADA (esto es clave)
             const isValid = v.length === 9 && v.startsWith('09');
-            const phoneError = document.getElementById('phoneError');
-
+            const err = document.getElementById('phoneError');
             if (!isValid) {
-                phoneError.innerText = 'Número inválido. Debe ser 9 dígitos y empezar con "09" (Ej: 099 123 456).';
-                phoneError.classList.remove('hidden');
+                err.innerText = 'Número inválido. Debe tener 9 dígitos y empezar con "09" (Ej: 099 123 456).';
+                err.classList.remove('hidden');
             } else {
-                phoneError.classList.add('hidden');
+                err.classList.add('hidden');
             }
         }
+
         function showToast(message, isError = false) {
             const toast = document.getElementById('toastNotification');
             toast.innerText = message;
@@ -391,41 +569,54 @@
             setTimeout(() => {
                 toast.classList.remove('opacity-100', 'scale-100');
                 toast.classList.add('opacity-0', 'scale-90');
-                setTimeout(() => toast.classList.add('hidden'), 300); 
-            }, 3000); 
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 3000);
         }
-        function togglePinVisibility() {
-            const pinInput = document.getElementById('loginPin');
-            const pinIcon = document.getElementById('pinToggleIcon');
-            if (pinInput.type === 'password') {
-                pinInput.type = 'text'; pinIcon.classList.remove('fa-eye'); pinIcon.classList.add('fa-eye-slash');
-            } else {
-                pinInput.type = 'password'; pinIcon.classList.remove('fa-eye-slash'); pinIcon.classList.add('fa-eye');
-            }
-        }
+
         function showConfirmationModal(message, onAccept, onCancel) {
             const modal = document.getElementById('confirmationModal');
             document.getElementById('confirmMessage').innerText = message;
-            const acceptBtn = document.getElementById('confirmBtnAccept');
-            const cancelBtn = document.getElementById('confirmBtnCancel');
-            acceptBtn.onclick = () => { onAccept(); modal.classList.add('hidden'); };
-            cancelBtn.onclick = () => { onCancel(); modal.classList.add('hidden'); };
+            document.getElementById('confirmBtnAccept').onclick = () => { onAccept(); modal.classList.add('hidden'); };
+            document.getElementById('confirmBtnCancel').onclick = () => { onCancel(); modal.classList.add('hidden'); };
             modal.classList.remove('hidden');
         }
+
+        function toggleModal(id)    { document.getElementById(id).classList.toggle('hidden'); }
+        function toggleDropdown(id) { document.getElementById(id).classList.toggle('hidden'); }
+
+        function updateAdminDropdownVisibility(isAdmin) {
+            document.getElementById('adminOptions')[isAdmin ? 'classList' : 'classList'][isAdmin ? 'remove' : 'add']('hidden');
+            document.getElementById('loginOption')[isAdmin ? 'classList' : 'classList'][isAdmin ? 'add' : 'remove']('hidden');
+        }
+        // Simplificado:
+        function updateAdminDropdownVisibility(isAdmin) {
+            if (isAdmin) {
+                document.getElementById('adminOptions').classList.remove('hidden');
+                document.getElementById('loginOption').classList.add('hidden');
+            } else {
+                document.getElementById('adminOptions').classList.add('hidden');
+                document.getElementById('loginOption').classList.remove('hidden');
+            }
+        }
+
+        function openAdminLoginAndCloseDropdown(e) { e.preventDefault(); toggleDropdown('adminDropdown'); toggleModal('modalBarberLogin'); }
+        function openAccountSettingsAndCloseDropdown(e) { e.preventDefault(); toggleDropdown('adminDropdown'); toggleModal('modalAccountSettings'); }
+        function adminLogoutAndCloseDropdown(e) { e.preventDefault(); toggleDropdown('adminDropdown'); logout(); }
+
+        // ════════════════════════════════════════════
+        //  INICIALIZACIÓN
+        // ════════════════════════════════════════════
         document.addEventListener('DOMContentLoaded', async () => {
             const params = new URLSearchParams(window.location.search);
-            const slug = params.get('barberia') || 'elite'; 
+            const slug = params.get('barberia') || 'elite';
             const { data: shop, error } = await supabase.from('barberias').select('*').eq('slug', slug).single();
             if (error || !shop) return alert('Barbería no encontrada.');
             currentShop = shop;
-            // =========================================================
-            // === INICIO DEL BLOQUEO AUTOMÁTICO DE PRUEBA (14 DÍAS) ===
-            // =========================================================
+
+            // Bloqueo de prueba
             if (currentShop.fecha_fin_prueba) {
-                // Añadimos 'T00:00:00' para que la comparación sea fiable
-                const trialEnd = new Date(currentShop.fecha_fin_prueba + 'T00:00:00'); 
-                const today = new Date();
-                today.setHours(0,0,0,0); 
+                const trialEnd = new Date(currentShop.fecha_fin_prueba + 'T00:00:00');
+                const today = new Date(); today.setHours(0,0,0,0);
                 if (today > trialEnd) {
                     document.title = currentShop.nombre + " - Prueba Finalizada";
                     document.getElementById('loader').classList.add('hidden');
@@ -439,35 +630,341 @@
                                 <i class="fas fa-crown mr-2"></i> Quiero Seguir Usándolo
                             </a>
                         </div>`;
-                    document.getElementById('viewClient').classList.add('hidden');
-                    document.getElementById('viewBarber').classList.add('hidden');
-                    return; 
+                    return;
                 }
             }
-            // =========================================================
-            // === FIN DEL BLOQUEO AUTOMÁTICO DE PRUEBA ==============
-            // =========================================================
+
             shopConfig = shop.config || {};
             if (!shopConfig.barber_breaks) shopConfig.barber_breaks = [];
             document.title = currentShop.nombre + " - Agendamiento";
             generatedHours = generateTimeSlots(shop.apertura, shop.cierre, shop.intervalo);
             applyTheme();
             setupInputs();
-            renderServiceOptions(); 
+            renderServiceOptions();
+            initPinInputs(); // Inicializa los inputs de PIN visuales
+
             document.getElementById('loader').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
+
+            // Auto-login si hay sesión guardada
             const storedClientId = localStorage.getItem(CLIENT_STORAGE_KEY);
-            const storedAdminId = localStorage.getItem(ADMIN_STORAGE_KEY);
+            const storedAdminId  = localStorage.getItem(ADMIN_STORAGE_KEY);
             if (storedClientId && storedClientId !== 'null') {
                 const { data: client } = await supabase.from('clientes').select('*').eq('id', storedClientId).single();
                 if (client) { currentUser = client; return showClientDashboard(); }
             } else if (storedAdminId && storedAdminId !== 'null') {
-                 const { data: admin } = await supabase.from('barberos').select('*').eq('id', storedAdminId).single();
+                const { data: admin } = await supabase.from('barberos').select('*').eq('id', storedAdminId).single();
                 if (admin) { currentUser = admin; return showAdminDashboard(); }
             }
             updateAdminDropdownVisibility(false);
-            resetLoginView(); // Asegura la vista de login en Paso 1
+            showLoginStep('loginStepPhone');
         });
+
+        // ════════════════════════════════════════════
+        //  PIN VISUAL — inputs decorativos
+        // ════════════════════════════════════════════
+        /**
+         * Conecta un input[type=tel] oculto con N divs .pin-char visibles.
+         * prefix: p.ej. 'ppc' para los chars ppc0..ppc3
+         * realId: id del input oculto
+         */
+        function bindPinInput(realId, charPrefix, count = 4) {
+            const real = document.getElementById(realId);
+            if (!real) return;
+            real.addEventListener('input', () => {
+                const val = real.value.replace(/\D/g, '').slice(0, count);
+                real.value = val;
+                for (let i = 0; i < count; i++) {
+                    const ch = document.getElementById(charPrefix + i);
+                    if (!ch) continue;
+                    ch.classList.remove('filled', 'active');
+                    if (i < val.length) {
+                        ch.innerText = '●';
+                        ch.classList.add('filled');
+                    } else {
+                        ch.innerText = '·';
+                        if (i === val.length) ch.classList.add('active');
+                    }
+                }
+            });
+            real.addEventListener('focus', () => {
+                document.getElementById(charPrefix + '0')?.closest('.pin-visual-input')?.classList.add('focused');
+            });
+            real.addEventListener('blur', () => {
+                document.getElementById(charPrefix + '0')?.closest('.pin-visual-input')?.classList.remove('focused');
+            });
+            // Enter avanza
+            real.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    if (realId === 'permPinReal')  verifyPermanentPin();
+                    if (realId === 'tempPinReal')   verifyTempPin();
+                    if (realId === 'newPinReal1')   document.getElementById('newPinReal2').focus();
+                    if (realId === 'newPinReal2')   savePermanentPin();
+                }
+            });
+        }
+
+        function clearPinInput(realId, charPrefix, count = 4) {
+            const real = document.getElementById(realId);
+            if (real) real.value = '';
+            for (let i = 0; i < count; i++) {
+                const ch = document.getElementById(charPrefix + i);
+                if (ch) { ch.innerText = '·'; ch.classList.remove('filled', 'active'); }
+            }
+        }
+
+        function initPinInputs() {
+            bindPinInput('permPinReal', 'ppc');
+            bindPinInput('tempPinReal', 'tpc');
+            bindPinInput('newPinReal1', 'np1c');
+            bindPinInput('newPinReal2', 'np2c');
+        }
+
+        // ════════════════════════════════════════════
+        //  NAVEGACIÓN ENTRE PASOS
+        // ════════════════════════════════════════════
+        const LOGIN_STEPS = ['loginStepPhone', 'loginStepPermanentPin', 'loginStepTempPin', 'loginStepSetPin'];
+
+        function showLoginStep(stepId) {
+            LOGIN_STEPS.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            });
+            const target = document.getElementById(stepId);
+            if (target) {
+                target.classList.remove('hidden');
+                // Autofocus al primer input del paso
+                const firstInput = target.querySelector('input');
+                if (firstInput) setTimeout(() => firstInput.focus(), 50);
+            }
+        }
+
+        function backToPhone() {
+            loginState = { phone: null, isNewUser: false, isForgot: false, tempPin: null, clientData: null };
+            clearPinInput('permPinReal', 'ppc');
+            clearPinInput('tempPinReal', 'tpc');
+            clearPinInput('newPinReal1', 'np1c');
+            clearPinInput('newPinReal2', 'np2c');
+            document.getElementById('loginPhone').value = '';
+            document.getElementById('loginPhone').disabled = false;
+            document.getElementById('phoneError').classList.add('hidden');
+            document.getElementById('loginName').value = '';
+            showLoginStep('loginStepPhone');
+        }
+
+        // ════════════════════════════════════════════
+        //  PASO 1 — Validar celular y decidir flujo
+        // ════════════════════════════════════════════
+        async function handlePhoneSubmit() {
+            const raw = document.getElementById('loginPhone').value.replace(/\D/g, '');
+            if (raw.length !== 9 || !raw.startsWith('09')) {
+                document.getElementById('phoneError').innerText = 'El celular debe tener 9 dígitos (Ej: 099123456).';
+                document.getElementById('phoneError').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('phoneError').classList.add('hidden');
+            const btn = document.getElementById('btnSendPin');
+            btn.disabled = true; btn.innerText = 'Buscando...';
+
+            loginState.phone = raw;
+
+            const { data: client } = await supabase.from('clientes')
+                .select('*').eq('barberia_id', currentShop.id).eq('celular', raw).single();
+
+            btn.disabled = false; btn.innerText = 'Continuar';
+
+            if (client && client.pin_permanente) {
+                // Usuario existente con PIN → pedir PIN permanente
+                loginState.isNewUser  = false;
+                loginState.clientData = client;
+                showLoginStep('loginStepPermanentPin');
+                setTimeout(() => document.getElementById('permPinReal').focus(), 100);
+            } else {
+                // Usuario nuevo O sin PIN permanente → enviar SMS
+                loginState.isNewUser  = !client;
+                loginState.clientData = client || null;
+                await sendTempPinSms(false);
+            }
+        }
+
+        // ════════════════════════════════════════════
+        //  ENVÍO DE PIN TEMPORAL POR SMS
+        // ════════════════════════════════════════════
+        async function sendTempPinSms(isForgot) {
+            const pin = (Math.floor(Math.random() * 9000) + 1000).toString();
+            loginState.tempPin  = pin;
+            loginState.isForgot = isForgot;
+
+            // Mostrar loader en botón según el contexto
+            const btnId = isForgot ? null : 'btnSendPin';
+            if (btnId) { const b = document.getElementById(btnId); b.disabled = true; b.innerText = 'Enviando SMS...'; }
+
+            // Guardar pin_temporal en la tabla (upsert)
+            const upsertData = {
+                barberia_id: currentShop.id,
+                celular: loginState.phone,
+                nombre: loginState.clientData?.nombre || 'PENDIENTE',
+                pin_temporal: pin,
+            };
+            // Incluir pin_permanente solo si ya existe para no borrarlo
+            if (loginState.clientData?.pin_permanente) upsertData.pin_permanente = loginState.clientData.pin_permanente;
+
+            const { error: upsertErr } = await supabase.from('clientes')
+                .upsert(upsertData, { onConflict: ['barberia_id', 'celular'] });
+
+            if (upsertErr) {
+                showToast("Error al generar PIN: " + upsertErr.message, true);
+                if (btnId) { const b = document.getElementById(btnId); b.disabled = false; b.innerText = 'Continuar'; }
+                return;
+            }
+
+            // Llamar Edge Function de Twilio
+            const res = await fetch(SUPABASE_FUNCTIONS_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
+                body: JSON.stringify({ to: loginState.phone, pin })
+            });
+            const resData = await res.json();
+
+            if (!res.ok || resData.success === false) {
+                console.error('SMS error:', resData);
+                showToast('Error al enviar PIN por SMS. Intentá de nuevo.', true);
+                if (btnId) { const b = document.getElementById(btnId); b.disabled = false; b.innerText = 'Continuar'; }
+                return;
+            }
+
+            // Preparar UI del paso 2b (PIN temporal)
+            document.getElementById('tempPinStepLabel').innerText = isForgot ? 'Recuperar PIN' : 'Verifica tu número';
+            document.getElementById('tempPinDesc').innerText = isForgot
+                ? `Enviamos un PIN temporal a tu celular (${loginState.phone.slice(0,3)}...). Ingrésalo para crear un nuevo PIN.`
+                : `Enviamos un PIN de un solo uso a tu celular (${loginState.phone.slice(0,3)}...). Ingrésalo para activar tu cuenta.`;
+            document.getElementById('nameFieldWrap').classList[loginState.isNewUser ? 'remove' : 'add']('hidden');
+            clearPinInput('tempPinReal', 'tpc');
+
+            showToast(`PIN enviado a ${loginState.phone.slice(0,3)}...`);
+            if (btnId) { const b = document.getElementById(btnId); b.disabled = false; b.innerText = 'Continuar'; }
+            showLoginStep('loginStepTempPin');
+            setTimeout(() => document.getElementById('tempPinReal').focus(), 100);
+        }
+
+        async function resendTempPin() {
+            if (!loginState.phone) return;
+            await sendTempPinSms(loginState.isForgot);
+        }
+
+        // ════════════════════════════════════════════
+        //  PASO 2a — Verificar PIN permanente
+        // ════════════════════════════════════════════
+        async function verifyPermanentPin() {
+            const pin = document.getElementById('permPinReal').value;
+            if (pin.length !== 4) { showToast('El PIN debe tener 4 dígitos.', true); return; }
+
+            const { data: client, error } = await supabase.from('clientes')
+                .select('*')
+                .eq('id', loginState.clientData.id)
+                .eq('pin_permanente', pin)
+                .single();
+
+            if (error || !client) {
+                showToast('PIN incorrecto. Volvé a intentarlo.', true);
+                clearPinInput('permPinReal', 'ppc');
+                return;
+            }
+            currentUser = client;
+            localStorage.setItem(CLIENT_STORAGE_KEY, currentUser.id);
+            localStorage.removeItem(ADMIN_STORAGE_KEY);
+            showClientDashboard();
+        }
+
+        // ════════════════════════════════════════════
+        //  PASO 2b — Verificar PIN temporal del SMS
+        // ════════════════════════════════════════════
+        async function verifyTempPin() {
+            const pin  = document.getElementById('tempPinReal').value;
+            const name = document.getElementById('loginName').value.trim();
+
+            if (pin.length !== 4) { showToast('El PIN debe tener 4 dígitos.', true); return; }
+            if (loginState.isNewUser && !name) { showToast('Por favor, ingresá tu nombre.', true); return; }
+
+            // Verificar contra la base de datos
+            const { data: client, error } = await supabase.from('clientes')
+                .select('*')
+                .eq('barberia_id', currentShop.id)
+                .eq('celular', loginState.phone)
+                .eq('pin_temporal', pin)
+                .single();
+
+            if (error || !client) {
+                showToast('PIN incorrecto o expirado. Pedí uno nuevo.', true);
+                clearPinInput('tempPinReal', 'tpc');
+                return;
+            }
+
+            // Guardar nombre si es usuario nuevo
+            if (loginState.isNewUser && name) {
+                await supabase.from('clientes').update({ nombre: name }).eq('id', client.id);
+                client.nombre = name;
+            }
+
+            // Limpiar pin_temporal (ya fue usado)
+            await supabase.from('clientes').update({ pin_temporal: null }).eq('id', client.id);
+
+            loginState.clientData = client;
+
+            // Ir al paso de crear/cambiar PIN permanente
+            document.getElementById('setPinStepLabel').innerText = loginState.isForgot ? 'Nuevo PIN' : 'Creá tu PIN';
+            document.getElementById('setPinDesc').innerText = loginState.isForgot
+                ? 'Ingresá un nuevo PIN de 4 dígitos que vayas a recordar.'
+                : 'Elegí un PIN de 4 dígitos para tus próximas reservas. ¡No lo compartas!';
+            clearPinInput('newPinReal1', 'np1c');
+            clearPinInput('newPinReal2', 'np2c');
+            showLoginStep('loginStepSetPin');
+            setTimeout(() => document.getElementById('newPinReal1').focus(), 100);
+        }
+
+        // ════════════════════════════════════════════
+        //  PASO 3 — Guardar PIN permanente y entrar
+        // ════════════════════════════════════════════
+        async function savePermanentPin() {
+            const pin1 = document.getElementById('newPinReal1').value;
+            const pin2 = document.getElementById('newPinReal2').value;
+
+            if (pin1.length !== 4) { showToast('El PIN debe tener 4 dígitos.', true); return; }
+            if (pin1 !== pin2) {
+                showToast('Los PINs no coinciden. Volvé a intentarlo.', true);
+                clearPinInput('newPinReal2', 'np2c');
+                document.getElementById('newPinReal2').focus();
+                return;
+            }
+
+            const { error } = await supabase.from('clientes')
+                .update({ pin_permanente: pin1, pin_temporal: null })
+                .eq('id', loginState.clientData.id);
+
+            if (error) { showToast('Error al guardar PIN: ' + error.message, true); return; }
+
+            // Recargar datos actualizados
+            const { data: updatedClient } = await supabase.from('clientes')
+                .select('*').eq('id', loginState.clientData.id).single();
+
+            currentUser = updatedClient || { ...loginState.clientData, pin_permanente: pin1 };
+            localStorage.setItem(CLIENT_STORAGE_KEY, currentUser.id);
+            localStorage.removeItem(ADMIN_STORAGE_KEY);
+            showToast('¡PIN guardado! Bienvenido/a 🎉');
+            showClientDashboard();
+        }
+
+        // ════════════════════════════════════════════
+        //  OLVIDÉ MI PIN
+        // ════════════════════════════════════════════
+        function startForgotPin() {
+            if (!loginState.phone) return;
+            sendTempPinSms(true);
+        }
+
+        // ════════════════════════════════════════════
+        //  RESTO DEL SISTEMA (sin cambios estructurales)
+        // ════════════════════════════════════════════
         function generateTimeSlots(startStr, endStr, intervalMins) {
             const slots = [];
             let [h, m] = startStr.split(':').map(Number);
@@ -475,51 +972,43 @@
             let current = new Date(); current.setHours(h, m, 0, 0);
             let end = new Date(); end.setHours(endH, endM, 0, 0);
             while (current < end) {
-                const timeString = current.toLocaleTimeString('es-UY', {hour: '2-digit', minute:'2-digit', hour12: false});
-                slots.push(timeString);
+                slots.push(current.toLocaleTimeString('es-UY', {hour:'2-digit', minute:'2-digit', hour12:false}));
                 current.setMinutes(current.getMinutes() + intervalMins);
             }
             return slots;
         }
+
         function applyTheme() {
             document.getElementById('shopName').innerText = currentShop.nombre;
             document.getElementById('headerSub').innerText = `${currentShop.sillas} Prof. • Abrimos ${currentShop.apertura.slice(0,5)}`;
             document.documentElement.style.setProperty('--color-primary', currentShop.color_primary);
-            if(shopConfig.mensaje_aviso) {
+            if (shopConfig.mensaje_aviso) {
                 document.getElementById('shopNotice').classList.remove('hidden');
                 document.getElementById('shopNoticeText').innerText = shopConfig.mensaje_aviso;
             } else document.getElementById('shopNotice').classList.add('hidden');
-            if(shopConfig.mostrar_whatsapp && shopConfig.whatsapp) {
+            if (shopConfig.mostrar_whatsapp && shopConfig.whatsapp) {
                 document.getElementById('footerWpp').classList.remove('hidden');
                 document.getElementById('wppLink').href = `https://wa.me/598${shopConfig.whatsapp.replace(/\D/g,'').slice(-9)}`;
             } else document.getElementById('footerWpp').classList.add('hidden');
         }
+
         function setupInputs() {
             const today = new Date().toISOString().split('T')[0];
             calendarInstance = flatpickr("#datePicker", {
-                ...flatpickrConfig,
-                defaultDate: today,
-                onChange: function(selectedDates, dateStr, instance) {
-                    loadSlots();
-                }
+                ...flatpickrConfig, defaultDate: today,
+                onChange: () => loadSlots()
             });
             adminCalendarInstance = flatpickr("#barberDatePicker", {
-                ...flatpickrConfig,
-                defaultDate: today,
-                onChange: function(selectedDates, dateStr, instance) {
-                    loadBarberDashboard();
-                }
+                ...flatpickrConfig, defaultDate: today,
+                onChange: () => loadBarberDashboard()
             });
-            manualCalendarInstance = flatpickr("#manualDate", {
-                ...flatpickrConfig,
-                defaultDate: today
-            });
+            manualCalendarInstance = flatpickr("#manualDate", { ...flatpickrConfig, defaultDate: today });
             document.getElementById('btnConfirmBooking').addEventListener('click', createClientBooking);
         }
+
         function renderServiceOptions() {
-            const services = shopConfig.servicios || [{nombre: 'Corte', precio: 0}];
-            const selects = [document.getElementById('serviceSelect'), document.getElementById('manualService')];
-            selects.forEach(sel => {
+            const services = shopConfig.servicios || [{nombre:'Corte', precio:0}];
+            [document.getElementById('serviceSelect'), document.getElementById('manualService')].forEach(sel => {
                 sel.innerHTML = '';
                 services.forEach(s => {
                     const opt = document.createElement('option');
@@ -529,159 +1018,8 @@
                 });
             });
         }
-        function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); }
-        function toggleDropdown(id) { document.getElementById(id).classList.toggle('hidden'); }
-        function updateAdminDropdownVisibility(isAdmin) {
-            if (isAdmin) {
-                document.getElementById('adminOptions').classList.remove('hidden');
-                document.getElementById('loginOption').classList.add('hidden');
-            } else {
-                document.getElementById('adminOptions').classList.add('hidden');
-                document.getElementById('loginOption').classList.remove('hidden');
-            }
-        }
-        function openAdminLoginAndCloseDropdown(e) { e.preventDefault(); toggleDropdown('adminDropdown'); toggleModal('modalBarberLogin'); }
-        function openAccountSettingsAndCloseDropdown(e) { e.preventDefault(); toggleDropdown('adminDropdown'); toggleModal('modalAccountSettings'); }
-        function adminLogoutAndCloseDropdown(e) { e.preventDefault(); toggleDropdown('adminDropdown'); logout(); }
-        // --- CLIENTE LOGIN (Flujo de 2 pasos con PIN SEGURO) ---
-        // Paso 1: Solicitar PIN / Paso 2: Verificar PIN
-        async function handleLoginFlow() {
-            const phoneInput = document.getElementById('loginPhone');
-            const phone = phoneInput.value.replace(/\D/g, ''); // Número limpio (9 dígitos)
-            const btn = document.getElementById('btnActionLogin');
-            document.getElementById('phoneError').classList.add('hidden');
-            // Validación de formato: Debe ser 9 dígitos y empezar con '09'
-            if (phone.length !== 9 || !phone.startsWith('09')) {
-                document.getElementById('phoneError').innerText = 'El celular debe tener 9 dígitos (Ej: 099123456).';
-                document.getElementById('phoneError').classList.remove('hidden');
-                return;
-            }
-            btn.disabled = true;
-            if (loginStep === 1) {
-                await requestPin(phone, btn);
-            } else if (loginStep === 2) {
-                // Validación adicional en el paso 2
-                const phoneError = document.getElementById('phoneError');
-                if (!phoneToVerify || phoneToVerify.length !== 9 || !phoneToVerify.startsWith('09')) {
-                    showToast("Número de verificación inválido. Vuelve a solicitar el PIN.", true);
-                    resetLoginView();
-                    btn.disabled = false;
-                    return;
-                }
-                await verifyPinAndLogin(phoneToVerify, btn); // Usamos el número almacenado
-            }
-        }
-        // Lógica de Solicitud de PIN (Paso 1) - **ACTUALIZADA PARA TWILIO**
-        async function requestPin(phone, btn) {
-            const min = 1000;
-            const max = 9999;
-            const randomPin = (Math.floor(Math.random() * (max - min + 1)) + min).toString();
-            phoneToVerify = phone;
-            // 1. Búsqueda y configuración de interfaz
-            let { data: client, error: searchError } = await supabase.from('clientes').select('*').eq('barberia_id', currentShop.id).eq('celular', phone).single();
-            if (searchError && searchError.code !== 'PGRST116') { 
-                showToast("Error en la búsqueda.", true);
-                btn.disabled = false;
-                return;
-            }
-            let isNewUser = !client;
-            if (isNewUser) {
-                document.getElementById('nameSection').classList.remove('hidden');
-                document.getElementById('pinHint').innerText = "Ingresa el PIN enviado a tu celular.";
-            } else {
-                document.getElementById('nameSection').classList.add('hidden');
-                document.getElementById('loginName').value = client.nombre; 
-                document.getElementById('pinHint').innerText = "Ingresa el PIN enviado a tu celular.";
-            }
-            // 2. Guardar PIN temporalmente en la base de datos
-            const { error: pinUpdateError } = await supabase.from('clientes').upsert({ 
-                barberia_id: currentShop.id, 
-                celular: phone, 
-                nombre: isNewUser ? 'PENDIENTE' : client.nombre,
-                pin: randomPin 
-            }, { onConflict: ['barberia_id', 'celular'] });
-            if (pinUpdateError) {
-                showToast("Error al generar PIN: " + pinUpdateError.message, true);
-                btn.disabled = false;
-                return;
-            }
-            // =========================================================
-            // 3. LLAMADA SEGURA AL BACKEND (TWILIO EDGE FUNCTION)
-            // =========================================================
-            const twilioUrl = SUPABASE_FUNCTIONS_URL; // Usamos la URL directa de la función
-            const smsResponse = await fetch(twilioUrl, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${SUPABASE_KEY}` // Usa la llave anon
-                },
-                body: JSON.stringify({
-                    to: phone.replace(/\D/g, ''), // Enviamos el número limpio de 9 dígitos
-                    pin: randomPin
-                }),
-            });
-            const smsData = await smsResponse.json();
-            if (!smsResponse.ok || smsData.success === false) {
-                // Si Twilio falla, mostramos un error genérico (por seguridad)
-                console.error("Error completo de SMS:", smsData); 
-                showToast("Error al enviar PIN por SMS. Intenta de nuevo.", true);
-                btn.disabled = false;
-                return;
-            }
-            // 4. Transición de la interfaz al Paso 2 (Solo si el SMS fue exitoso)
-            showToast(`PIN enviado correctamente al ${phone.slice(0, 3)}...`, false);
-            document.getElementById('loginPhone').disabled = true;
-            document.getElementById('pinSection').classList.remove('hidden');
-            document.getElementById('btnResendPin').classList.remove('hidden');
-            btn.innerText = "Ingresar";
-            btn.disabled = false;
-            loginStep = 2;
-        }
-        // Lógica de Verificación de PIN y Login Final (Paso 2)
-        async function verifyPinAndLogin(phone, btn) {
-            const pin = document.getElementById('loginPin').value;
-            const name = document.getElementById('loginName').value;
-            if (pin.length !== 4) { showToast("El PIN debe tener 4 dígitos.", true); btn.disabled = false; return; }
-            const { data: client, error: searchError } = await supabase.from('clientes')
-                .select('*')
-                .eq('barberia_id', currentShop.id)
-                .eq('celular', phone)
-                .eq('pin', pin) // El pin guardado es el PIN temporal
-                .single();
-            if (searchError) {
-                showToast("PIN incorrecto o expirado. Solicítalo de nuevo.", true);
-                btn.disabled = false;
-                return;
-            }
-            // Si el nombre está pendiente (nuevo usuario), lo guardamos.
-            if (client.nombre === 'PENDIENTE') {
-                if (!name) { showToast("Por favor, ingresa tu nombre.", true); btn.disabled = false; return; }
-                await supabase.from('clientes').update({ nombre: name, pin: null }).eq('id', client.id);
-                client.nombre = name;
-            } else {
-                // Si es usuario existente, limpiamos el PIN de la base de datos
-                await supabase.from('clientes').update({ pin: null }).eq('id', client.id);
-            }
-            // Login Exitoso
-            currentUser = client; 
-            localStorage.setItem(CLIENT_STORAGE_KEY, currentUser.id); 
-            localStorage.removeItem(ADMIN_STORAGE_KEY);
-            showClientDashboard();
-            resetLoginView();
-        }
-        // Función de reseteo de la vista
-        function resetLoginView() {
-            loginStep = 1;
-            document.getElementById('loginPhone').disabled = false;
-            document.getElementById('loginPhone').value = '';
-            document.getElementById('loginPin').value = '';
-            document.getElementById('loginName').value = '';
-            document.getElementById('nameSection').classList.add('hidden');
-            document.getElementById('pinSection').classList.add('hidden');
-            document.getElementById('btnActionLogin').innerText = 'Solicitar PIN';
-            document.getElementById('btnResendPin').classList.add('hidden');
-            document.getElementById('phoneError').classList.add('hidden');
-        }
+
+        // ── DASHBOARD CLIENTE ──
         async function showClientDashboard() {
             document.getElementById('viewLogin').classList.add('hidden');
             document.getElementById('viewClient').classList.remove('hidden');
@@ -690,8 +1028,13 @@
             document.getElementById('clientNameDisplay').innerText = currentUser.nombre.split(' ')[0];
             document.title = currentShop.nombre + " - Agendamiento";
             updateAdminDropdownVisibility(false);
+
             const todayISO = new Date().toISOString().split('T')[0];
-            const { data: appt } = await supabase.from('turnos').select('*').eq('barberia_id', currentShop.id).eq('cliente_id', currentUser.id).eq('estado', 'pendiente').gte('fecha', todayISO).order('fecha', {ascending: true}).single();
+            const { data: appt } = await supabase.from('turnos').select('*')
+                .eq('barberia_id', currentShop.id).eq('cliente_id', currentUser.id)
+                .eq('estado', 'pendiente').gte('fecha', todayISO)
+                .order('fecha', {ascending: true}).single();
+
             if (appt) {
                 document.getElementById('activeAppointmentCard').classList.remove('hidden');
                 document.getElementById('newBookingContainer').classList.add('hidden');
@@ -705,10 +1048,11 @@
                 loadSlots();
             }
         }
+
         async function loadSlots() {
             const dateStr = document.getElementById('datePicker').value;
-            const dateObj = new Date(dateStr + 'T00:00:00'); 
-            const dayOfWeek = dateObj.getDay(); 
+            const dateObj = new Date(dateStr + 'T00:00:00');
+            const dayOfWeek = dateObj.getDay();
             const openDays = shopConfig.dias_laborables || [1,2,3,4,5,6];
             if (!openDays.includes(dayOfWeek)) {
                 document.getElementById('slotsGrid').innerHTML = '';
@@ -720,59 +1064,63 @@
             grid.innerHTML = '<p class="col-span-3 text-center">Cargando...</p>';
             selectedTime = null;
             document.getElementById('btnConfirmBooking').disabled = true;
-            const { data: turnos } = await supabase.from('turnos').select('hora').eq('barberia_id', currentShop.id).eq('fecha', dateStr).neq('estado', 'cancelado');
+
+            const { data: turnos } = await supabase.from('turnos').select('hora')
+                .eq('barberia_id', currentShop.id).eq('fecha', dateStr).neq('estado', 'cancelado');
             const occupation = {};
-            turnos.forEach(t => { const h = t.hora.slice(0,5); occupation[h] = (occupation[h] || 0) + 1; });
+            turnos.forEach(t => { const h = t.hora.slice(0,5); occupation[h] = (occupation[h]||0)+1; });
             const capacity = currentShop.sillas || 1;
             grid.innerHTML = '';
             const barberBreaks = shopConfig.barber_breaks || [];
             generatedHours.forEach(time => {
                 let currentCapacity = capacity;
-                barberBreaks.forEach(breakTime => {
-                    if (breakTime.start && breakTime.end) {
-                        if (time >= breakTime.start && time < breakTime.end) currentCapacity--;
-                    }
-                });
+                barberBreaks.forEach(b => { if (b.start && b.end && time >= b.start && time < b.end) currentCapacity--; });
                 const currentCount = occupation[time] || 0;
                 const isAvailable = (Math.max(0, currentCapacity) - currentCount) > 0;
                 const btn = document.createElement('button');
-                btn.className = `slot-btn border rounded-lg py-3 font-medium text-sm flex flex-col items-center justify-center ${ !isAvailable ? 'occupied' : 'available bg-white border-gray-200 text-gray-700' }`;
-                let spotsLeft = Math.max(0, currentCapacity) - currentCount;
-                let badgeHtml = (isAvailable && spotsLeft <= 2) ? `<span class="spots-badge">${spotsLeft}</span>` : '';
+                btn.className = `slot-btn border rounded-lg py-3 font-medium text-sm flex flex-col items-center justify-center ${!isAvailable ? 'occupied' : 'available bg-white border-gray-200 text-gray-700'}`;
+                const spotsLeft = Math.max(0, currentCapacity) - currentCount;
+                const badgeHtml = (isAvailable && spotsLeft <= 2) ? `<span class="spots-badge">${spotsLeft}</span>` : '';
                 btn.innerHTML = `${time}${badgeHtml}`;
                 if (isAvailable) {
                     btn.onclick = () => {
                         document.querySelectorAll('.slot-btn').forEach(b => {
                             if (b.classList.contains('available')) {
-                                b.classList.remove('selected', 'bg-primary', 'text-white');
-                                b.classList.add('bg-white', 'text-gray-700');
+                                b.classList.remove('selected','bg-primary','text-white');
+                                b.classList.add('bg-white','text-gray-700');
                             }
                         });
-                        btn.classList.remove('bg-white', 'text-gray-700');
-                        btn.classList.add('selected', 'bg-primary', 'text-white');
+                        btn.classList.remove('bg-white','text-gray-700');
+                        btn.classList.add('selected','bg-primary','text-white');
                         selectedTime = time;
                         document.getElementById('btnConfirmBooking').disabled = false;
-                    }
+                    };
                 }
                 grid.appendChild(btn);
             });
         }
+
         async function createClientBooking() {
             const date = document.getElementById('datePicker').value;
             const service = document.getElementById('serviceSelect').value;
-            const { error } = await supabase.from('turnos').insert({ barberia_id: currentShop.id, cliente_id: currentUser.id, fecha: date, hora: selectedTime, servicio: service });
-            if (!error) { showToast("¡Turno confirmado! 👍"); showClientDashboard(); }
-            else showToast("Error: " + error.message, true);
+            const { error } = await supabase.from('turnos').insert({
+                barberia_id: currentShop.id, cliente_id: currentUser.id,
+                fecha: date, hora: selectedTime, servicio: service
+            });
+            if (!error) { showToast('¡Turno confirmado! 👍'); showClientDashboard(); }
+            else showToast('Error: ' + error.message, true);
         }
+
         async function cancelMyAppointment() {
-            showConfirmationModal("¿Estás seguro de que quieres CANCELAR tu turno?", 
+            showConfirmationModal('¿Estás seguro de que querés CANCELAR tu turno?',
                 async () => {
                     await supabase.from('turnos').update({ estado: 'cancelado' }).eq('id', currentUser.activeApptId);
-                    showToast("Turno cancelado.", true);
+                    showToast('Turno cancelado.', true);
                     showClientDashboard();
-                }, () => {} );
+                }, () => {});
         }
-        // --- ADMIN ---
+
+        // ── DASHBOARD ADMIN ──
         function showAdminDashboard() {
             document.getElementById('viewLogin').classList.add('hidden');
             document.getElementById('viewClient').classList.add('hidden');
@@ -782,45 +1130,52 @@
             updateAdminDropdownVisibility(true);
             loadBarberDashboard();
         }
+
         function switchAdminTab(tabName) {
             const tabA = document.getElementById('tabAgenda'); const tabC = document.getElementById('tabConfig');
             const panA = document.getElementById('panelAgenda'); const panC = document.getElementById('panelConfig');
-            if(tabName === 'agenda') {
-                tabA.classList.add('text-primary', 'border-b-2'); tabA.classList.remove('text-gray-500');
-                tabC.classList.remove('text-primary', 'border-b-2'); tabC.classList.add('text-gray-500');
+            if (tabName === 'agenda') {
+                tabA.classList.add('text-primary','border-b-2'); tabA.classList.remove('text-gray-500');
+                tabC.classList.remove('text-primary','border-b-2'); tabC.classList.add('text-gray-500');
                 panA.classList.remove('hidden'); panC.classList.add('hidden');
                 loadBarberDashboard();
             } else {
-                tabC.classList.add('text-primary', 'border-b-2'); tabC.classList.remove('text-gray-500');
-                tabA.classList.remove('text-primary', 'border-b-2'); tabA.classList.add('text-gray-500');
+                tabC.classList.add('text-primary','border-b-2'); tabC.classList.remove('text-gray-500');
+                tabA.classList.remove('text-primary','border-b-2'); tabA.classList.add('text-gray-500');
                 panC.classList.remove('hidden'); panA.classList.add('hidden');
                 loadConfigForm();
             }
         }
+
         async function loginBarber() {
             const username = document.getElementById('adminUsername').value;
             const pass = document.getElementById('adminPass').value;
-            const { data: barber } = await supabase.from('barberos').select('*').eq('barberia_id', currentShop.id).eq('email', username).eq('password', pass).single();
+            const { data: barber } = await supabase.from('barberos').select('*')
+                .eq('barberia_id', currentShop.id).eq('email', username).eq('password', pass).single();
             if (barber) {
                 currentUser = barber;
-                localStorage.setItem(ADMIN_STORAGE_KEY, currentUser.id); localStorage.removeItem(CLIENT_STORAGE_KEY);
+                localStorage.setItem(ADMIN_STORAGE_KEY, currentUser.id);
+                localStorage.removeItem(CLIENT_STORAGE_KEY);
                 document.getElementById('modalBarberLogin').classList.add('hidden');
                 showAdminDashboard();
-            } else showToast("Datos incorrectos", true);
+            } else showToast('Datos incorrectos', true);
         }
+
         async function loadBarberDashboard() {
             const date = document.getElementById('barberDatePicker').value;
             const list = document.getElementById('barberAppointmentsList');
             const summary = document.getElementById('occupancySummary');
             list.innerHTML = '<p class="text-center text-gray-400">Cargando...</p>';
-            const { data: appts } = await supabase.from('turnos').select(`id, hora, servicio, estado, clientes (nombre, celular)`).eq('barberia_id', currentShop.id).eq('fecha', date).order('hora');
+            const { data: appts } = await supabase.from('turnos')
+                .select(`id, hora, servicio, estado, clientes (nombre, celular)`)
+                .eq('barberia_id', currentShop.id).eq('fecha', date).order('hora');
             list.innerHTML = ''; summary.innerHTML = '';
-            if (!appts.length) list.innerHTML = '<p class="text-center text-gray-400 py-10">Agenda libre 🏖️</p>';
+            if (!appts.length) { list.innerHTML = '<p class="text-center text-gray-400 py-10">Agenda libre 🏖️</p>'; }
             const occupation = {};
-            appts.forEach(a => { if(a.estado!=='cancelado') occupation[a.hora.slice(0,5)] = (occupation[a.hora.slice(0,5)]||0)+1; });
+            appts.forEach(a => { if (a.estado !== 'cancelado') occupation[a.hora.slice(0,5)] = (occupation[a.hora.slice(0,5)]||0)+1; });
             generatedHours.forEach(h => {
                 const count = occupation[h] || 0;
-                if(count > 0) {
+                if (count > 0) {
                     const div = document.createElement('div');
                     div.className = `flex-shrink-0 px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap ${count >= currentShop.sillas ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`;
                     div.innerText = `${h}: ${count}/${currentShop.sillas}`;
@@ -828,14 +1183,14 @@
                 }
             });
             appts.forEach(a => {
-                const isBlocked = a.clientes.nombre === 'PAUSA'; 
+                const isBlocked = a.clientes.nombre === 'PAUSA';
                 let cardClass = 'bg-white shadow-sm border-l-4 border-green-500';
                 let statusLabel = `<span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">✅ EN ESPERA</span>`;
-                let actionBtn = `<button onclick="barberCancel(${a.id})" class="text-red-500 p-2 hover:bg-red-100 rounded-full transition" title="Cancelar Turno"><i class="fas fa-times"></i></button>`;
+                let actionBtn = `<button onclick="barberCancel(${a.id})" class="text-red-500 p-2 hover:bg-red-100 rounded-full transition"><i class="fas fa-times"></i></button>`;
                 if (a.estado === 'cancelado') {
                     cardClass = 'bg-red-50 border-l-4 border-red-300 opacity-75';
                     statusLabel = `<span class="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded">❌ CANCELADO</span>`;
-                    actionBtn = `<button onclick="deleteAppt(${a.id})" class="text-gray-500 p-2 hover:bg-gray-200 rounded-full transition" title="Borrar Definitivamente"><i class="fas fa-trash-alt"></i></button>`;
+                    actionBtn = `<button onclick="deleteAppt(${a.id})" class="text-gray-500 p-2 hover:bg-gray-200 rounded-full transition"><i class="fas fa-trash-alt"></i></button>`;
                 } else if (isBlocked) {
                     cardClass = 'bg-yellow-50 border-l-4 border-yellow-400';
                     statusLabel = `<span class="text-xs font-bold text-yellow-700 bg-yellow-100 px-2 py-1 rounded">⏸️ PAUSA</span>`;
@@ -851,30 +1206,27 @@
                         <div class="text-sm font-medium ${isBlocked ? 'text-yellow-700' : 'text-gray-700'}">${a.clientes.nombre}</div>
                         <div class="text-xs text-gray-500">${a.servicio}</div>
                     </div>
-                    ${actionBtn}
-                `;
+                    ${actionBtn}`;
                 list.appendChild(item);
             });
         }
+
         async function barberCancel(id) {
-            showConfirmationModal("¿Cancelar este turno?", 
-                async () => {
-                    await supabase.from('turnos').update({estado:'cancelado'}).eq('id', id);
-                    showToast("Turno cancelado.");
-                    loadBarberDashboard();
-                }, () => {});
+            showConfirmationModal('¿Cancelar este turno?',
+                async () => { await supabase.from('turnos').update({estado:'cancelado'}).eq('id',id); showToast('Turno cancelado.'); loadBarberDashboard(); },
+                () => {});
         }
+
         async function deleteAppt(id) {
-            showConfirmationModal("¿Borrar definitivamente del historial?", 
+            showConfirmationModal('¿Borrar definitivamente del historial?',
                 async () => {
                     const { error } = await supabase.from('turnos').delete().eq('id', id);
-                    if(!error) {
-                        showToast("Registro eliminado.");
-                        loadBarberDashboard();
-                    } else showToast("Error al borrar", true);
+                    if (!error) { showToast('Registro eliminado.'); loadBarberDashboard(); }
+                    else showToast('Error al borrar', true);
                 }, () => {});
         }
-        // --- CONFIG ---
+
+        // ── CONFIGURACIÓN ──
         function loadConfigForm() {
             document.getElementById('cfgOpen').value = currentShop.apertura.slice(0,5);
             document.getElementById('cfgClose').value = currentShop.cierre.slice(0,5);
@@ -888,31 +1240,29 @@
             renderServicesListDOM();
             renderBarberBreaks();
         }
+
         function renderBarberBreaks() {
-            const container = document.getElementById('barberBreaksContainer');
-            container.innerHTML = '';
+            const container = document.getElementById('barberBreaksContainer'); container.innerHTML = '';
             const chairs = parseInt(document.getElementById('cfgChairs').value) || 1;
-            while (shopConfig.barber_breaks.length < chairs) shopConfig.barber_breaks.push({ id: shopConfig.barber_breaks.length + 1, start: '', end: '' });
+            while (shopConfig.barber_breaks.length < chairs) shopConfig.barber_breaks.push({ id: shopConfig.barber_breaks.length+1, start:'', end:'' });
             shopConfig.barber_breaks = shopConfig.barber_breaks.slice(0, chairs);
             shopConfig.barber_breaks.forEach((breakTime, index) => {
-                const div = document.createElement('div');
-                div.className = 'flex gap-2 items-center';
+                const div = document.createElement('div'); div.className = 'flex gap-2 items-center';
                 div.innerHTML = `
-                    <label class="text-sm font-medium w-16">Barbero ${index + 1}:</label>
-                    <input type="tel" inputmode="numeric" class="p-1 border rounded w-full text-sm text-center time-mask" placeholder="Inicio" data-barber-id="${index}" data-time-type="start" value="${breakTime.start || ''}" oninput="maskTime(this)">
+                    <label class="text-sm font-medium w-16">Barbero ${index+1}:</label>
+                    <input type="tel" inputmode="numeric" class="p-1 border rounded w-full text-sm text-center time-mask" placeholder="Inicio" data-barber-id="${index}" data-time-type="start" value="${breakTime.start||''}" oninput="maskTime(this)">
                     <span class="text-xs">-</span>
-                    <input type="tel" inputmode="numeric" class="p-1 border rounded w-full text-sm text-center time-mask" placeholder="Fin" data-barber-id="${index}" data-time-type="end" value="${breakTime.end || ''}" oninput="maskTime(this)">
-                `;
+                    <input type="tel" inputmode="numeric" class="p-1 border rounded w-full text-sm text-center time-mask" placeholder="Fin" data-barber-id="${index}" data-time-type="end" value="${breakTime.end||''}" oninput="maskTime(this)">`;
                 container.appendChild(div);
             });
             container.querySelectorAll('input').forEach(input => {
-                input.addEventListener('change', (e) => {
+                input.addEventListener('change', e => {
                     const id = parseInt(e.target.dataset.barberId);
-                    const type = e.target.dataset.timeType;
-                    shopConfig.barber_breaks[id][type] = e.target.value;
+                    shopConfig.barber_breaks[id][e.target.dataset.timeType] = e.target.value;
                 });
             });
         }
+
         function renderServicesListDOM() {
             const container = document.getElementById('servicesList'); container.innerHTML = '';
             (shopConfig.servicios || []).forEach((s, index) => {
@@ -922,24 +1272,30 @@
                 container.appendChild(div);
             });
         }
+
         function addServiceDOM() {
             const name = document.getElementById('newSvcName').value; const price = document.getElementById('newSvcPrice').value;
-            if(!name || !price) return;
-            if(!shopConfig.servicios) shopConfig.servicios = [];
+            if (!name || !price) return;
+            if (!shopConfig.servicios) shopConfig.servicios = [];
             shopConfig.servicios.push({nombre: name, precio: parseInt(price)});
             document.getElementById('newSvcName').value = ''; document.getElementById('newSvcPrice').value = '';
             renderServicesListDOM();
         }
+
         function removeService(index) { shopConfig.servicios.splice(index, 1); renderServicesListDOM(); }
+
         async function changeAdminPassword() {
-            const currentPass = document.getElementById('currentPass').value; const newPass = document.getElementById('newPass').value; const confirmPass = document.getElementById('confirmNewPass').value;
-            if (!currentPass || !newPass || !confirmPass) return showToast("Faltan datos", true);
-            if (newPass !== confirmPass) return showToast("No coinciden", true);
-            if (currentPass !== currentUser.password) return showToast("Contraseña actual mal", true);
+            const currentPass = document.getElementById('currentPass').value;
+            const newPass = document.getElementById('newPass').value;
+            const confirmPass = document.getElementById('confirmNewPass').value;
+            if (!currentPass || !newPass || !confirmPass) return showToast('Faltan datos', true);
+            if (newPass !== confirmPass) return showToast('No coinciden', true);
+            if (currentPass !== currentUser.password) return showToast('Contraseña actual incorrecta', true);
             const { error } = await supabase.from('barberos').update({ password: newPass }).eq('id', currentUser.id);
-            if (!error) { currentUser.password = newPass; showToast("Actualizado"); toggleModal('modalAccountSettings'); } 
-            else showToast("Error", true);
+            if (!error) { currentUser.password = newPass; showToast('Actualizado'); toggleModal('modalAccountSettings'); }
+            else showToast('Error', true);
         }
+
         async function saveConfig() {
             const newOpen = document.getElementById('cfgOpen').value;
             const newClose = document.getElementById('cfgClose').value;
@@ -950,120 +1306,95 @@
             shopConfig.mensaje_aviso = document.getElementById('cfgMsg').value;
             shopConfig.mostrar_whatsapp = document.getElementById('cfgShowWpp').checked;
             shopConfig.whatsapp = document.getElementById('cfgWppNumber').value;
-            shopConfig.barber_breaks = shopConfig.barber_breaks.filter(b => b.start && b.end); 
+            shopConfig.barber_breaks = shopConfig.barber_breaks.filter(b => b.start && b.end);
             const { error } = await supabase.from('barberias').update({
                 apertura: newOpen, cierre: newClose, intervalo: newInterval, sillas: newChairs, config: shopConfig
             }).eq('id', currentShop.id);
-            if(!error) {
-                showToast("Guardado");
+            if (!error) {
+                showToast('Guardado');
                 currentShop.apertura = newOpen; currentShop.cierre = newClose; currentShop.intervalo = newInterval; currentShop.sillas = newChairs;
                 generatedHours = generateTimeSlots(currentShop.apertura, currentShop.cierre, currentShop.intervalo);
-                renderServiceOptions(); showAdminDashboard(); switchAdminTab('config'); 
-            } else showToast("Error: " + error.message, true);
+                renderServiceOptions(); showAdminDashboard(); switchAdminTab('config');
+            } else showToast('Error: ' + error.message, true);
         }
+
         async function createManualBooking() {
-            const phone = document.getElementById('manualPhone').value; const name = document.getElementById('manualName').value;
-            const date = document.getElementById('manualDate').value; const time = document.getElementById('manualTime').value; const service = document.getElementById('manualService').value;
-            if (!name || !date || !time) return showToast("Faltan datos", true);
+            const phone = document.getElementById('manualPhone').value;
+            const name = document.getElementById('manualName').value;
+            const date = document.getElementById('manualDate').value;
+            const time = document.getElementById('manualTime').value;
+            const service = document.getElementById('manualService').value;
+            if (!name || !date || !time) return showToast('Faltan datos', true);
             let clientId;
-            const { data: existing } = await supabase.from('clientes').select('id').eq('barberia_id', currentShop.id).eq('celular', phone || '000000000').single();
+            const { data: existing } = await supabase.from('clientes').select('id')
+                .eq('barberia_id', currentShop.id).eq('celular', phone || '000000000').single();
             if (existing) clientId = existing.id;
             else {
-                const { data: newC } = await supabase.from('clientes').insert({ barberia_id: currentShop.id, celular: phone || '000000000', nombre: name, pin: '0000' }).select().single();
+                const { data: newC } = await supabase.from('clientes').insert({
+                    barberia_id: currentShop.id, celular: phone || '000000000', nombre: name, pin_temporal: '0000'
+                }).select().single();
                 clientId = newC.id;
             }
-            const { error } = await supabase.from('turnos').insert({ barberia_id: currentShop.id, cliente_id: clientId, fecha: date, hora: time, servicio: service });
-            if(!error) { showToast("Agendado"); toggleModal('modalManualBooking'); loadBarberDashboard(); }
+            const { error } = await supabase.from('turnos').insert({
+                barberia_id: currentShop.id, cliente_id: clientId, fecha: date, hora: time, servicio: service
+            });
+            if (!error) { showToast('Agendado'); toggleModal('modalManualBooking'); loadBarberDashboard(); }
             else showToast(error.message, true);
         }
-        const DAYS_ES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-        function formatDate(d) {
-            const date = new Date(d + 'T00:00:00'); 
-            return `${DAYS_ES[date.getDay()]}, ${date.toLocaleDateString('es-UY', { day: 'numeric', month: 'long' })}`;
-        }
-        function logout() { 
-            currentUser = null; localStorage.removeItem(CLIENT_STORAGE_KEY); localStorage.removeItem(ADMIN_STORAGE_KEY);
-            document.title = currentShop.nombre + " - Agendamiento"; updateAdminDropdownVisibility(false);
-            document.getElementById('viewBarber').classList.add('hidden'); document.getElementById('viewClient').classList.add('hidden');
-            document.getElementById('viewLogin').classList.remove('hidden'); document.getElementById('fabAdd').classList.add('hidden');
-            resetLoginView();
+
+        // ── LOGOUT ──
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem(CLIENT_STORAGE_KEY);
+            localStorage.removeItem(ADMIN_STORAGE_KEY);
+            document.title = currentShop.nombre + " - Agendamiento";
+            updateAdminDropdownVisibility(false);
+            document.getElementById('viewBarber').classList.add('hidden');
+            document.getElementById('viewClient').classList.add('hidden');
+            document.getElementById('viewLogin').classList.remove('hidden');
+            document.getElementById('fabAdd').classList.add('hidden');
+            backToPhone();
         }
 
-        // --- FUNCIONES ADICIONALES PARA CAMBIO DE PIN ---
+        // ── CAMBIAR PIN (desde dashboard) ──
         async function changeClientPin() {
-            const currentPinInput = document.getElementById('currentPin');
-            const newPinInput = document.getElementById('newPin');
-            const confirmPinInput = document.getElementById('confirmNewPin');
+            const currentPinVal = document.getElementById('currentPin').value;
+            const newPinVal = document.getElementById('newPin').value;
+            const confirmPinVal = document.getElementById('confirmNewPin').value;
             const saveBtn = document.getElementById('btnSavePin');
-
-            const currentPin = currentPinInput.value;
-            const newPin = newPinInput.value;
-            const confirmPin = confirmPinInput.value;
-
-            // Validaciones
-            if (currentPin.length !== 4) {
-                showToast("El PIN actual debe tener 4 dígitos.", true);
-                return;
-            }
-            if (newPin.length !== 4 || confirmPin.length !== 4) {
-                showToast("Los nuevos PINs deben tener 4 dígitos.", true);
-                return;
-            }
-            if (newPin !== confirmPin) {
-                showToast("Los PINs nuevos no coinciden.", true);
-                return;
-            }
-
-            saveBtn.disabled = true;
-            saveBtn.innerText = "Guardando...";
-
+            if (currentPinVal.length !== 4) return showToast('El PIN actual debe tener 4 dígitos.', true);
+            if (newPinVal.length !== 4 || confirmPinVal.length !== 4) return showToast('Los nuevos PINs deben tener 4 dígitos.', true);
+            if (newPinVal !== confirmPinVal) return showToast('Los PINs nuevos no coinciden.', true);
+            saveBtn.disabled = true; saveBtn.innerText = 'Guardando...';
             try {
-                // Verificar que el PIN actual sea correcto
                 const { data: client, error: verifyError } = await supabase.from('clientes')
-                    .select('*')
-                    .eq('id', currentUser.id)
-                    .eq('pin', currentPin) // Comparamos con el pin actual
-                    .single();
-
-                if (verifyError || !client) {
-                    showToast("PIN actual incorrecto.", true);
-                    saveBtn.disabled = false;
-                    saveBtn.innerText = "Guardar PIN";
-                    return;
-                }
-
-                // Actualizar el PIN en la base de datos
+                    .select('*').eq('id', currentUser.id).eq('pin_permanente', currentPinVal).single();
+                if (verifyError || !client) { showToast('PIN actual incorrecto.', true); return; }
                 const { error: updateError } = await supabase.from('clientes')
-                    .update({ pin: newPin }) // Guardamos el nuevo PIN como permanente
-                    .eq('id', currentUser.id);
-
-                if (updateError) {
-                    throw new Error(updateError.message);
-                }
-
-                // Actualizamos el currentUser local
-                currentUser.pin = newPin;
-
-                showToast("¡PIN actualizado con éxito!");
-                toggleModal('modalChangePin'); // Cierra el modal
-                // Opcional: reinicia la vista de login si quieres que el usuario vuelva a iniciar sesión con su nuevo PIN
-                // resetLoginView();
-
+                    .update({ pin_permanente: newPinVal }).eq('id', currentUser.id);
+                if (updateError) throw new Error(updateError.message);
+                currentUser.pin_permanente = newPinVal;
+                showToast('¡PIN actualizado con éxito!');
+                toggleModal('modalChangePin');
             } catch (error) {
-                showToast("Error al actualizar PIN: " + error.message, true);
+                showToast('Error al actualizar PIN: ' + error.message, true);
             } finally {
-                saveBtn.disabled = false;
-                saveBtn.innerText = "Guardar PIN";
+                saveBtn.disabled = false; saveBtn.innerText = 'Guardar PIN';
             }
         }
 
-        // Función para abrir el modal de cambio de PIN
         function openChangePinModal() {
             toggleModal('modalChangePin');
             document.getElementById('currentPin').value = '';
             document.getElementById('newPin').value = '';
             document.getElementById('confirmNewPin').value = '';
         }
+
+        const DAYS_ES = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+        function formatDate(d) {
+            const date = new Date(d + 'T00:00:00');
+            return `${DAYS_ES[date.getDay()]}, ${date.toLocaleDateString('es-UY', {day:'numeric', month:'long'})}`;
+        }
     </script>
 </body>
-                    </html>
+</html>
