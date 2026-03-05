@@ -618,17 +618,41 @@ function renderDetalles(){
 }
 
 // -------- CARRUSEL --------
+let carouselTouchBound=false;
 function loadCarousel(){
     const photos=shopConfig.carousel_photos||[];
     const track=document.getElementById('carouselTrack'),dots=document.getElementById('carouselDots');
-    if(!photos.length)return;
-    track.innerHTML=photos.map(url=>`<img src="${url}" class="carousel-slide" alt="" loading="lazy">`).join('');
+    // Siempre resetear
+    track.style.transform='translateX(0)';
+    clearInterval(carouselTimer);
+    if(!photos.length){
+        track.innerHTML='<div class="carousel-placeholder"><i class="fas fa-cut"></i></div>';
+        dots.innerHTML='';carouselSlides=[];carouselIndex=0;return;
+    }
+    // Precargar imágenes antes de insertar
+    let loaded=0;
+    const imgs=photos.map(url=>{
+        const img=new Image();
+        img.onload=img.onerror=()=>{loaded++;if(loaded===photos.length)_mountCarousel(photos);};
+        img.src=url;return img;
+    });
+    // También montar de inmediato (sin esperar precarga) para no quedar en negro
+    _mountCarousel(photos);
+}
+function _mountCarousel(photos){
+    const track=document.getElementById('carouselTrack'),dots=document.getElementById('carouselDots');
+    track.innerHTML=photos.map(url=>`<img src="${url}" class="carousel-slide" alt="" style="background:#222;">`).join('');
     carouselSlides=photos;carouselIndex=0;
+    track.style.transform='translateX(0)';
     dots.innerHTML=photos.map((_,i)=>`<div class="carousel-dot${i===0?' active':''}" onclick="carouselGoTo(${i})"></div>`).join('');
-    const wrap=document.getElementById('carouselWrap');let sx=0;
-    wrap.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;},{passive:true});
-    wrap.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>40){dx<0?carouselNext():carouselPrev();}});
-    clearInterval(carouselTimer);carouselTimer=setInterval(carouselNext,4000);
+    if(!carouselTouchBound){
+        const wrap=document.getElementById('carouselWrap');let sx=0;
+        wrap.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;},{passive:true});
+        wrap.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>40){dx<0?carouselNext():carouselPrev();}});
+        carouselTouchBound=true;
+    }
+    clearInterval(carouselTimer);
+    if(photos.length>1)carouselTimer=setInterval(carouselNext,4000);
 }
 function carouselGoTo(i){
     if(!carouselSlides.length)return;
@@ -922,11 +946,14 @@ function loadPaginaForm(){
     document.getElementById('cfgInstagram').value=shopConfig.instagram||'';
     renderCarouselThumbs();renderPortfolioThumbs();renderWppContacts();
 }
+function thumbHtml(url, i, deleteFn){
+    return `<div class="photo-thumb"><img src="${url}" alt="" style="background:#f3f4f6;" onerror="this.parentElement.style.border='2px solid #ef4444';this.style.opacity='0.3';"><button class="del-btn" onclick="${deleteFn}(${i})">✕</button></div>`;
+}
 function renderCarouselThumbs(){
-    document.getElementById('carouselThumbList').innerHTML=(shopConfig.carousel_photos||[]).map((url,i)=>`<div class="photo-thumb"><img src="${url}" alt=""><button class="del-btn" onclick="deleteCarouselPhoto(${i})">✕</button></div>`).join('');
+    document.getElementById('carouselThumbList').innerHTML=(shopConfig.carousel_photos||[]).map((url,i)=>thumbHtml(url,i,'deleteCarouselPhoto')).join('');
 }
 function renderPortfolioThumbs(){
-    document.getElementById('portfolioThumbList').innerHTML=(shopConfig.portfolio_photos||[]).map((url,i)=>`<div class="photo-thumb"><img src="${url}" alt=""><button class="del-btn" onclick="deletePortfolioPhoto(${i})">✕</button></div>`).join('');
+    document.getElementById('portfolioThumbList').innerHTML=(shopConfig.portfolio_photos||[]).map((url,i)=>thumbHtml(url,i,'deletePortfolioPhoto')).join('');
 }
 
 // ---- MÚLTIPLES WPP ----
@@ -957,7 +984,7 @@ async function uploadCarouselPhotos(input){
         const path=`${currentShop.slug}/carousel/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
         const {data:upData,error}=await supabase.storage.from(STORAGE_BUCKET).upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type});
         if(error){showToast('Error subiendo foto: '+error.message,true);console.error('Upload error:',error);continue;}
-        const {data:{publicUrl}}=supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+        const publicUrl=`${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/${path}`;
         if(!shopConfig.carousel_photos)shopConfig.carousel_photos=[];
         shopConfig.carousel_photos.push(publicUrl);
     }
@@ -972,7 +999,7 @@ async function uploadPortfolioPhotos(input){
         const path=`${currentShop.slug}/portfolio/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
         const {data:upData,error}=await supabase.storage.from(STORAGE_BUCKET).upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type});
         if(error){showToast('Error subiendo foto: '+error.message,true);console.error('Upload error:',error);continue;}
-        const {data:{publicUrl}}=supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+        const publicUrl=`${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/${path}`;
         if(!shopConfig.portfolio_photos)shopConfig.portfolio_photos=[];
         shopConfig.portfolio_photos.push(publicUrl);
     }
