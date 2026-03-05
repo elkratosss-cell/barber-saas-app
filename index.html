@@ -42,6 +42,7 @@
         .slot-btn.available:hover{transform:scale(1.05);border-color:var(--color-primary);}
         .slot-btn.selected{background:var(--color-primary);color:#fff;border-color:var(--color-primary);}
         .slot-btn.occupied{background:#e5e7eb;color:#9ca3af;cursor:not-allowed;opacity:0.7;}
+        .slot-btn.blocked{background:repeating-linear-gradient(45deg,#f3f4f6,#f3f4f6 4px,#e5e7eb 4px,#e5e7eb 8px);color:#d1d5db;cursor:not-allowed;font-size:0.7rem;text-decoration:line-through;}
         .spots-badge{position:absolute;top:-5px;right:-5px;background:#10B981;color:#fff;font-size:0.6rem;padding:2px 5px;border-radius:999px;font-weight:bold;}
         .flatpickr-calendar{border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.1);border:none;}
         .flatpickr-day.selected,.flatpickr-day.selected:hover{background:var(--color-primary)!important;border-color:var(--color-primary)!important;}
@@ -332,9 +333,11 @@
             <div id="servicesList" class="space-y-2 mb-2"></div>
             <div class="flex gap-2">
                 <input type="text" id="newSvcName" placeholder="Nombre" class="flex-1 min-w-0 p-2 border rounded text-sm">
-                <input type="tel" inputmode="numeric" id="newSvcPrice" placeholder="$" class="w-20 p-2 border rounded text-sm">
-                <button onclick="addServiceDOM()" class="w-10 h-10 flex items-center justify-center bg-gray-200 rounded font-bold text-xl hover:bg-gray-300">+</button>
+                <input type="tel" inputmode="numeric" id="newSvcPrice" placeholder="$" class="w-16 p-2 border rounded text-sm">
+                <input type="tel" inputmode="numeric" id="newSvcDuracion" placeholder="min" class="w-14 p-2 border rounded text-sm" title="Duración en minutos">
+                <button onclick="addServiceDOM()" class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-gray-200 rounded font-bold text-xl hover:bg-gray-300">+</button>
             </div>
+            <p class="text-xs text-gray-400">Nombre · Precio · Duración (min)</p>
         </div>
 
         <!-- Mensaje aviso -->
@@ -810,33 +813,134 @@ async function loadSlots(){
     document.getElementById('closedMessage').classList.add('hidden');
     const grid=document.getElementById('slotsGrid');grid.innerHTML='<p class="col-span-3 text-center text-sm text-gray-400">Cargando...</p>';
     selectedTime=null;document.getElementById('btnConfirmBooking').disabled=true;
-    const {data:turnos}=await supabase.from('turnos').select('hora').eq('barberia_id',currentShop.id).eq('fecha',dateStr).neq('estado','cancelado');
-    const occ={};turnos.forEach(t=>{const h=t.hora.slice(0,5);occ[h]=(occ[h]||0)+1;});
-    const cap=currentShop.sillas||1;grid.innerHTML='';
+
+    // Traer turnos con servicio para calcular bloqueos por duración
+    const {data:turnos}=await supabase.from('turnos').select('hora,servicio,tipo').eq('barberia_id',currentShop.id).eq('fecha',dateStr).neq('estado','cancelado');
+    const intervalo=currentShop.intervalo||30;
+    const cap=currentShop.sillas||1;
+
+    // Construir mapa: hora -> cantidad ocupada
+    const occ={};
+    // Mapa de slots bloqueados por desborde de duración (no cuentan como "ocupados" completos, 
+    // sino que bloquean disponibilidad para nuevos turnos)
+    const blocked={};
+
+    turnos.forEach(t=>{
+        const h=t.hora.slice(0,5);
+        if(t.tipo==='bloqueo'){
+            // Slot bloqueado por desborde de un turno anterior
+            blocked[h]=(blocked[h]||0)+1;
+        } else {
+            occ[h]=(occ[h]||0)+1;
+            // Calcular cuántos slots extra ocupa este servicio
+            const svcConfig=(shopConfig.servicios||[]).find(s=>s.nombre===t.servicio);
+            const durMin=svcConfig?.duracion||intervalo;
+            const slotsExtra=Math.ceil(durMin/intervalo)-1;
+            if(slotsExtra>0){
+                const idx=generatedHours.indexOf(h);
+                for(let k=1;k<=slotsExtra;k++){
+                    if(idx+k<generatedHours.length){
+                        const bh=generatedHours[idx+k];
+                        blocked[bh]=(blocked[bh]||0)+1;
+                    }
+                }
+            }
+        }
+    });
+
+    grid.innerHTML='';
     generatedHours.forEach(time=>{
-        let cc=cap;(shopConfig.barber_breaks||[]).forEach(b=>{if(b.start&&b.end&&time>=b.start&&time<b.end)cc--;});
-        const cnt=occ[time]||0,avail=(Math.max(0,cc)-cnt)>0;
+        // Capacidad real descontando pausas
+        let cc=cap;
+        (shopConfig.barber_breaks||[]).forEach(b=>{if(b.start&&b.end&&time>=b.start&&time<b.end)cc--;});
+        const cnt=occ[time]||0;
+        const blk=blocked[time]||0;
+        const totalOcupado=cnt+blk;
+        const libre=Math.max(0,cc)-totalOcupado;
+        // Un slot está "bloqueado visualmente" si está bloqueado pero no completamente ocupado
+        const isBlocked=blk>0&&cnt===0&&libre<=0;
+        const isOccupied=!isBlocked&&libre<=0;
+        const avail=libre>0;
+
         const btn=document.createElement('button');
-        btn.className=`slot-btn border rounded-lg py-3 font-medium text-sm flex flex-col items-center justify-center ${!avail?'occupied':'available bg-white border-gray-200 text-gray-700'}`;
-        const spots=Math.max(0,cc)-cnt;
-        btn.innerHTML=time+(avail&&spots<=2?`<span class="spots-badge">${spots}</span>`:'');
-        if(avail){btn.onclick=()=>{document.querySelectorAll('.slot-btn').forEach(b=>{if(b.classList.contains('available')){b.classList.remove('selected','bg-primary','text-white');b.classList.add('bg-white','text-gray-700');}});btn.classList.remove('bg-white','text-gray-700');btn.classList.add('selected');selectedTime=time;document.getElementById('btnConfirmBooking').disabled=false;};}
+        let cls='slot-btn border rounded-lg py-3 font-medium text-sm flex flex-col items-center justify-center ';
+        if(isBlocked) cls+='blocked';
+        else if(isOccupied) cls+='occupied';
+        else cls+='available bg-white border-gray-200 text-gray-700';
+        btn.className=cls;
+        btn.innerHTML=time+(avail&&libre<=2?`<span class="spots-badge">${libre}</span>`:'');
+
+        if(avail){
+            btn.onclick=()=>{
+                // Verificar que los slots necesarios para el servicio seleccionado estén libres
+                const durSel=getSelectedServiceDuracion('serviceSelect');
+                const slotsNeed=Math.ceil(durSel/intervalo);
+                const idx=generatedHours.indexOf(time);
+                let canBook=true;
+                for(let k=1;k<slotsNeed;k++){
+                    if(idx+k>=generatedHours.length){canBook=false;break;}
+                    const nt=generatedHours[idx+k];
+                    const nOcc=(occ[nt]||0)+(blocked[nt]||0);
+                    let nCap=cap;
+                    (shopConfig.barber_breaks||[]).forEach(b=>{if(b.start&&b.end&&nt>=b.start&&nt<b.end)nCap--;});
+                    if(nOcc>=nCap){canBook=false;break;}
+                }
+                if(!canBook){
+                    showToast('No hay espacio suficiente para este servicio en este horario.',true);return;
+                }
+                document.querySelectorAll('.slot-btn').forEach(b=>{
+                    if(b.classList.contains('available')){b.classList.remove('selected');b.style.background='';b.style.color='';}
+                });
+                btn.classList.add('selected');
+                selectedTime=time;
+                document.getElementById('btnConfirmBooking').disabled=false;
+            };
+        } else {
+            btn.disabled=true;
+        }
         grid.appendChild(btn);
     });
+
+    // Re-verificar al cambiar servicio
+    document.getElementById('serviceSelect').onchange=()=>loadSlots();
 }
 function confirmBookingModal(){
     const date=document.getElementById('datePicker').value,svc=document.getElementById('serviceSelect').value;
     if(!selectedTime||!date)return;
+    const durSel=getSelectedServiceDuracion('serviceSelect');
+    const intervalo=currentShop.intervalo||30;
+    const [hh,mm]=selectedTime.split(':').map(Number);
+    const finDate=new Date();finDate.setHours(hh,mm+durSel,0,0);
+    const horaFin=finDate.toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit',hour12:false});
+    const timeStr=durSel>intervalo?`${selectedTime} – ${horaFin} (${durSel}min)`:selectedTime;
     document.getElementById('bookingConfirmDate').innerText=formatDate(date);
-    document.getElementById('bookingConfirmTime').innerText=selectedTime;
+    document.getElementById('bookingConfirmTime').innerText=timeStr;
     document.getElementById('bookingConfirmService').innerText=svc;
     toggleModal('modalConfirmBooking');
 }
 async function createClientBooking(){
     toggleModal('modalConfirmBooking');
     const date=document.getElementById('datePicker').value,svc=document.getElementById('serviceSelect').value;
-    const {error}=await supabase.from('turnos').insert({barberia_id:currentShop.id,cliente_id:currentUser.id,fecha:date,hora:selectedTime,servicio:svc});
-    if(!error){showToast('¡Turno confirmado! 👍');showClientDashboard();}else showToast('Error: '+error.message,true);
+    const intervalo=currentShop.intervalo||30;
+    const durSel=getSelectedServiceDuracion('serviceSelect');
+    const slotsNeed=Math.ceil(durSel/intervalo);
+    const idx=generatedHours.indexOf(selectedTime);
+
+    // Insertar turno principal
+    const {error}=await supabase.from('turnos').insert({barberia_id:currentShop.id,cliente_id:currentUser.id,fecha:date,hora:selectedTime,servicio:svc,duracion_min:durSel,tipo:'principal'});
+    if(error){showToast('Error: '+error.message,true);return;}
+
+    // Insertar slots de bloqueo para los slots siguientes que ocupa el servicio
+    if(slotsNeed>1){
+        const bloques=[];
+        for(let k=1;k<slotsNeed;k++){
+            if(idx+k<generatedHours.length){
+                bloques.push({barberia_id:currentShop.id,cliente_id:currentUser.id,fecha:date,hora:generatedHours[idx+k],servicio:svc+' (cont.)',duracion_min:0,tipo:'bloqueo'});
+            }
+        }
+        if(bloques.length) await supabase.from('turnos').insert(bloques);
+    }
+    showToast('¡Turno confirmado! 👍');showClientDashboard();
 }
 async function cancelMyAppointment(){
     showConfirmationModal('¿Cancelar tu turno?',async()=>{
@@ -872,17 +976,41 @@ async function loadBarberDashboard(){
     if(!appts||!appts.length){list.innerHTML='<p class="text-center text-gray-400 py-10">Agenda libre 🏖️</p>';return;}
     const occ={};appts.forEach(a=>{if(a.estado!=='cancelado')occ[a.hora.slice(0,5)]=(occ[a.hora.slice(0,5)]||0)+1;});
     generatedHours.forEach(h=>{const c=occ[h]||0;if(c>0){const d=document.createElement('div');d.className=`flex-shrink-0 px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap ${c>=currentShop.sillas?'bg-red-100 text-red-600':'bg-green-100 text-green-600'}`;d.innerText=`${h}: ${c}/${currentShop.sillas}`;summary.appendChild(d);}});
-    appts.forEach(a=>{
+    // Filtrar bloqueos — mostrar solo turnos principales y cancelados
+    const mainAppts=appts.filter(a=>a.tipo!=='bloqueo');
+    // Agrupar: para cada turno principal, calcular hora fin
+    const intervalo=currentShop.intervalo||30;
+    mainAppts.forEach(a=>{
         const ib=a.clientes?.nombre==='PAUSA';
+        // Calcular hora fin según duración
+        const durMin=a.duracion_min||intervalo;
+        const [hh,mm]=a.hora.slice(0,5).split(':').map(Number);
+        const finDate=new Date();finDate.setHours(hh,mm+durMin,0,0);
+        const horaFin=finDate.toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit',hour12:false});
+        const timeLabel=durMin>intervalo?`${a.hora.slice(0,5)} – ${horaFin}`:a.hora.slice(0,5);
+
         let cc='bg-white shadow-sm border-l-4 border-green-500',sl='<span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">✅ EN ESPERA</span>',ab=`<button onclick="barberCancel(${a.id})" class="text-red-500 p-2 hover:bg-red-100 rounded-full"><i class="fas fa-times"></i></button>`;
         if(a.estado==='cancelado'){cc='bg-red-50 border-l-4 border-red-300 opacity-75';sl='<span class="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded">❌ CANCELADO</span>';ab=`<button onclick="deleteAppt(${a.id})" class="text-gray-500 p-2 hover:bg-gray-200 rounded-full"><i class="fas fa-trash-alt"></i></button>`;}
         else if(ib){cc='bg-yellow-50 border-l-4 border-yellow-400';sl='<span class="text-xs font-bold text-yellow-700 bg-yellow-100 px-2 py-1 rounded">⏸️ PAUSA</span>';}
         const item=document.createElement('div');item.className=`border rounded-xl p-4 flex justify-between items-center ${cc}`;
-        item.innerHTML=`<div><div class="flex items-center gap-2 mb-1"><span class="font-bold text-lg">${a.hora.slice(0,5)}</span>${sl}</div><div class="text-sm font-medium ${ib?'text-yellow-700':'text-gray-700'}">${a.clientes?.nombre||'-'}</div><div class="text-xs text-gray-500">${a.servicio}</div></div>${ab}`;
+        const durBadge=durMin>intervalo?`<span class="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded ml-1">⏱ ${durMin}min</span>`:'';
+        item.innerHTML=`<div><div class="flex items-center gap-1 mb-1 flex-wrap"><span class="font-bold text-base">${timeLabel}</span>${durBadge}${sl}</div><div class="text-sm font-medium ${ib?'text-yellow-700':'text-gray-700'}">${a.clientes?.nombre||'-'}</div><div class="text-xs text-gray-500">${a.servicio}</div></div>${ab}`;
         list.appendChild(item);
     });
 }
-async function barberCancel(id){showConfirmationModal('¿Cancelar este turno?',async()=>{await supabase.from('turnos').update({estado:'cancelado'}).eq('id',id);showToast('Cancelado.');loadBarberDashboard();});}
+async function barberCancel(id){
+    showConfirmationModal('¿Cancelar este turno?',async()=>{
+        // Obtener datos del turno principal para cancelar sus bloqueos
+        const {data:t}=await supabase.from('turnos').select('fecha,hora,cliente_id,duracion_min,barberia_id').eq('id',id).single();
+        await supabase.from('turnos').update({estado:'cancelado'}).eq('id',id);
+        // Cancelar bloqueos asociados (misma fecha, cliente, tipo bloqueo)
+        if(t&&t.duracion_min>0){
+            await supabase.from('turnos').update({estado:'cancelado'})
+                .eq('barberia_id',t.barberia_id).eq('fecha',t.fecha).eq('cliente_id',t.cliente_id).eq('tipo','bloqueo');
+        }
+        showToast('Turno cancelado.');loadBarberDashboard();
+    });
+}
 async function deleteAppt(id){showConfirmationModal('¿Borrar del historial?',async()=>{const{error}=await supabase.from('turnos').delete().eq('id',id);if(!error){showToast('Eliminado.');loadBarberDashboard();}else showToast('Error',true);});}
 
 // -------- CONFIG --------
@@ -909,22 +1037,61 @@ function renderBarberBreaks(){
 }
 function renderServicesListDOM(){
     const c=document.getElementById('servicesList');c.innerHTML='';
-    (shopConfig.servicios||[]).forEach((s,i)=>{const d=document.createElement('div');d.className='flex justify-between items-center bg-gray-50 p-2 rounded border';d.innerHTML=`<span class="text-sm">${s.nombre} — $${s.precio}</span><button onclick="removeService(${i})" class="text-red-500 font-bold px-2 text-lg">×</button>`;c.appendChild(d);});
+    const intervalo=currentShop.intervalo||30;
+    (shopConfig.servicios||[]).forEach((s,i)=>{
+        const dur=s.duracion||intervalo;
+        const d=document.createElement('div');
+        d.className='flex justify-between items-center bg-gray-50 p-2 rounded border gap-2';
+        d.innerHTML=`
+            <div class="flex-1 min-w-0">
+                <input type="text" value="${s.nombre}" onchange="editService(${i},'nombre',this.value)" class="w-full text-sm font-medium bg-transparent border-b border-transparent hover:border-gray-300 focus:border-primary outline-none">
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+                <span class="text-xs text-gray-400">$</span>
+                <input type="tel" inputmode="numeric" value="${s.precio}" onchange="editService(${i},'precio',parseInt(this.value)||0)" class="w-14 text-sm text-right border rounded p-1 bg-white">
+                <span class="text-xs text-gray-400 ml-1">⏱</span>
+                <input type="tel" inputmode="numeric" value="${dur}" onchange="editService(${i},'duracion',parseInt(this.value)||${intervalo})" class="w-14 text-sm text-right border rounded p-1 bg-white" title="minutos">
+                <span class="text-xs text-gray-400">m</span>
+                <button onclick="removeService(${i})" class="text-red-400 font-bold px-1 text-lg hover:text-red-600">×</button>
+            </div>`;
+        c.appendChild(d);
+    });
 }
 function addServiceDOM(){
-    const n=document.getElementById('newSvcName').value.trim(),p=document.getElementById('newSvcPrice').value;
-    if(!n||!p)return;if(!shopConfig.servicios)shopConfig.servicios=[];
-    shopConfig.servicios.push({nombre:n,precio:parseInt(p)});
-    document.getElementById('newSvcName').value='';document.getElementById('newSvcPrice').value='';
+    const n=document.getElementById('newSvcName').value.trim();
+    const p=document.getElementById('newSvcPrice').value;
+    const dur=parseInt(document.getElementById('newSvcDuracion').value)||currentShop.intervalo||30;
+    if(!n||!p)return;
+    if(!shopConfig.servicios)shopConfig.servicios=[];
+    shopConfig.servicios.push({nombre:n,precio:parseInt(p),duracion:dur});
+    document.getElementById('newSvcName').value='';
+    document.getElementById('newSvcPrice').value='';
+    document.getElementById('newSvcDuracion').value='';
     renderServicesListDOM();
+}
+function editService(i,field,val){
+    if(shopConfig.servicios[i])shopConfig.servicios[i][field]=val;
 }
 function removeService(i){shopConfig.servicios.splice(i,1);renderServicesListDOM();}
 function renderServiceOptions(){
-    const s=shopConfig.servicios||[{nombre:'Corte',precio:0}];
+    const intervalo=currentShop.intervalo||30;
+    const s=shopConfig.servicios||[{nombre:'Corte',precio:0,duracion:intervalo}];
     [document.getElementById('serviceSelect'),document.getElementById('manualService')].forEach(sel=>{
         if(!sel)return;sel.innerHTML='';
-        s.forEach(sv=>{const o=document.createElement('option');o.value=sv.nombre;o.innerText=`${sv.nombre} ($${sv.precio})`;sel.appendChild(o);});
+        s.forEach(sv=>{
+            const dur=sv.duracion||intervalo;
+            const o=document.createElement('option');
+            o.value=sv.nombre;
+            o.dataset.duracion=dur;
+            o.innerText=`${sv.nombre} ($${sv.precio}) — ${dur}min`;
+            sel.appendChild(o);
+        });
     });
+}
+function getSelectedServiceDuracion(selectId){
+    const sel=document.getElementById(selectId);
+    if(!sel||!sel.selectedOptions[0])return currentShop.intervalo||30;
+    return parseInt(sel.selectedOptions[0].dataset.duracion)||currentShop.intervalo||30;
 }
 async function saveConfig(){
     const nO=document.getElementById('cfgOpen').value,nC=document.getElementById('cfgClose').value;
@@ -982,13 +1149,26 @@ async function uploadCarouselPhotos(input){
     for(const file of files){
         const ext=file.name.split('.').pop().toLowerCase();
         const path=`${currentShop.slug}/carousel/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+        console.log('[UPLOAD] Subiendo a path:', path, '| tipo:', file.type, '| tamaño:', file.size);
         const {data:upData,error}=await supabase.storage.from(STORAGE_BUCKET).upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type});
-        if(error){showToast('Error subiendo foto: '+error.message,true);console.error('Upload error:',error);continue;}
-        const publicUrl=`${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/${path}`;
+        if(error){
+            console.error('[UPLOAD ERROR]', error);
+            showToast('Error: '+error.message,true);
+            continue;
+        }
+        console.log('[UPLOAD OK] upData:', upData);
+        // Intentar con getPublicUrl primero, fallback a URL manual
+        const {data:urlData}=supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+        const publicUrl=urlData?.publicUrl||`${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/${path}`;
+        console.log('[URL GENERADA]', publicUrl);
+        // Test si la URL responde
+        fetch(publicUrl,{method:'HEAD'}).then(r=>console.log('[URL STATUS]',publicUrl, r.status, r.ok?'OK':'FALLO')).catch(e=>console.error('[URL FETCH ERROR]',e));
         if(!shopConfig.carousel_photos)shopConfig.carousel_photos=[];
         shopConfig.carousel_photos.push(publicUrl);
     }
-    await saveShopConfig();renderCarouselThumbs();loadCarousel();input.value='';showToast('Fotos del carrusel guardadas ✅');
+    await saveShopConfig();
+    console.log('[CONFIG GUARDADA] carousel_photos:', shopConfig.carousel_photos);
+    renderCarouselThumbs();loadCarousel();input.value='';showToast('Fotos guardadas - revisá consola para debug ✅');
 }
 async function uploadPortfolioPhotos(input){
     const files=Array.from(input.files);if(!files.length)return;
@@ -1028,13 +1208,31 @@ async function createManualBooking(){
     const time=document.getElementById('manualTime').value;
     const svc=document.getElementById('manualService').value;
     if(!name||!date||!time)return showToast('Faltan datos',true);
+
+    const intervalo=currentShop.intervalo||30;
+    const durSel=getSelectedServiceDuracion('manualService');
+    const slotsNeed=Math.ceil(durSel/intervalo);
+    const idx=generatedHours.indexOf(time);
+
     let cid;
     const {data:ex}=await supabase.from('clientes').select('id').eq('barberia_id',currentShop.id).eq('celular',phone).single();
     if(ex)cid=ex.id;
     else{const {data:nC}=await supabase.from('clientes').insert({barberia_id:currentShop.id,celular:phone,nombre:name,pin_temporal:'0000'}).select().single();cid=nC?.id;}
     if(!cid){showToast('Error al buscar cliente',true);return;}
-    const {error}=await supabase.from('turnos').insert({barberia_id:currentShop.id,cliente_id:cid,fecha:date,hora:time,servicio:svc});
-    if(!error){showToast('Agendado');toggleModal('modalManualBooking');loadBarberDashboard();}else showToast(error.message,true);
+
+    const {error}=await supabase.from('turnos').insert({barberia_id:currentShop.id,cliente_id:cid,fecha:date,hora:time,servicio:svc,duracion_min:durSel,tipo:'principal'});
+    if(error){showToast(error.message,true);return;}
+
+    if(slotsNeed>1){
+        const bloques=[];
+        for(let k=1;k<slotsNeed;k++){
+            if(idx>=0&&idx+k<generatedHours.length){
+                bloques.push({barberia_id:currentShop.id,cliente_id:cid,fecha:date,hora:generatedHours[idx+k],servicio:svc+' (cont.)',duracion_min:0,tipo:'bloqueo'});
+            }
+        }
+        if(bloques.length) await supabase.from('turnos').insert(bloques);
+    }
+    showToast('Agendado');toggleModal('modalManualBooking');loadBarberDashboard();
 }
 
 // -------- MI CUENTA CLIENTE --------
