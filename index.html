@@ -102,6 +102,29 @@
         .exc-fecha{font-size:0.8rem;font-weight:700;color:#92400e;white-space:nowrap;}
         .exc-motivo{flex:1;font-size:0.8rem;color:#78350f;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
+        /* MINI CALENDARIO EXCEPCIONES — selección múltiple */
+        .exc-mini-cal{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px;margin-bottom:8px;}
+        .exc-mini-cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+        .exc-mini-cal-title{font-size:0.85rem;font-weight:700;color:#374151;}
+        .exc-mini-cal-nav{background:none;border:1px solid #e5e7eb;border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#6b7280;font-size:0.75rem;}
+        .exc-mini-cal-nav:hover{background:#f3f4f6;}
+        .exc-mini-cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+        .exc-day-hdr{font-size:0.65rem;font-weight:600;color:#9ca3af;text-align:center;padding:2px 0;}
+        .exc-day{width:100%;aspect-ratio:1;border:none;border-radius:6px;font-size:0.75rem;font-weight:500;cursor:pointer;background:none;color:#374151;transition:all 0.15s;display:flex;align-items:center;justify-content:center;}
+        .exc-day:hover:not(.exc-day-past):not(.exc-day-empty){background:#fef3c7;}
+        .exc-day-past{color:#d1d5db;cursor:not-allowed;}
+        .exc-day-empty{cursor:default;}
+        .exc-day-selected{background:var(--color-primary)!important;color:#fff!important;font-weight:700;}
+        .exc-day-today{border:2px solid var(--color-primary);color:var(--color-primary);font-weight:700;}
+
+        /* CAJA — selector de período personalizado */
+        .caja-periodo-bar{display:flex;gap:6px;flex-wrap:wrap;}
+        .caja-periodo-btn{padding:5px 12px;border-radius:999px;font-size:0.75rem;font-weight:700;border:1.5px solid #e5e7eb;background:#f9fafb;color:#6b7280;cursor:pointer;transition:all 0.15s;}
+        .caja-periodo-btn.active{background:var(--color-primary);color:#fff;border-color:var(--color-primary);}
+        .caja-rango-custom{display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap;}
+        .caja-rango-custom input{flex:1;min-width:120px;padding:6px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:0.8rem;background:#fff;color:#374151;}
+        .caja-rango-custom button{padding:6px 14px;background:var(--color-primary);color:#fff;border:none;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;}
+
         /* AGENDA — fecha selector mejorado */
         .agenda-date-btn{display:flex;align-items:center;gap:8px;background:#f3f4f6;border:2px solid #e5e7eb;border-radius:10px;padding:8px 14px;font-size:0.9rem;font-weight:600;color:#374151;cursor:pointer;transition:border-color 0.2s;}
         .agenda-date-btn:hover,.agenda-date-btn.active{border-color:var(--color-primary);background:#fff;}
@@ -338,12 +361,25 @@
 
     <!-- ADMIN: CAJA -->
     <div id="adminPanelCaja" class="hidden p-4 pb-24 overflow-y-auto space-y-4">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between flex-wrap gap-2">
             <h3 class="font-bold text-gray-800 text-base">💰 Caja</h3>
-            <div class="flex gap-1 text-xs">
-                <button onclick="setCajaPeriod('week')" id="cajaPeriodWeek" class="px-3 py-1 rounded-full font-bold bg-primary text-white">Semana</button>
-                <button onclick="setCajaPeriod('month')" id="cajaPeriodMonth" class="px-3 py-1 rounded-full font-bold bg-gray-100 text-gray-600">Mes</button>
+        </div>
+        <!-- Fix 4: Selector de período expandido con opción personalizada -->
+        <div class="border rounded-xl p-3 space-y-2">
+            <p class="text-xs font-bold text-gray-500 uppercase tracking-wide">Período</p>
+            <div class="caja-periodo-bar">
+                <button onclick="setCajaPeriod('today')" id="cajaPeriodToday" class="caja-periodo-btn">Hoy</button>
+                <button onclick="setCajaPeriod('week')" id="cajaPeriodWeek" class="caja-periodo-btn active">7 días</button>
+                <button onclick="setCajaPeriod('month')" id="cajaPeriodMonth" class="caja-periodo-btn">Este mes</button>
+                <button onclick="setCajaPeriod('custom')" id="cajaPeriodCustom" class="caja-periodo-btn">Personalizado</button>
             </div>
+            <div id="cajaRangoCustom" class="caja-rango-custom hidden">
+                <input type="date" id="cajaRangoDesde" title="Desde">
+                <span class="text-xs text-gray-400">→</span>
+                <input type="date" id="cajaRangoHasta" title="Hasta">
+                <button onclick="aplicarRangoCustom()">Aplicar</button>
+            </div>
+            <p class="text-xs text-gray-400" id="cajaPeriodoLabel"></p>
         </div>
         <div class="grid grid-cols-2 gap-3">
             <div class="stat-card"><p class="lbl">Total período</p><p class="val" id="cajaTotalPeriod">$0</p></div>
@@ -409,20 +445,33 @@
             </div>
             <p class="text-xs text-gray-400">Nombre · Precio · Duración (min)</p>
         </div>
-        <!-- Excepciones -->
+        <!-- Excepciones — mini calendario multi-selección -->
         <div class="border rounded-xl p-4 space-y-3">
             <h4 class="font-bold text-sm text-gray-700">🚫 Días de excepción (cerrado)</h4>
-            <p class="text-xs text-gray-400">Marcá días puntuales que el local estará cerrado aunque sea día laboral.</p>
-            <div id="excepcionesList" class="space-y-2"></div>
-            <div class="flex gap-2 mt-2">
-                <input type="text" id="newExcFecha" placeholder="Fecha" class="flex-1 p-2 border rounded-lg text-sm bg-white">
-                <input type="text" id="newExcMotivo" placeholder="Motivo (opcional)" class="flex-1 p-2 border rounded-lg text-sm">
-                <button onclick="addExcepcion()" class="bg-primary text-white px-3 py-2 rounded-lg text-sm font-bold">+</button>
+            <p class="text-xs text-gray-400">Tocá uno o varios días para marcarlos como cerrado. Podés agregar un motivo opcional.</p>
+            <!-- Mini calendario -->
+            <div class="exc-mini-cal">
+                <div class="exc-mini-cal-header">
+                    <button class="exc-mini-cal-nav" onclick="excCalNav(-1)"><i class="fas fa-chevron-left"></i></button>
+                    <span class="exc-mini-cal-title" id="excCalTitle"></span>
+                    <button class="exc-mini-cal-nav" onclick="excCalNav(1)"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div class="exc-mini-cal-days" id="excCalDays"></div>
             </div>
+            <!-- Días seleccionados pending -->
+            <div id="excSelectedPreview" class="hidden">
+                <p class="text-xs font-bold text-gray-600 mb-1">Días seleccionados:</p>
+                <div id="excSelectedTags" class="flex flex-wrap gap-1 mb-2"></div>
+                <input type="text" id="newExcMotivo" placeholder="Motivo (opcional, aplica a todos)" class="w-full p-2 border rounded-lg text-sm mb-2" autocomplete="off">
+                <button onclick="addExcepcionMulti()" class="w-full bg-primary text-white py-2 rounded-lg text-sm font-bold">Agregar días seleccionados</button>
+            </div>
+            <!-- Lista de excepciones guardadas -->
+            <div id="excepcionesList" class="space-y-2 mt-1"></div>
         </div>
         <div class="border rounded-xl p-4 space-y-2">
             <h4 class="font-bold text-sm text-gray-700">📣 Mensaje de aviso</h4>
-            <input type="text" id="cfgMsg" placeholder="Ej: Vuelvo el martes" class="w-full p-2 border rounded-lg text-sm">
+            <!-- Fix 3: autocomplete="off" + name aleatorio para evitar popup de contraseñas -->
+            <input type="text" id="cfgMsg" name="aviso_msg_x7k" placeholder="Ej: Vuelvo el martes" class="w-full p-2 border rounded-lg text-sm" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
         </div>
         <button onclick="saveConfig()" class="w-full bg-primary text-white py-3 rounded-xl font-bold shadow-lg">💾 Guardar Cambios</button>
     </div>
@@ -786,15 +835,23 @@ function showAdminPanel(){
     }
 
     // FIX: manualDate flatpickr — init aquí para que esté listo cuando se abra el modal
+    // Fix 2: minDate=today para que días pasados aparezcan oscurecidos y no sean seleccionables
     const md=document.getElementById('manualDate');
     if(!md._flatpickr){
         flatpickr(md,{
             locale:'es',
             dateFormat:'Y-m-d',
-            altInput:false, // No usar altInput, el input ya tiene el estilo correcto
+            altInput:false,
             disableMobile:false,
-            minDate:null,
+            minDate:'today', // Fix 2: bloquea días pasados visualmente
             defaultDate:today,
+            onDayCreate:(_,__,___,dayElem)=>{
+                // Días pasados se ven aún más oscuros con estilos extra
+                if(dayElem.classList.contains('flatpickr-disabled')){
+                    dayElem.style.opacity='0.25';
+                    dayElem.style.textDecoration='line-through';
+                }
+            }
         });
     }
 
@@ -1159,10 +1216,7 @@ function loadConfigForm(){
     document.getElementById('cfgChairs').value=currentShop.sillas;
     document.getElementById('cfgMsg').value=shopConfig.mensaje_aviso||'';
     document.querySelectorAll('input[name="workday"]').forEach(cb=>{cb.checked=(shopConfig.dias_laborables||[]).includes(parseInt(cb.value));});
-    renderServicesListDOM();renderBarberBreaks();renderExcepciones();
-    // Flatpickr para excepciones
-    const excInput=document.getElementById('newExcFecha');
-    if(!excInput._flatpickr)flatpickr(excInput,{locale:'es',dateFormat:'Y-m-d',altInput:true,altFormat:'j/n/Y',disableMobile:false,minDate:'today'});
+    renderServicesListDOM();renderBarberBreaks();renderExcepciones();initExcCal();
 }
 function renderBarberBreaks(){
     const c=document.getElementById('barberBreaksContainer');c.innerHTML='';
@@ -1387,65 +1441,202 @@ async function changeAdminPassword(){
     if(!error){currentUser.password=n;showToast('Actualizado');toggleModal('modalAccountSettings');}else showToast('Error',true);
 }
 
-// -------- EXCEPCIONES --------
+// -------- EXCEPCIONES — mini calendario multi-selección --------
+let excCalYear=new Date().getFullYear();
+let excCalMonth=new Date().getMonth();
+let excSelectedDates=new Set(); // fechas pendientes de agregar
+
+function initExcCal(){
+    excCalYear=new Date().getFullYear();
+    excCalMonth=new Date().getMonth();
+    excSelectedDates=new Set();
+    renderExcCal();
+}
+
+function excCalNav(dir){
+    excCalMonth+=dir;
+    if(excCalMonth>11){excCalMonth=0;excCalYear++;}
+    if(excCalMonth<0){excCalMonth=11;excCalYear--;}
+    renderExcCal();
+}
+
+function renderExcCal(){
+    const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    document.getElementById('excCalTitle').innerText=`${meses[excCalMonth]} ${excCalYear}`;
+    const todayISO=new Date().toISOString().split('T')[0];
+    const firstDay=new Date(excCalYear,excCalMonth,1).getDay(); // 0=dom
+    const daysInMonth=new Date(excCalYear,excCalMonth+1,0).getDate();
+    const savedDates=new Set((shopConfig.excepciones||[]).map(e=>e.fecha));
+
+    let html='';
+    // Cabecera días semana
+    ['D','L','M','M','J','V','S'].forEach(d=>{html+=`<div class="exc-day-hdr">${d}</div>`;});
+    // Celdas vacías antes del primer día
+    for(let i=0;i<firstDay;i++) html+=`<div class="exc-day exc-day-empty"></div>`;
+    // Días del mes
+    for(let d=1;d<=daysInMonth;d++){
+        const dateStr=`${excCalYear}-${String(excCalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const isPast=dateStr<todayISO;
+        const isToday=dateStr===todayISO;
+        const isSaved=savedDates.has(dateStr);
+        const isPending=excSelectedDates.has(dateStr);
+        let cls='exc-day';
+        if(isPast) cls+=' exc-day-past';
+        else if(isSaved) cls+=' exc-day-selected opacity-50'; // ya guardado
+        else if(isPending) cls+=' exc-day-selected';
+        else if(isToday) cls+=' exc-day-today';
+        const title=isSaved?'Ya guardado':isPast?'Fecha pasada':'';
+        html+=`<button class="${cls}" onclick="toggleExcDay('${dateStr}')" ${isPast||isSaved?'disabled':''} title="${title}">${d}</button>`;
+    }
+    document.getElementById('excCalDays').innerHTML=html;
+    updateExcSelectedPreview();
+}
+
+function toggleExcDay(dateStr){
+    if(excSelectedDates.has(dateStr)) excSelectedDates.delete(dateStr);
+    else excSelectedDates.add(dateStr);
+    renderExcCal();
+}
+
+function updateExcSelectedPreview(){
+    const preview=document.getElementById('excSelectedPreview');
+    const tags=document.getElementById('excSelectedTags');
+    if(excSelectedDates.size===0){preview.classList.add('hidden');return;}
+    preview.classList.remove('hidden');
+    const sorted=[...excSelectedDates].sort();
+    tags.innerHTML=sorted.map(d=>`<span class="inline-flex items-center gap-1 text-xs bg-yellow-100 text-yellow-800 font-bold px-2 py-1 rounded-full">${formatDateShort(d)}<button onclick="toggleExcDay('${d}')" class="hover:text-red-500 ml-0.5">×</button></span>`).join('');
+}
+
+function addExcepcionMulti(){
+    if(excSelectedDates.size===0) return showToast('Seleccioná al menos un día',true);
+    const motivo=document.getElementById('newExcMotivo').value.trim();
+    if(!shopConfig.excepciones) shopConfig.excepciones=[];
+    let added=0;
+    [...excSelectedDates].sort().forEach(fecha=>{
+        if(!shopConfig.excepciones.find(e=>e.fecha===fecha)){
+            shopConfig.excepciones.push({fecha,motivo});added++;
+        }
+    });
+    shopConfig.excepciones.sort((a,b)=>a.fecha.localeCompare(b.fecha));
+    excSelectedDates=new Set();
+    document.getElementById('newExcMotivo').value='';
+    renderExcCal();
+    renderExcepciones();
+    showToast(`${added} día(s) agregado(s) ✅`);
+}
+
 function renderExcepciones(){
     const list=document.getElementById('excepcionesList');if(!list)return;
     const exc=shopConfig.excepciones||[];
     list.innerHTML=exc.length?exc.map((e,i)=>`<div class="exc-row"><span class="exc-fecha">${formatDateShort(e.fecha)}</span><span class="exc-motivo">${e.motivo||'Sin motivo'}</span><button onclick="removeExcepcion(${i})" class="text-red-400 hover:text-red-600 font-bold text-lg leading-none ml-auto">×</button></div>`).join(''):'<p class="text-xs text-gray-400">Sin excepciones cargadas.</p>';
-}
-function addExcepcion(){
-    const fpEl=document.getElementById('newExcFecha');
-    const fp=fpEl._flatpickr;
-    const fecha=fp&&fp.selectedDates[0]?fp.selectedDates[0].toISOString().split('T')[0]:fpEl.value;
-    const motivo=document.getElementById('newExcMotivo').value.trim();
-    if(!fecha)return showToast('Seleccioná una fecha',true);
-    if(!shopConfig.excepciones)shopConfig.excepciones=[];
-    if(shopConfig.excepciones.find(e=>e.fecha===fecha))return showToast('Esa fecha ya está agregada.',true);
-    shopConfig.excepciones.push({fecha,motivo});shopConfig.excepciones.sort((a,b)=>a.fecha.localeCompare(b.fecha));
-    document.getElementById('newExcMotivo').value='';if(fp)fp.clear();
-    renderExcepciones();
+    // Re-render cal para que los días guardados se muestren en gris
+    renderExcCal();
 }
 function removeExcepcion(i){shopConfig.excepciones.splice(i,1);renderExcepciones();}
 function formatDateShort(d){const dt=new Date(d+'T00:00:00');return dt.toLocaleDateString('es-UY',{day:'numeric',month:'short'});}
 
-// -------- CAJA --------
-let cajaPeriod='week';let cajaCacheTurnos=[];
+// -------- CAJA — selector de período libre --------
+let cajaPeriod='week';
+let cajaCacheTurnos=[];
+let cajaRangoDesde=null;
+let cajaRangoHasta=null;
+
 function setCajaPeriod(p){
     cajaPeriod=p;
-    document.getElementById('cajaPeriodWeek').className=`px-3 py-1 rounded-full font-bold text-xs ${p==='week'?'bg-primary text-white':'bg-gray-100 text-gray-600'}`;
-    document.getElementById('cajaPeriodMonth').className=`px-3 py-1 rounded-full font-bold text-xs ${p==='month'?'bg-primary text-white':'bg-gray-100 text-gray-600'}`;
+    // Actualizar botones
+    ['today','week','month','custom'].forEach(id=>{
+        const btn=document.getElementById('cajaPeriod'+id.charAt(0).toUpperCase()+id.slice(1));
+        if(btn) btn.classList.toggle('active',id===p);
+    });
+    // Mostrar/ocultar rango custom
+    const rangoDiv=document.getElementById('cajaRangoCustom');
+    if(p==='custom'){
+        rangoDiv.classList.remove('hidden');
+        // Pre-llenar con fechas razonables
+        const today=new Date().toISOString().split('T')[0];
+        const week=new Date();week.setDate(week.getDate()-6);
+        document.getElementById('cajaRangoDesde').value=week.toISOString().split('T')[0];
+        document.getElementById('cajaRangoHasta').value=today;
+        return; // esperar que el usuario toque "Aplicar"
+    } else {
+        rangoDiv.classList.add('hidden');
+        loadCaja();
+    }
+}
+
+function aplicarRangoCustom(){
+    cajaRangoDesde=document.getElementById('cajaRangoDesde').value;
+    cajaRangoHasta=document.getElementById('cajaRangoHasta').value;
+    if(!cajaRangoDesde||!cajaRangoHasta) return showToast('Seleccioná ambas fechas',true);
+    if(cajaRangoDesde>cajaRangoHasta) return showToast('La fecha inicio debe ser anterior al fin',true);
     loadCaja();
 }
+
 async function loadCaja(){
     const today=new Date();const todayISO=today.toISOString().split('T')[0];
-    let startDate;
-    if(cajaPeriod==='week'){const d=new Date(today);d.setDate(d.getDate()-6);startDate=d.toISOString().split('T')[0];}
-    else{const d=new Date(today.getFullYear(),today.getMonth(),1);startDate=d.toISOString().split('T')[0];}
-    const {data:turnos}=await supabase.from('turnos').select('id,fecha,hora,servicio,monto_cobrado,estado,tipo,clientes(nombre)').eq('barberia_id',currentShop.id).eq('estado','completado').neq('tipo','bloqueo').gte('fecha',startDate).lte('fecha',todayISO).order('fecha',{ascending:false});
-    const {data:movs}=await supabase.from('caja_movimientos').select('*').eq('barberia_id',currentShop.id).gte('fecha',startDate).lte('fecha',todayISO).order('fecha',{ascending:false});
+    let startDate,endDate=todayISO,labelTxt='';
+
+    if(cajaPeriod==='today'){
+        startDate=todayISO;endDate=todayISO;labelTxt='Solo hoy';
+    } else if(cajaPeriod==='week'){
+        const d=new Date(today);d.setDate(d.getDate()-6);startDate=d.toISOString().split('T')[0];
+        labelTxt='Últimos 7 días';
+    } else if(cajaPeriod==='month'){
+        startDate=new Date(today.getFullYear(),today.getMonth(),1).toISOString().split('T')[0];
+        labelTxt='Este mes ('+new Date().toLocaleDateString('es-UY',{month:'long'})+')';
+    } else if(cajaPeriod==='custom'){
+        startDate=cajaRangoDesde||todayISO;
+        endDate=cajaRangoHasta||todayISO;
+        labelTxt=`${formatDateShort(startDate)} → ${formatDateShort(endDate)}`;
+    }
+
+    const lbl=document.getElementById('cajaPeriodoLabel');
+    if(lbl) lbl.innerText=labelTxt;
+
+    const {data:turnos}=await supabase.from('turnos').select('id,fecha,hora,servicio,monto_cobrado,estado,tipo,clientes(nombre)').eq('barberia_id',currentShop.id).eq('estado','completado').neq('tipo','bloqueo').gte('fecha',startDate).lte('fecha',endDate).order('fecha',{ascending:false});
+    const {data:movs}=await supabase.from('caja_movimientos').select('*').eq('barberia_id',currentShop.id).gte('fecha',startDate).lte('fecha',endDate).order('fecha',{ascending:false});
+
     const allMovs=movs||[];const allTurnos=turnos||[];cajaCacheTurnos=allTurnos;
     const totalTurnos=allTurnos.reduce((s,t)=>s+(t.monto_cobrado||0),0);
     const totalMovIngresos=allMovs.filter(m=>m.tipo==='ingreso').reduce((s,m)=>s+(m.monto||0),0);
     const totalMovEgresos=allMovs.filter(m=>m.tipo==='egreso').reduce((s,m)=>s+(m.monto||0),0);
     const totalPeriod=totalTurnos+totalMovIngresos-totalMovEgresos;
+
+    // Para "hoy" en las stat cards siempre usar todayISO
     const hoyTurnos=allTurnos.filter(t=>t.fecha===todayISO).reduce((s,t)=>s+(t.monto_cobrado||0),0);
     const hoyMovI=allMovs.filter(m=>m.fecha===todayISO&&m.tipo==='ingreso').reduce((s,m)=>s+(m.monto||0),0);
     const hoyMovE=allMovs.filter(m=>m.fecha===todayISO&&m.tipo==='egreso').reduce((s,m)=>s+(m.monto||0),0);
     const totalHoy=hoyTurnos+hoyMovI-hoyMovE;
-    const dias=cajaPeriod==='week'?7:today.getDate();const prom=dias>0?Math.round(totalPeriod/dias):0;
+
+    // Días en el rango para promedio
+    const d1=new Date(startDate+'T00:00:00'),d2=new Date(endDate+'T00:00:00');
+    const dias=Math.max(1,Math.round((d2-d1)/(1000*60*60*24))+1);
+    const prom=Math.round(totalPeriod/dias);
+
     document.getElementById('cajaTotalPeriod').innerText='$'+totalPeriod.toLocaleString('es-UY');
     document.getElementById('cajaTurnosPeriod').innerText=allTurnos.length;
     document.getElementById('cajaTotalHoy').innerText='$'+totalHoy.toLocaleString('es-UY');
     document.getElementById('cajaProm').innerText='$'+prom.toLocaleString('es-UY');
+
+    // Gráfico — últimos 7 días siempre (contexto visual)
     const barDays=[];for(let i=6;i>=0;i--){const d=new Date(today);d.setDate(d.getDate()-i);barDays.push(d.toISOString().split('T')[0]);}
-    const dayTotals=barDays.map(date=>{const t=allTurnos.filter(x=>x.fecha===date).reduce((s,x)=>s+(x.monto_cobrado||0),0);const mi=allMovs.filter(m=>m.fecha===date&&m.tipo==='ingreso').reduce((s,m)=>s+(m.monto||0),0);const me=allMovs.filter(m=>m.fecha===date&&m.tipo==='egreso').reduce((s,m)=>s+(m.monto||0),0);return t+mi-me;});
+    const dayTotals=barDays.map(date=>{
+        const t=allTurnos.filter(x=>x.fecha===date).reduce((s,x)=>s+(x.monto_cobrado||0),0);
+        const mi=allMovs.filter(m=>m.fecha===date&&m.tipo==='ingreso').reduce((s,m)=>s+(m.monto||0),0);
+        const me=allMovs.filter(m=>m.fecha===date&&m.tipo==='egreso').reduce((s,m)=>s+(m.monto||0),0);
+        return t+mi-me;
+    });
     const maxVal=Math.max(...dayTotals,1);
     const chart=document.getElementById('cajaBarChart');const labels=document.getElementById('cajaBarLabels');
-    chart.innerHTML=dayTotals.map((v,i)=>{const h=Math.max(4,Math.round((v/maxVal)*56));const isToday=barDays[i]===todayISO;return `<div class="bar-col${isToday?' today':''}" style="height:${h}px" title="$${v}"></div>`;}).join('');
+    chart.innerHTML=dayTotals.map((v,i)=>{const h=Math.max(4,Math.round((v/maxVal)*56));const isToday=barDays[i]===todayISO;return `<div class="bar-col${isToday?' today':''}" style="height:${h}px" title="$${v.toLocaleString('es-UY')}"></div>`;}).join('');
     labels.innerHTML=barDays.map(d=>{const dt=new Date(d+'T00:00:00');return `<span style="flex:1;text-align:center">${['D','L','M','X','J','V','S'][dt.getDay()]}</span>`;}).join('');
+
+    // Top servicios
     const svcMap={};allTurnos.forEach(t=>{if(!svcMap[t.servicio])svcMap[t.servicio]={total:0,count:0};svcMap[t.servicio].total+=t.monto_cobrado||0;svcMap[t.servicio].count++;});
     const svcList=Object.entries(svcMap).sort((a,b)=>b[1].total-a[1].total);const maxSvc=svcList[0]?svcList[0][1].total:1;
     document.getElementById('cajaServiciosList').innerHTML=svcList.length?svcList.map(([nombre,{total,count}])=>`<div><div class="flex justify-between text-xs mb-1"><span class="font-medium text-gray-700">${nombre}</span><span class="text-gray-500">${count}x — <span class="font-bold text-primary">$${total.toLocaleString('es-UY')}</span></span></div><div class="h-1.5 bg-gray-100 rounded-full"><div class="h-1.5 bg-primary rounded-full" style="width:${Math.round((total/maxSvc)*100)}%"></div></div></div>`).join(''):'<p class="text-xs text-gray-400">Sin datos para el período.</p>';
+
+    // Movimientos del día actual
     const movsHoy=[...allTurnos.filter(t=>t.fecha===todayISO).map(t=>({tipo:'turno',concepto:t.servicio,monto:t.monto_cobrado||0,nombre:t.clientes?.nombre||'',hora:t.hora?.slice(0,5)||''})),...allMovs.filter(m=>m.fecha===todayISO).map(m=>({tipo:m.tipo,concepto:m.concepto,monto:m.monto,nombre:'',hora:''}))];
     document.getElementById('cajaMovimientosList').innerHTML=movsHoy.length?movsHoy.map(m=>`<div class="flex justify-between items-center p-2 rounded-lg bg-gray-50 border text-sm"><div><span class="font-medium text-gray-700">${m.concepto}</span>${m.nombre?`<span class="text-xs text-gray-400 ml-1">· ${m.nombre}</span>`:''}${m.hora?`<span class="text-xs text-gray-400 ml-1">· ${m.hora}</span>`:''}</div><span class="font-bold ${m.tipo==='egreso'?'text-red-500':'text-green-600'}">${m.tipo==='egreso'?'-':'+'} $${m.monto.toLocaleString('es-UY')}</span></div>`).join(''):'<p class="text-xs text-gray-400 text-center py-2">Sin movimientos hoy.</p>';
 }
