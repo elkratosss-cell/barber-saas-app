@@ -385,7 +385,7 @@
             <div class="stat-card"><p class="lbl">Total período</p><p class="val" id="cajaTotalPeriod">$0</p></div>
             <div class="stat-card"><p class="lbl">Turnos cobrados</p><p class="val" id="cajaTurnosPeriod">0</p></div>
             <div class="stat-card"><p class="lbl">Hoy</p><p class="val" id="cajaTotalHoy">$0</p></div>
-            <div class="stat-card"><p class="lbl">Promedio/día</p><p class="val" id="cajaProm">$0</p></div>
+            <div class="stat-card"><p class="lbl">Promedio / día</p><p class="val" id="cajaProm">$0</p></div>
         </div>
         <div class="border rounded-xl p-4">
             <p class="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Ingresos por día</p>
@@ -470,8 +470,16 @@
         </div>
         <div class="border rounded-xl p-4 space-y-2">
             <h4 class="font-bold text-sm text-gray-700">📣 Mensaje de aviso</h4>
-            <!-- Fix 3: autocomplete="off" + name aleatorio para evitar popup de contraseñas -->
-            <input type="text" id="cfgMsg" name="aviso_msg_x7k" placeholder="Ej: Vuelvo el martes" class="w-full p-2 border rounded-lg text-sm" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            <!-- Campos trampa invisibles: engañan al browser para que use estos en lugar del real -->
+            <div style="position:absolute;opacity:0;pointer-events:none;height:0;overflow:hidden;">
+                <input type="text" name="fake_user_zt9" tabindex="-1" aria-hidden="true">
+                <input type="password" name="fake_pass_zt9" tabindex="-1" aria-hidden="true">
+            </div>
+            <!-- type="search" es ignorado por el autocompletado de credenciales del browser -->
+            <input type="search" id="cfgMsg" name="notice_zt9" placeholder="Ej: Vuelvo el martes"
+                class="w-full p-2 border rounded-lg text-sm"
+                autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false"
+                style="-webkit-appearance:none;">
         </div>
         <button onclick="saveConfig()" class="w-full bg-primary text-white py-3 rounded-xl font-bold shadow-lg">💾 Guardar Cambios</button>
     </div>
@@ -1608,15 +1616,18 @@ async function loadCaja(){
     const hoyMovE=allMovs.filter(m=>m.fecha===todayISO&&m.tipo==='egreso').reduce((s,m)=>s+(m.monto||0),0);
     const totalHoy=hoyTurnos+hoyMovI-hoyMovE;
 
-    // Días en el rango para promedio
+    // Promedio por día del período (simple y predecible: total ÷ días del rango)
     const d1=new Date(startDate+'T00:00:00'),d2=new Date(endDate+'T00:00:00');
-    const dias=Math.max(1,Math.round((d2-d1)/(1000*60*60*24))+1);
-    const prom=Math.round(totalPeriod/dias);
+    const diasPeriodo=Math.max(1,Math.round((d2-d1)/(1000*60*60*24))+1);
+    const prom=Math.round(totalPeriod/diasPeriodo);
+    // Texto explicativo debajo del promedio
+    const promLabel=`$${prom.toLocaleString('es-UY')} / día (${diasPeriodo}d)`;
 
     document.getElementById('cajaTotalPeriod').innerText='$'+totalPeriod.toLocaleString('es-UY');
     document.getElementById('cajaTurnosPeriod').innerText=allTurnos.length;
     document.getElementById('cajaTotalHoy').innerText='$'+totalHoy.toLocaleString('es-UY');
     document.getElementById('cajaProm').innerText='$'+prom.toLocaleString('es-UY');
+    document.getElementById('cajaProm').title=promLabel; // tooltip con detalle
 
     // Gráfico — últimos 7 días siempre (contexto visual)
     const barDays=[];for(let i=6;i>=0;i--){const d=new Date(today);d.setDate(d.getDate()-i);barDays.push(d.toISOString().split('T')[0]);}
