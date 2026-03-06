@@ -130,6 +130,11 @@
         .agenda-date-btn:hover,.agenda-date-btn.active{border-color:var(--color-primary);background:#fff;}
         /* Ocultar el input real del flatpickr de agenda y mostrar solo el altInput */
         #barberDatePicker{display:none;}
+
+        /* CUMPLEAÑOS badge en turno */
+        .bday-badge{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#fde68a,#fbbf24);color:#78350f;font-size:0.7rem;font-weight:800;padding:3px 8px;border-radius:999px;margin-top:4px;animation:bdayPulse 2s infinite;}
+        .bday-badge.manana{background:linear-gradient(135deg,#dbeafe,#93c5fd);color:#1e3a5f;}
+        @keyframes bdayPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.05);}}
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800 font-sans">
@@ -237,9 +242,15 @@
             </div>
             <div id="loginStepTempPin" class="pin-step hidden space-y-4">
                 <p id="tempPinDesc" class="text-sm text-gray-600"></p>
-                <div id="nameFieldWrap" class="hidden">
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Nombre completo</label>
-                    <input type="text" id="loginName" placeholder="Nombre y apellido" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none" autocomplete="off">
+                <div id="nameFieldWrap" class="hidden space-y-3">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Nombre completo</label>
+                        <input type="text" id="loginName" placeholder="Nombre y apellido" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none" autocomplete="off">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Fecha de nacimiento <span class="text-gray-400 font-normal">(opcional)</span></label>
+                        <input type="date" id="loginBirthdate" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none text-gray-700" max="">
+                    </div>
                 </div>
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">PIN SMS (4 dígitos)</label>
@@ -671,6 +682,10 @@
             <div><label class="block text-xs font-bold text-gray-600 mb-1">Nombre</label><input type="text" id="accountFirstName" placeholder="Nombre" class="w-full px-4 py-3 border rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none"></div>
             <div><label class="block text-xs font-bold text-gray-600 mb-1">Apellido</label><input type="text" id="accountLastName" placeholder="Apellido" class="w-full px-4 py-3 border rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none"></div>
             <div><label class="block text-xs font-bold text-gray-600 mb-1">Celular</label><input type="text" id="accountPhone" class="w-full px-4 py-3 border rounded-xl bg-gray-50 text-sm text-gray-400 cursor-not-allowed" readonly></div>
+            <div>
+                <label class="block text-xs font-bold text-gray-600 mb-1">🎂 Fecha de nacimiento <span class="text-gray-400 font-normal">(opcional)</span></label>
+                <input type="date" id="accountBirthdate" class="w-full px-4 py-3 border rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none text-gray-700" max="">
+            </div>
             <button onclick="saveAccountProfile()" class="w-full bg-primary text-white py-3 rounded-xl font-bold hover:opacity-90 transition">Guardar cambios</button>
         </div>
         <div id="accountPanelPin" class="p-5 space-y-4 hidden">
@@ -1038,7 +1053,13 @@ async function verifyTempPin(){
     if(loginState.isNewUser&&!name){showToast('Ingresá tu nombre completo.',true);return;}
     const {data:c,error}=await supabase.from('clientes').select('*').eq('barberia_id',currentShop.id).eq('celular',loginState.phone).eq('pin_temporal',pin).single();
     if(error||!c){showToast('PIN incorrecto o expirado.',true);clearPinInput('tempPinReal','tpc');return;}
-    if(loginState.isNewUser&&name){await supabase.from('clientes').update({nombre:name}).eq('id',c.id);c.nombre=name;}
+    if(loginState.isNewUser&&name){
+        const bday=document.getElementById('loginBirthdate').value||null;
+        const updateData={nombre:name};
+        if(bday) updateData.fecha_nacimiento=bday;
+        await supabase.from('clientes').update(updateData).eq('id',c.id);
+        c.nombre=name;if(bday)c.fecha_nacimiento=bday;
+    }
     await supabase.from('clientes').update({pin_temporal:null}).eq('id',c.id);loginState.clientData=c;
     document.getElementById('setPinDesc').innerText=loginState.isForgot?'Ingresá un nuevo PIN de 4 dígitos.':'Elegí un PIN para tus próximas reservas.';
     clearPinInput('newPinReal1','np1c');clearPinInput('newPinReal2','np2c');
@@ -1182,13 +1203,21 @@ async function loadBarberDashboard(){
     if(!date)return;
     const list=document.getElementById('barberAppointmentsList'),summary=document.getElementById('occupancySummary');
     list.innerHTML='<p class="text-center text-gray-400 text-sm py-4">Cargando...</p>';
-    const {data:appts}=await supabase.from('turnos').select('id,hora,servicio,estado,tipo,duracion_min,monto_cobrado,clientes(nombre,celular)').eq('barberia_id',currentShop.id).eq('fecha',date).order('hora');
+    // Traer fecha_nacimiento para detectar cumpleaños
+    const {data:appts}=await supabase.from('turnos').select('id,hora,servicio,estado,tipo,duracion_min,monto_cobrado,clientes(nombre,celular,fecha_nacimiento)').eq('barberia_id',currentShop.id).eq('fecha',date).order('hora');
     list.innerHTML='';summary.innerHTML='';
     if(!appts||!appts.length){list.innerHTML='<p class="text-center text-gray-400 py-10">Agenda libre 🏖️</p>';return;}
     const occ={};appts.forEach(a=>{if(a.estado!=='cancelado')occ[a.hora.slice(0,5)]=(occ[a.hora.slice(0,5)]||0)+1;});
     generatedHours.forEach(h=>{const c=occ[h]||0;if(c>0){const d=document.createElement('div');d.className=`flex-shrink-0 px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap ${c>=currentShop.sillas?'bg-red-100 text-red-600':'bg-green-100 text-green-600'}`;d.innerText=`${h}: ${c}/${currentShop.sillas}`;summary.appendChild(d);}});
     const mainAppts=appts.filter(a=>a.tipo!=='bloqueo');
     const intervalo=currentShop.intervalo||30;
+
+    // Comparar mes-día para cumpleaños (ignora el año)
+    const viewDate=new Date(date+'T00:00:00');
+    const viewMD=`${String(viewDate.getMonth()+1).padStart(2,'0')}-${String(viewDate.getDate()).padStart(2,'0')}`;
+    const manDate=new Date(viewDate);manDate.setDate(manDate.getDate()+1);
+    const manMD=`${String(manDate.getMonth()+1).padStart(2,'0')}-${String(manDate.getDate()).padStart(2,'0')}`;
+
     mainAppts.forEach(a=>{
         const ib=a.clientes?.nombre==='PAUSA';
         const durMin=a.duracion_min||intervalo;
@@ -1199,10 +1228,24 @@ async function loadBarberDashboard(){
         let cc='bg-white shadow-sm border-l-4 border-green-500',sl='<span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">✅ EN ESPERA</span>',ab=`<button onclick="barberCancel(${a.id})" class="text-red-500 p-2 hover:bg-red-100 rounded-full"><i class="fas fa-times"></i></button>`;
         if(a.estado==='cancelado'){cc='bg-red-50 border-l-4 border-red-300 opacity-75';sl='<span class="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded">❌ CANCELADO</span>';ab=`<button onclick="deleteAppt(${a.id})" class="text-gray-500 p-2 hover:bg-gray-200 rounded-full"><i class="fas fa-trash-alt"></i></button>`;}
         else if(ib){cc='bg-yellow-50 border-l-4 border-yellow-400';sl='<span class="text-xs font-bold text-yellow-700 bg-yellow-100 px-2 py-1 rounded">⏸️ PAUSA</span>';}
+
+        // Badge cumpleaños — compara solo MM-DD (bday = YYYY-MM-DD → slice(5) = MM-DD)
+        let bdayBadge='';
+        const bday=a.clientes?.fecha_nacimiento;
+        if(bday&&!ib){
+            const clientMD=bday.slice(5);
+            if(clientMD===viewMD){
+                bdayBadge='<span class="bday-badge">🎂 ¡Cumpleaños hoy!</span>';
+                if(a.estado!=='cancelado') cc='bg-amber-50 shadow-sm border-l-4 border-yellow-400';
+            } else if(clientMD===manMD){
+                bdayBadge='<span class="bday-badge manana">🎁 Cumpleaños mañana</span>';
+            }
+        }
+
         const item=document.createElement('div');item.className=`border rounded-xl p-4 ${cc}`;
         const durBadge=durMin>intervalo?`<span class="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded ml-1">⏱ ${durMin}min</span>`:'';
         const completarBtn=(!ib&&a.estado==='pendiente')?`<button onclick="abrirCompletarTurno(${a.id},'${a.servicio.replace(/'/g,"\\'")}')" class="estado-btn bg-green-100 text-green-700 hover:bg-green-200 mt-2">✅ Marcar cobrado</button>`:'';
-        item.innerHTML=`<div class="flex justify-between items-start"><div><div class="flex items-center gap-1 mb-1 flex-wrap"><span class="font-bold text-base">${timeLabel}</span>${durBadge}${sl}</div><div class="text-sm font-medium ${ib?'text-yellow-700':'text-gray-700'}">${a.clientes?.nombre||'-'}</div><div class="text-xs text-gray-500">${a.servicio}</div>${completarBtn}</div>${ab}</div>`;
+        item.innerHTML=`<div class="flex justify-between items-start"><div><div class="flex items-center gap-1 mb-1 flex-wrap"><span class="font-bold text-base">${timeLabel}</span>${durBadge}${sl}</div><div class="text-sm font-medium ${ib?'text-yellow-700':'text-gray-700'}">${a.clientes?.nombre||'-'}</div><div class="text-xs text-gray-500">${a.servicio}</div>${bdayBadge}${completarBtn}</div>${ab}</div>`;
         list.appendChild(item);
     });
 }
@@ -1403,6 +1446,10 @@ function openClientAccount(){
     document.getElementById('accountLastName').value=parts.slice(1).join(' ')||'';
     document.getElementById('accountPhone').value=currentUser.celular||'';
     document.getElementById('accountSubtitle').innerText=currentUser.celular||'';
+    // Cargar fecha de nacimiento si existe
+    document.getElementById('accountBirthdate').value=currentUser.fecha_nacimiento||'';
+    // Poner max = hoy para que no elijan fecha futura
+    document.getElementById('accountBirthdate').max=new Date().toISOString().split('T')[0];
     document.getElementById('currentPin').value='';document.getElementById('newPin').value='';document.getElementById('confirmNewPin').value='';
     switchAccountTab('profile');toggleModal('modalClientAccount');
 }
@@ -1417,9 +1464,14 @@ async function saveAccountProfile(){
     const first=document.getElementById('accountFirstName').value.trim(),last=document.getElementById('accountLastName').value.trim();
     if(!first)return showToast('El nombre no puede estar vacío.',true);
     const full=last?first+' '+last:first;
-    const {error}=await supabase.from('clientes').update({nombre:full}).eq('id',currentUser.id);
+    const bday=document.getElementById('accountBirthdate').value||null;
+    const updateData={nombre:full};
+    if(bday!==undefined) updateData.fecha_nacimiento=bday;
+    const {error}=await supabase.from('clientes').update(updateData).eq('id',currentUser.id);
     if(error)return showToast('Error: '+error.message,true);
-    currentUser.nombre=full;document.getElementById('clientNameDisplay').innerText=first;
+    currentUser.nombre=full;
+    if(bday!==undefined) currentUser.fecha_nacimiento=bday;
+    document.getElementById('clientNameDisplay').innerText=first;
     showToast('Datos actualizados ✅');toggleModal('modalClientAccount');
 }
 async function changeClientPin(){
