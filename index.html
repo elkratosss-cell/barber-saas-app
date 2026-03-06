@@ -72,6 +72,41 @@
         .wpp-contact-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
         .wpp-contact-row input{flex:1;min-width:0;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:0.82rem;}
         .wpp-contact-row .del-wpp{background:#fee2e2;color:#ef4444;border:none;border-radius:8px;padding:8px 10px;cursor:pointer;font-size:0.82rem;}
+
+        /* =============================================
+           CSS FALTANTE — FIX PRINCIPAL
+           ============================================= */
+
+        /* CAJA — stat cards */
+        .stat-card{background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px;text-align:center;}
+        .stat-card .lbl{font-size:0.72rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;}
+        .stat-card .val{font-size:1.4rem;font-weight:700;color:var(--color-primary);}
+
+        /* CAJA — gráfico barras */
+        .bar-wrap{display:flex;align-items:flex-end;gap:4px;height:60px;padding:0 2px;}
+        .bar-col{flex:1;background:var(--color-primary);border-radius:4px 4px 0 0;opacity:0.7;transition:opacity 0.2s;min-height:4px;}
+        .bar-col.today{opacity:1;}
+        .bar-col:hover{opacity:1;}
+
+        /* ESTADOS turno en agenda */
+        .estado-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:8px;font-size:0.78rem;font-weight:600;border:none;cursor:pointer;transition:all 0.2s;}
+
+        /* PAGO CLIENTE */
+        .pago-row{display:flex;align-items:center;gap:10px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:8px;}
+        .pago-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+        .copy-btn{display:inline-flex;align-items:center;gap:4px;background:var(--color-primary);color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:0.75rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity 0.2s;text-decoration:none;}
+        .copy-btn:hover{opacity:0.85;}
+
+        /* EXCEPCIONES */
+        .exc-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fef9f0;border:1px solid #fde68a;border-radius:8px;margin-bottom:6px;}
+        .exc-fecha{font-size:0.8rem;font-weight:700;color:#92400e;white-space:nowrap;}
+        .exc-motivo{flex:1;font-size:0.8rem;color:#78350f;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+        /* AGENDA — fecha selector mejorado */
+        .agenda-date-btn{display:flex;align-items:center;gap:8px;background:#f3f4f6;border:2px solid #e5e7eb;border-radius:10px;padding:8px 14px;font-size:0.9rem;font-weight:600;color:#374151;cursor:pointer;transition:border-color 0.2s;}
+        .agenda-date-btn:hover,.agenda-date-btn.active{border-color:var(--color-primary);background:#fff;}
+        /* Ocultar el input real del flatpickr de agenda y mostrar solo el altInput */
+        #barberDatePicker{display:none;}
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800 font-sans">
@@ -81,10 +116,9 @@
     <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
 </div>
 
-<!-- ===== APP PÚBLICO (cliente/visitante) ===== -->
+<!-- ===== APP PÚBLICO ===== -->
 <div id="appPublic" class="max-w-md mx-auto min-h-screen bg-white shadow-2xl relative hidden flex flex-col w-full overflow-hidden">
 
-    <!-- CARRUSEL -->
     <div class="carousel-wrap" id="carouselWrap">
         <div class="carousel-track" id="carouselTrack">
             <div class="carousel-placeholder"><i class="fas fa-cut"></i></div>
@@ -94,7 +128,6 @@
         <div class="carousel-dots" id="carouselDots"></div>
     </div>
 
-    <!-- SHOP HEADER -->
     <div class="shop-header">
         <div style="position:absolute;top:13px;right:13px;">
             <button onclick="toggleDropdown('publicDropdown')" style="background:none;border:none;color:rgba(255,255,255,0.65);font-size:1.15rem;cursor:pointer;"><i class="fas fa-cog"></i></button>
@@ -107,7 +140,6 @@
     </div>
     <div id="shopNotice" class="hidden"><i class="fas fa-bullhorn mr-1"></i><span id="shopNoticeText"></span></div>
 
-    <!-- MAIN TABS (público) -->
     <div class="main-tabs">
         <button class="main-tab active" onclick="switchMainTab('servicios')" id="mainTabServicios"><i class="fas fa-list-ul mr-1"></i>Servicios</button>
         <button class="main-tab" onclick="switchMainTab('detalles')" id="mainTabDetalles"><i class="fas fa-info-circle mr-1"></i>Detalles</button>
@@ -149,9 +181,8 @@
         </div>
     </div>
 
-    <!-- TAB RESERVAR (clientes) -->
+    <!-- TAB RESERVAR -->
     <div id="panelReservar" class="hidden pb-20">
-        <!-- LOGIN -->
         <div id="viewLogin" class="p-5">
             <div class="text-center mb-6 mt-2">
                 <h2 class="text-xl font-bold text-gray-800">Reserva tu turno</h2>
@@ -239,6 +270,15 @@
                     <button onclick="cancelMyAppointment()" class="text-red-500 text-xs border border-red-200 px-3 py-1 rounded hover:bg-red-50">Cancelar</button>
                 </div>
             </div>
+
+            <!-- PAGO — visible para clientes logueados -->
+            <div id="clientPagoSection" class="hidden mb-5 border border-gray-100 rounded-xl overflow-hidden">
+                <div class="bg-gray-50 px-4 py-3 border-b border-gray-100">
+                    <h3 class="font-bold text-sm text-gray-700 flex items-center gap-2"><i class="fas fa-credit-card text-primary"></i> Métodos de pago</h3>
+                </div>
+                <div id="clientPagoList" class="p-4"></div>
+            </div>
+
             <div id="newBookingContainer">
                 <h3 class="font-bold text-gray-700 mb-4">📅 Nuevo Turno</h3>
                 <input type="text" id="datePicker" class="w-full px-4 py-3 border border-gray-300 rounded-xl mb-5 focus:ring-2 focus:ring-primary outline-none bg-white" placeholder="Seleccioná una fecha">
@@ -251,18 +291,17 @@
                 <button id="btnConfirmBooking" onclick="confirmBookingModal()" class="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>Confirmar turno</button>
             </div>
         </div>
-    </div><!-- /panelReservar -->
+    </div>
 
-    <footer id="footerWpp" class="hidden text-center py-4 border-t" id="footerWpp">
+    <footer id="footerWpp" class="hidden text-center py-4 border-t">
         <div id="footerWppLinks" class="flex flex-wrap gap-2 justify-center px-4"></div>
     </footer>
-</div><!-- /appPublic -->
+</div>
 
 
-<!-- ===== PANEL ADMIN (completamente separado) ===== -->
+<!-- ===== PANEL ADMIN ===== -->
 <div id="appAdmin" class="max-w-md mx-auto min-h-screen bg-white shadow-2xl relative hidden flex flex-col w-full overflow-hidden">
 
-    <!-- TOPBAR ADMIN -->
     <div class="admin-topbar">
         <div>
             <p class="text-xs opacity-70 font-medium uppercase tracking-wider">Panel Admin</p>
@@ -274,7 +313,6 @@
         </div>
     </div>
 
-    <!-- TABS ADMIN -->
     <div class="admin-tabs">
         <button class="admin-tab active" onclick="switchAdminTab('agenda')" id="tabAgenda"><i class="fas fa-calendar-day mr-1"></i>Agenda</button>
         <button class="admin-tab" onclick="switchAdminTab('caja')" id="tabCaja"><i class="fas fa-cash-register mr-1"></i>Caja</button>
@@ -284,9 +322,15 @@
 
     <!-- ADMIN: AGENDA -->
     <div id="adminPanelAgenda" class="p-4 pb-24 overflow-y-auto">
-        <div class="flex justify-between items-center mb-4">
-            <input type="text" id="barberDatePicker" class="px-3 py-2 border rounded-lg text-sm bg-white font-medium w-48 text-center">
-            <button onclick="toggleModal('modalManualBooking')" class="flex items-center gap-1 bg-primary text-white px-3 py-2 rounded-lg text-sm font-bold"><i class="fas fa-plus"></i> Agendar</button>
+        <!-- FIX: Selector de fecha con ícono de calendario en lugar de input texto vacío -->
+        <div class="flex justify-between items-center mb-4 gap-3">
+            <div class="flex-1">
+                <!-- Input oculto para flatpickr — el altInput se muestra automáticamente -->
+                <input type="text" id="barberDatePicker" placeholder="Seleccioná una fecha">
+                <!-- Wrapper que flatpickr va a insertar su altInput dentro -->
+                <div id="agendaDateWrapper"></div>
+            </div>
+            <button onclick="toggleModal('modalManualBooking')" class="flex items-center gap-1 bg-primary text-white px-3 py-2 rounded-lg text-sm font-bold whitespace-nowrap"><i class="fas fa-plus"></i> Agendar</button>
         </div>
         <div id="occupancySummary" class="flex gap-2 mb-4 overflow-x-auto pb-2"></div>
         <div id="barberAppointmentsList" class="space-y-3"></div>
@@ -328,8 +372,6 @@
     <!-- ADMIN: CONFIG -->
     <div id="adminPanelConfig" class="hidden p-4 pb-24 space-y-5 overflow-y-auto">
         <h3 class="font-bold text-gray-800 text-base">🔧 Configuración del local</h3>
-
-        <!-- Horario y sillas -->
         <div class="border rounded-xl p-4 space-y-3">
             <h4 class="font-bold text-sm text-gray-700">⏰ Horario y capacidad</h4>
             <div class="grid grid-cols-2 gap-3">
@@ -339,8 +381,6 @@
                 <div><label class="text-xs text-gray-500 block mb-1">Sillas / Barberos</label><input type="tel" inputmode="numeric" id="cfgChairs" class="w-full p-2 border rounded-lg text-center" min="1" onchange="renderBarberBreaks()"></div>
             </div>
         </div>
-
-        <!-- Días laborables -->
         <div class="border rounded-xl p-4 space-y-3">
             <h4 class="font-bold text-sm text-gray-700">📅 Días abiertos</h4>
             <div class="flex justify-between">
@@ -353,15 +393,11 @@
                 <label class="flex flex-col items-center cursor-pointer gap-1"><input type="checkbox" name="workday" value="0"><span class="text-xs">Dom</span></label>
             </div>
         </div>
-
-        <!-- Pausas barberos -->
         <div class="border rounded-xl p-4 space-y-3">
             <h4 class="font-bold text-sm text-gray-700">🕒 Pausas por barbero</h4>
             <p class="text-xs text-gray-400">Bloqueo de horario por barbero (ej: almuerzo).</p>
             <div id="barberBreaksContainer" class="space-y-2"></div>
         </div>
-
-        <!-- Servicios -->
         <div class="border rounded-xl p-4 space-y-3">
             <h4 class="font-bold text-sm text-gray-700">✂️ Servicios y precios</h4>
             <div id="servicesList" class="space-y-2 mb-2"></div>
@@ -373,13 +409,21 @@
             </div>
             <p class="text-xs text-gray-400">Nombre · Precio · Duración (min)</p>
         </div>
-
-        <!-- Mensaje aviso -->
+        <!-- Excepciones -->
+        <div class="border rounded-xl p-4 space-y-3">
+            <h4 class="font-bold text-sm text-gray-700">🚫 Días de excepción (cerrado)</h4>
+            <p class="text-xs text-gray-400">Marcá días puntuales que el local estará cerrado aunque sea día laboral.</p>
+            <div id="excepcionesList" class="space-y-2"></div>
+            <div class="flex gap-2 mt-2">
+                <input type="text" id="newExcFecha" placeholder="Fecha" class="flex-1 p-2 border rounded-lg text-sm bg-white">
+                <input type="text" id="newExcMotivo" placeholder="Motivo (opcional)" class="flex-1 p-2 border rounded-lg text-sm">
+                <button onclick="addExcepcion()" class="bg-primary text-white px-3 py-2 rounded-lg text-sm font-bold">+</button>
+            </div>
+        </div>
         <div class="border rounded-xl p-4 space-y-2">
             <h4 class="font-bold text-sm text-gray-700">📣 Mensaje de aviso</h4>
             <input type="text" id="cfgMsg" placeholder="Ej: Vuelvo el martes" class="w-full p-2 border rounded-lg text-sm">
         </div>
-
         <button onclick="saveConfig()" class="w-full bg-primary text-white py-3 rounded-xl font-bold shadow-lg">💾 Guardar Cambios</button>
     </div>
 
@@ -419,12 +463,84 @@
             <div><label class="text-xs text-gray-500 block mb-1">Instagram (sin @)</label><input type="text" id="cfgInstagram" placeholder="Ej: santisbarbershop" class="w-full p-2 border rounded-lg text-sm"></div>
         </div>
 
-        <!-- Contactos WhatsApp (múltiples) -->
+        <!-- Contactos WhatsApp -->
         <div class="border rounded-xl p-4 space-y-3">
             <h4 class="font-bold text-sm text-gray-700">💬 WhatsApp de contacto</h4>
-            <p class="text-xs text-gray-400">Podés agregar varios números con etiqueta. Se muestran como botones en la página.</p>
+            <p class="text-xs text-gray-400">Podés agregar varios números con etiqueta.</p>
             <div id="wppContactsList" class="space-y-2"></div>
             <button onclick="addWppContact()" class="flex items-center gap-2 text-sm font-medium text-primary border border-primary px-3 py-2 rounded-lg hover:bg-primary hover:text-white transition"><i class="fas fa-plus"></i> Agregar número</button>
+        </div>
+
+        <!-- =============================================
+             MÉTODOS DE PAGO — FIX: sección completa y visible
+             ============================================= -->
+        <div class="border rounded-xl overflow-hidden">
+            <div class="bg-gray-50 px-4 py-3 border-b">
+                <h4 class="font-bold text-sm text-gray-700">💳 Métodos de pago</h4>
+                <p class="text-xs text-gray-400 mt-0.5">Los clientes logueados verán esta info con botón para copiar.</p>
+            </div>
+            <div class="p-4 space-y-4">
+
+                <!-- Nombre titular -->
+                <div>
+                    <label class="text-xs font-bold text-gray-600 block mb-1">Nombre del titular</label>
+                    <input type="text" id="cfgTitularPago" placeholder="Ej: Juan Pérez" class="w-full p-2 border rounded-lg text-sm">
+                </div>
+
+                <!-- Cuenta bancaria -->
+                <div class="border border-gray-200 rounded-xl overflow-hidden">
+                    <label class="flex items-center gap-3 p-3 bg-gray-50 cursor-pointer select-none">
+                        <input type="checkbox" id="chkCuenta" onchange="togglePagoField('fieldCuenta',this.checked)" class="w-4 h-4 accent-primary flex-shrink-0">
+                        <div>
+                            <span class="text-sm font-semibold text-gray-700">🏦 Cuenta bancaria</span>
+                            <p class="text-xs text-gray-400">Número de cuenta, banco</p>
+                        </div>
+                    </label>
+                    <div id="fieldCuenta" class="hidden px-4 pb-3 pt-2 bg-white border-t border-gray-100">
+                        <input type="text" id="cfgCuentaBanco" placeholder="Ej: 001-123456/7 — Brou / Itaú..." class="w-full p-2 border rounded-lg text-sm">
+                    </div>
+                </div>
+
+                <!-- Alias / CBU -->
+                <div class="border border-gray-200 rounded-xl overflow-hidden">
+                    <label class="flex items-center gap-3 p-3 bg-gray-50 cursor-pointer select-none">
+                        <input type="checkbox" id="chkAlias" onchange="togglePagoField('fieldAlias',this.checked)" class="w-4 h-4 accent-primary flex-shrink-0">
+                        <div>
+                            <span class="text-sm font-semibold text-gray-700">💸 Alias / CBU (transferencia)</span>
+                            <p class="text-xs text-gray-400">Alias o CBU para transferencias</p>
+                        </div>
+                    </label>
+                    <div id="fieldAlias" class="hidden px-4 pb-3 pt-2 bg-white border-t border-gray-100">
+                        <input type="text" id="cfgAliasCBU" placeholder="Ej: barberia.corte o 072000..." class="w-full p-2 border rounded-lg text-sm">
+                    </div>
+                </div>
+
+                <!-- MercadoPago -->
+                <div class="border border-gray-200 rounded-xl overflow-hidden">
+                    <label class="flex items-center gap-3 p-3 bg-gray-50 cursor-pointer select-none">
+                        <input type="checkbox" id="chkLink" onchange="togglePagoField('fieldLink',this.checked)" class="w-4 h-4 accent-primary flex-shrink-0">
+                        <div>
+                            <span class="text-sm font-semibold text-gray-700">🔗 MercadoPago / Link de pago</span>
+                            <p class="text-xs text-gray-400">URL del link de cobro</p>
+                        </div>
+                    </label>
+                    <div id="fieldLink" class="hidden px-4 pb-3 pt-2 bg-white border-t border-gray-100">
+                        <input type="text" id="cfgLinkPago" placeholder="Ej: https://mpago.la/xxx" class="w-full p-2 border rounded-lg text-sm">
+                    </div>
+                </div>
+
+                <!-- Efectivo -->
+                <div class="border border-gray-200 rounded-xl overflow-hidden">
+                    <label class="flex items-center gap-3 p-3 bg-gray-50 cursor-pointer select-none">
+                        <input type="checkbox" id="chkEfectivo" class="w-4 h-4 accent-primary flex-shrink-0">
+                        <div>
+                            <span class="text-sm font-semibold text-gray-700">💵 Efectivo</span>
+                            <p class="text-xs text-gray-400">Se acepta pago en efectivo</p>
+                        </div>
+                    </label>
+                </div>
+
+            </div>
         </div>
 
         <button onclick="savePaginaConfig()" class="w-full bg-primary text-white py-3 rounded-xl font-bold shadow-lg">💾 Guardar Página</button>
@@ -448,18 +564,22 @@
     </div>
 </div>
 
-<!-- Manual Booking -->
+<!-- FIX: Modal Agendar — manualDate usa flatpickr correctamente -->
 <div id="modalManualBooking" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center px-4 backdrop-blur-sm">
     <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
         <div class="flex justify-between items-center mb-4"><h3 class="font-bold text-xl text-primary">Agendar Turno</h3><button onclick="toggleModal('modalManualBooking')" class="text-gray-400 text-xl">✕</button></div>
         <div class="space-y-3">
             <input type="tel" id="manualPhone" placeholder="Celular (opcional)" class="w-full px-4 py-3 border rounded-xl">
-            <input type="text" id="manualName" placeholder="Nombre" class="w-full px-4 py-3 border rounded-xl">
+            <input type="text" id="manualName" placeholder="Nombre del cliente" class="w-full px-4 py-3 border rounded-xl">
             <div class="grid grid-cols-2 gap-2">
-                <input type="text" id="manualDate" class="px-4 py-3 border rounded-xl text-center" placeholder="Fecha">
+                <!-- FIX: input de fecha con ícono de calendario, flatpickr abre al tocar -->
+                <div class="relative">
+                    <input type="text" id="manualDate" class="w-full px-3 py-3 border rounded-xl text-sm text-center pr-8 bg-white" placeholder="📅 Fecha" readonly style="cursor:pointer;">
+                    <i class="fas fa-calendar-alt absolute right-3 top-3.5 text-gray-400 pointer-events-none text-sm"></i>
+                </div>
                 <input type="tel" inputmode="numeric" id="manualTime" placeholder="09:00" maxlength="5" class="px-4 py-3 border rounded-xl font-mono text-center" oninput="maskTime(this)">
             </div>
-            <select id="manualService" class="w-full px-4 py-3 border rounded-xl"></select>
+            <select id="manualService" class="w-full px-4 py-3 border rounded-xl bg-white"></select>
             <button onclick="createManualBooking()" class="w-full bg-primary text-white py-3 rounded-xl font-bold">Guardar</button>
         </div>
     </div>
@@ -534,7 +654,6 @@
     </div>
 </div>
 
-
 <!-- Modal Caja Manual -->
 <div id="modalCajaManual" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center px-4 backdrop-blur-sm">
     <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
@@ -543,24 +662,9 @@
             <button onclick="toggleModal('modalCajaManual')" class="text-gray-400 text-xl">✕</button>
         </div>
         <div class="space-y-3">
-            <div>
-                <label class="text-xs font-bold text-gray-600 block mb-1">Concepto</label>
-                <input type="text" id="cajaManualConcepto" placeholder="Ej: Venta de producto" class="w-full px-4 py-3 border rounded-xl text-sm">
-            </div>
-            <div>
-                <label class="text-xs font-bold text-gray-600 block mb-1">Monto</label>
-                <div class="relative">
-                    <span class="absolute left-3 top-3.5 text-gray-400 font-bold">$</span>
-                    <input type="tel" inputmode="numeric" id="cajaManualMonto" placeholder="0" class="w-full pl-7 pr-4 py-3 border rounded-xl text-sm">
-                </div>
-            </div>
-            <div>
-                <label class="text-xs font-bold text-gray-600 block mb-1">Tipo</label>
-                <select id="cajaManualTipo" class="w-full px-4 py-3 border rounded-xl bg-white text-sm">
-                    <option value="ingreso">💚 Ingreso</option>
-                    <option value="egreso">🔴 Egreso / Gasto</option>
-                </select>
-            </div>
+            <div><label class="text-xs font-bold text-gray-600 block mb-1">Concepto</label><input type="text" id="cajaManualConcepto" placeholder="Ej: Venta de producto" class="w-full px-4 py-3 border rounded-xl text-sm"></div>
+            <div><label class="text-xs font-bold text-gray-600 block mb-1">Monto</label><div class="relative"><span class="absolute left-3 top-3.5 text-gray-400 font-bold">$</span><input type="tel" inputmode="numeric" id="cajaManualMonto" placeholder="0" class="w-full pl-7 pr-4 py-3 border rounded-xl text-sm"></div></div>
+            <div><label class="text-xs font-bold text-gray-600 block mb-1">Tipo</label><select id="cajaManualTipo" class="w-full px-4 py-3 border rounded-xl bg-white text-sm"><option value="ingreso">💚 Ingreso</option><option value="egreso">🔴 Egreso / Gasto</option></select></div>
             <button onclick="saveCajaManual()" class="w-full bg-primary text-white py-3 rounded-xl font-bold">Guardar</button>
         </div>
     </div>
@@ -569,24 +673,12 @@
 <!-- Modal Completar Turno -->
 <div id="modalCompletarTurno" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center px-4 backdrop-blur-sm">
     <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="font-bold text-xl text-green-600">✅ Completar turno</h3>
-            <button onclick="toggleModal('modalCompletarTurno')" class="text-gray-400 text-xl">✕</button>
-        </div>
+        <div class="flex justify-between items-center mb-4"><h3 class="font-bold text-xl text-green-600">✅ Completar turno</h3><button onclick="toggleModal('modalCompletarTurno')" class="text-gray-400 text-xl">✕</button></div>
         <p class="text-sm text-gray-500 mb-4">Confirmá el monto cobrado para registrar en caja.</p>
         <input type="hidden" id="completarTurnoId">
         <div class="space-y-3">
-            <div>
-                <label class="text-xs font-bold text-gray-600 block mb-1">Servicio</label>
-                <p id="completarTurnoServicio" class="text-sm font-medium text-gray-800 bg-gray-50 p-2 rounded-lg"></p>
-            </div>
-            <div>
-                <label class="text-xs font-bold text-gray-600 block mb-1">Monto cobrado</label>
-                <div class="relative">
-                    <span class="absolute left-3 top-3.5 text-gray-400 font-bold">$</span>
-                    <input type="tel" inputmode="numeric" id="completarMonto" placeholder="0" class="w-full pl-7 pr-4 py-3 border rounded-xl text-sm font-bold text-lg">
-                </div>
-            </div>
+            <div><label class="text-xs font-bold text-gray-600 block mb-1">Servicio</label><p id="completarTurnoServicio" class="text-sm font-medium text-gray-800 bg-gray-50 p-2 rounded-lg"></p></div>
+            <div><label class="text-xs font-bold text-gray-600 block mb-1">Monto cobrado</label><div class="relative"><span class="absolute left-3 top-3.5 text-gray-400 font-bold">$</span><input type="tel" inputmode="numeric" id="completarMonto" placeholder="0" class="w-full pl-7 pr-4 py-3 border rounded-xl text-sm font-bold text-lg"></div></div>
             <button onclick="confirmarCompletarTurno()" class="w-full bg-green-500 text-white py-3 rounded-xl font-bold">💰 Cobrado — Registrar</button>
         </div>
     </div>
@@ -608,7 +700,9 @@ const ADMIN_STORAGE_KEY='barbersaas_admin_id';
 let currentShop=null,currentUser=null,selectedTime=null,shopConfig={},generatedHours=[];
 let carouselIndex=0,carouselSlides=[],carouselTimer=null;
 let loginState={phone:null,isNewUser:false,isForgot:false,tempPin:null,clientData:null};
-const flatpickrCfg={locale:"es",dateFormat:"Y-m-d",altInput:true,altFormat:"j \\de F, Y",disableMobile:true,minDate:"today"};
+
+// FIX: flatpickrCfg sin disableMobile para que funcione en móvil
+const flatpickrCfg={locale:"es",dateFormat:"Y-m-d",altInput:true,altFormat:"j \\de F, Y",disableMobile:false,minDate:"today"};
 const DAYS_ES=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const DAYS_FULL=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 
@@ -618,7 +712,6 @@ document.addEventListener('DOMContentLoaded',async()=>{
     const {data:shop,error}=await supabase.from('barberias').select('*').eq('slug',slug).single();
     if(error||!shop){alert('Barbería no encontrada.');return;}
     currentShop=shop;
-    // Trial check
     if(currentShop.fecha_fin_prueba){
         const te=new Date(currentShop.fecha_fin_prueba+'T00:00:00'),td=new Date();td.setHours(0,0,0,0);
         if(td>te){
@@ -637,6 +730,10 @@ document.addEventListener('DOMContentLoaded',async()=>{
     applyTheme();renderPublicServices();renderDetalles();loadCarousel();renderServiceOptions();initPinInputs();
     document.getElementById('loader').classList.add('hidden');
 
+    // FIX: Inicializar flatpickr de clientes AQUÍ (panel público visible)
+    const today=new Date().toISOString().split('T')[0];
+    flatpickr('#datePicker',{...flatpickrCfg,defaultDate:today,onChange:()=>loadSlots()});
+
     // Restore session
     const cid=localStorage.getItem(CLIENT_STORAGE_KEY),aid=localStorage.getItem(ADMIN_STORAGE_KEY);
     if(aid&&aid!=='null'){
@@ -648,19 +745,59 @@ document.addEventListener('DOMContentLoaded',async()=>{
         if(c){currentUser=c;showPublicApp();showClientDashboard();return;}
     }
     showPublicApp();showLoginStep('loginStepPhone');
-
-    // Flatpickr setup after DOM ready
-    setupFlatpickr();
 });
 
 function showPublicApp(){
     document.getElementById('appPublic').classList.remove('hidden');
     document.getElementById('appAdmin').classList.add('hidden');
 }
+
+// FIX: showAdminPanel inicializa flatpickr correctamente
 function showAdminPanel(){
     document.getElementById('appAdmin').classList.remove('hidden');
     document.getElementById('appPublic').classList.add('hidden');
     document.getElementById('adminShopName').innerText=currentShop.nombre;
+    const today=new Date().toISOString().split('T')[0];
+
+    // FIX: barberDatePicker — usar altInput para mostrar fecha legible con ícono
+    const bdp=document.getElementById('barberDatePicker');
+    if(!bdp._flatpickr){
+        flatpickr(bdp,{
+            locale:'es',
+            dateFormat:'Y-m-d',
+            altInput:true,
+            altFormat:'j \\de F, Y',
+            disableMobile:false,
+            minDate:null, // Admin puede ver fechas pasadas
+            defaultDate:today,
+            onChange:()=>loadBarberDashboard(),
+            onReady:(_,__,fp)=>{
+                // Estilizar el altInput generado por flatpickr
+                if(fp.altInput){
+                    fp.altInput.className='agenda-date-btn w-full';
+                    fp.altInput.style.cssText='display:flex;align-items:center;gap:8px;background:#f3f4f6;border:2px solid #e5e7eb;border-radius:10px;padding:8px 14px;font-size:0.9rem;font-weight:600;color:#374151;cursor:pointer;width:100%;';
+                    // Agregar ícono de calendario al principio
+                    fp.altInput.setAttribute('placeholder','📅 Seleccioná fecha');
+                }
+            }
+        });
+    } else {
+        bdp._flatpickr.setDate(today);
+    }
+
+    // FIX: manualDate flatpickr — init aquí para que esté listo cuando se abra el modal
+    const md=document.getElementById('manualDate');
+    if(!md._flatpickr){
+        flatpickr(md,{
+            locale:'es',
+            dateFormat:'Y-m-d',
+            altInput:false, // No usar altInput, el input ya tiene el estilo correcto
+            disableMobile:false,
+            minDate:null,
+            defaultDate:today,
+        });
+    }
+
     switchAdminTab('agenda');
 }
 
@@ -695,16 +832,12 @@ function renderDetalles(){
     document.getElementById('detailHorario').innerHTML=DAYS_FULL.map((d,i)=>{const op=openDays.includes(i);return `<div class="horario-row"><span class="text-gray-600">${d}</span><span class="${op?'text-green-600 font-medium':'text-gray-400'}">${op?`${currentShop.apertura?.slice(0,5)} - ${currentShop.cierre?.slice(0,5)}`:'Cerrado'}</span></div>`;}).join('');
     const sw=document.getElementById('detailSobreWrap');if(cfg.sobre){sw.classList.remove('hidden');document.getElementById('detailSobre').innerText=cfg.sobre;}else sw.classList.add('hidden');
     const dw=document.getElementById('detailDireccionWrap');if(cfg.direccion){dw.classList.remove('hidden');document.getElementById('detailDireccion').innerText=cfg.direccion;}else dw.classList.add('hidden');
-
     const contactos=[];
     const contacts=cfg.wpp_contacts||[];
-    contacts.forEach(c=>{
-        if(c.numero) contactos.push(`<a href="https://wa.me/598${c.numero.replace(/\D/g,'').slice(-9)}" target="_blank" class="flex items-center gap-2 bg-green-50 p-3 rounded-xl text-sm text-green-700 font-medium"><i class="fab fa-whatsapp text-green-500 text-lg"></i><span>${c.etiqueta||c.numero}: ${c.numero}</span></a>`);
-    });
+    contacts.forEach(c=>{if(c.numero) contactos.push(`<a href="https://wa.me/598${c.numero.replace(/\D/g,'').slice(-9)}" target="_blank" class="flex items-center gap-2 bg-green-50 p-3 rounded-xl text-sm text-green-700 font-medium"><i class="fab fa-whatsapp text-green-500 text-lg"></i><span>${c.etiqueta||c.numero}: ${c.numero}</span></a>`);});
     if(cfg.instagram) contactos.push(`<a href="https://instagram.com/${cfg.instagram}" target="_blank" class="flex items-center gap-2 bg-pink-50 p-3 rounded-xl text-sm text-pink-700 font-medium"><i class="fab fa-instagram text-pink-500"></i>@${cfg.instagram}</a>`);
     const cw=document.getElementById('detailContactoWrap');
     if(contactos.length){cw.classList.remove('hidden');document.getElementById('detailContactoList').innerHTML=contactos.join('');}else cw.classList.add('hidden');
-
     const pp=cfg.portfolio_photos||[];
     const ps=document.getElementById('detailPhotosSection');
     if(pp.length){ps.classList.remove('hidden');document.getElementById('detailPhotosGrid').innerHTML=pp.map(url=>`<img src="${url}" alt="" loading="lazy" onclick="openPhotoModal('${url}')">`).join('');}
@@ -716,28 +849,14 @@ let carouselTouchBound=false;
 function loadCarousel(){
     const photos=shopConfig.carousel_photos||[];
     const track=document.getElementById('carouselTrack'),dots=document.getElementById('carouselDots');
-    // Siempre resetear
-    track.style.transform='translateX(0)';
-    clearInterval(carouselTimer);
-    if(!photos.length){
-        track.innerHTML='<div class="carousel-placeholder"><i class="fas fa-cut"></i></div>';
-        dots.innerHTML='';carouselSlides=[];carouselIndex=0;return;
-    }
-    // Precargar imágenes antes de insertar
-    let loaded=0;
-    const imgs=photos.map(url=>{
-        const img=new Image();
-        img.onload=img.onerror=()=>{loaded++;if(loaded===photos.length)_mountCarousel(photos);};
-        img.src=url;return img;
-    });
-    // También montar de inmediato (sin esperar precarga) para no quedar en negro
+    track.style.transform='translateX(0)';clearInterval(carouselTimer);
+    if(!photos.length){track.innerHTML='<div class="carousel-placeholder"><i class="fas fa-cut"></i></div>';dots.innerHTML='';carouselSlides=[];carouselIndex=0;return;}
     _mountCarousel(photos);
 }
 function _mountCarousel(photos){
     const track=document.getElementById('carouselTrack'),dots=document.getElementById('carouselDots');
     track.innerHTML=photos.map(url=>`<img src="${url}" class="carousel-slide" alt="" style="background:#222;">`).join('');
-    carouselSlides=photos;carouselIndex=0;
-    track.style.transform='translateX(0)';
+    carouselSlides=photos;carouselIndex=0;track.style.transform='translateX(0)';
     dots.innerHTML=photos.map((_,i)=>`<div class="carousel-dot${i===0?' active':''}" onclick="carouselGoTo(${i})"></div>`).join('');
     if(!carouselTouchBound){
         const wrap=document.getElementById('carouselWrap');let sx=0;
@@ -745,8 +864,7 @@ function _mountCarousel(photos){
         wrap.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>40){dx<0?carouselNext():carouselPrev();}});
         carouselTouchBound=true;
     }
-    clearInterval(carouselTimer);
-    if(photos.length>1)carouselTimer=setInterval(carouselNext,4000);
+    clearInterval(carouselTimer);if(photos.length>1)carouselTimer=setInterval(carouselNext,4000);
 }
 function carouselGoTo(i){
     if(!carouselSlides.length)return;
@@ -901,7 +1019,6 @@ async function loadSlots(){
     if(!dateStr)return;
     const dow=new Date(dateStr+'T00:00:00').getDay();
     const openDays=shopConfig.dias_laborables||[1,2,3,4,5,6];
-    // Verificar excepciones (días cerrados puntuales)
     const excepciones=shopConfig.excepciones||[];
     const esExcepcion=excepciones.find(e=>e.fecha===dateStr);
     if(esExcepcion||!openDays.includes(dow)){
@@ -913,104 +1030,47 @@ async function loadSlots(){
     document.getElementById('closedMessage').classList.add('hidden');
     const grid=document.getElementById('slotsGrid');grid.innerHTML='<p class="col-span-3 text-center text-sm text-gray-400">Cargando...</p>';
     selectedTime=null;document.getElementById('btnConfirmBooking').disabled=true;
-
-    // Traer turnos con servicio para calcular bloqueos por duración
     const {data:turnos}=await supabase.from('turnos').select('hora,servicio,tipo').eq('barberia_id',currentShop.id).eq('fecha',dateStr).neq('estado','cancelado');
-    const intervalo=currentShop.intervalo||30;
-    const cap=currentShop.sillas||1;
-
-    // Construir mapa: hora -> cantidad ocupada
-    const occ={};
-    // Mapa de slots bloqueados por desborde de duración (no cuentan como "ocupados" completos, 
-    // sino que bloquean disponibilidad para nuevos turnos)
-    const blocked={};
-
+    const intervalo=currentShop.intervalo||30;const cap=currentShop.sillas||1;
+    const occ={};const blocked={};
     turnos.forEach(t=>{
         const h=t.hora.slice(0,5);
-        if(t.tipo==='bloqueo'){
-            // Slot bloqueado por desborde de un turno anterior
-            blocked[h]=(blocked[h]||0)+1;
-        } else {
+        if(t.tipo==='bloqueo'){blocked[h]=(blocked[h]||0)+1;}
+        else{
             occ[h]=(occ[h]||0)+1;
-            // Calcular cuántos slots extra ocupa este servicio
             const svcConfig=(shopConfig.servicios||[]).find(s=>s.nombre===t.servicio);
-            const durMin=svcConfig?.duracion||intervalo;
-            const slotsExtra=Math.ceil(durMin/intervalo)-1;
-            if(slotsExtra>0){
-                const idx=generatedHours.indexOf(h);
-                for(let k=1;k<=slotsExtra;k++){
-                    if(idx+k<generatedHours.length){
-                        const bh=generatedHours[idx+k];
-                        blocked[bh]=(blocked[bh]||0)+1;
-                    }
-                }
-            }
+            const durMin=svcConfig?.duracion||intervalo;const slotsExtra=Math.ceil(durMin/intervalo)-1;
+            if(slotsExtra>0){const idx=generatedHours.indexOf(h);for(let k=1;k<=slotsExtra;k++){if(idx+k<generatedHours.length){const bh=generatedHours[idx+k];blocked[bh]=(blocked[bh]||0)+1;}}}
         }
     });
-
     grid.innerHTML='';
     generatedHours.forEach(time=>{
-        // Capacidad real descontando pausas
-        let cc=cap;
-        (shopConfig.barber_breaks||[]).forEach(b=>{if(b.start&&b.end&&time>=b.start&&time<b.end)cc--;});
-        const cnt=occ[time]||0;
-        const blk=blocked[time]||0;
-        const totalOcupado=cnt+blk;
-        const libre=Math.max(0,cc)-totalOcupado;
-        // Un slot está "bloqueado visualmente" si está bloqueado pero no completamente ocupado
-        const isBlocked=blk>0&&cnt===0&&libre<=0;
-        const isOccupied=!isBlocked&&libre<=0;
-        const avail=libre>0;
-
+        let cc=cap;(shopConfig.barber_breaks||[]).forEach(b=>{if(b.start&&b.end&&time>=b.start&&time<b.end)cc--;});
+        const cnt=occ[time]||0;const blk=blocked[time]||0;const totalOcupado=cnt+blk;const libre=Math.max(0,cc)-totalOcupado;
+        const isBlocked=blk>0&&cnt===0&&libre<=0;const isOccupied=!isBlocked&&libre<=0;const avail=libre>0;
         const btn=document.createElement('button');
         let cls='slot-btn border rounded-lg py-3 font-medium text-sm flex flex-col items-center justify-center ';
-        if(isBlocked) cls+='blocked';
-        else if(isOccupied) cls+='occupied';
-        else cls+='available bg-white border-gray-200 text-gray-700';
-        btn.className=cls;
-        btn.innerHTML=time+(avail&&libre<=2?`<span class="spots-badge">${libre}</span>`:'');
-
+        if(isBlocked)cls+='blocked';else if(isOccupied)cls+='occupied';else cls+='available bg-white border-gray-200 text-gray-700';
+        btn.className=cls;btn.innerHTML=time+(avail&&libre<=2?`<span class="spots-badge">${libre}</span>`:'');
         if(avail){
             btn.onclick=()=>{
-                // Verificar que los slots necesarios para el servicio seleccionado estén libres
-                const durSel=getSelectedServiceDuracion('serviceSelect');
-                const slotsNeed=Math.ceil(durSel/intervalo);
-                const idx=generatedHours.indexOf(time);
+                const durSel=getSelectedServiceDuracion('serviceSelect');const slotsNeed=Math.ceil(durSel/intervalo);const idx=generatedHours.indexOf(time);
                 let canBook=true;
-                for(let k=1;k<slotsNeed;k++){
-                    if(idx+k>=generatedHours.length){canBook=false;break;}
-                    const nt=generatedHours[idx+k];
-                    const nOcc=(occ[nt]||0)+(blocked[nt]||0);
-                    let nCap=cap;
-                    (shopConfig.barber_breaks||[]).forEach(b=>{if(b.start&&b.end&&nt>=b.start&&nt<b.end)nCap--;});
-                    if(nOcc>=nCap){canBook=false;break;}
-                }
-                if(!canBook){
-                    showToast('No hay espacio suficiente para este servicio en este horario.',true);return;
-                }
-                document.querySelectorAll('.slot-btn').forEach(b=>{
-                    if(b.classList.contains('available')){b.classList.remove('selected');b.style.background='';b.style.color='';}
-                });
-                btn.classList.add('selected');
-                selectedTime=time;
-                document.getElementById('btnConfirmBooking').disabled=false;
+                for(let k=1;k<slotsNeed;k++){if(idx+k>=generatedHours.length){canBook=false;break;}const nt=generatedHours[idx+k];const nOcc=(occ[nt]||0)+(blocked[nt]||0);let nCap=cap;(shopConfig.barber_breaks||[]).forEach(b=>{if(b.start&&b.end&&nt>=b.start&&nt<b.end)nCap--;});if(nOcc>=nCap){canBook=false;break;}}
+                if(!canBook){showToast('No hay espacio suficiente para este servicio en este horario.',true);return;}
+                document.querySelectorAll('.slot-btn').forEach(b=>{if(b.classList.contains('available')){b.classList.remove('selected');b.style.background='';b.style.color='';}});
+                btn.classList.add('selected');selectedTime=time;document.getElementById('btnConfirmBooking').disabled=false;
             };
-        } else {
-            btn.disabled=true;
-        }
+        }else btn.disabled=true;
         grid.appendChild(btn);
     });
-
-    // Re-verificar al cambiar servicio
     document.getElementById('serviceSelect').onchange=()=>loadSlots();
 }
 function confirmBookingModal(){
     const date=document.getElementById('datePicker').value,svc=document.getElementById('serviceSelect').value;
     if(!selectedTime||!date)return;
-    const durSel=getSelectedServiceDuracion('serviceSelect');
-    const intervalo=currentShop.intervalo||30;
-    const [hh,mm]=selectedTime.split(':').map(Number);
-    const finDate=new Date();finDate.setHours(hh,mm+durSel,0,0);
+    const durSel=getSelectedServiceDuracion('serviceSelect');const intervalo=currentShop.intervalo||30;
+    const [hh,mm]=selectedTime.split(':').map(Number);const finDate=new Date();finDate.setHours(hh,mm+durSel,0,0);
     const horaFin=finDate.toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit',hour12:false});
     const timeStr=durSel>intervalo?`${selectedTime} – ${horaFin} (${durSel}min)`:selectedTime;
     document.getElementById('bookingConfirmDate').innerText=formatDate(date);
@@ -1021,42 +1081,23 @@ function confirmBookingModal(){
 async function createClientBooking(){
     toggleModal('modalConfirmBooking');
     const date=document.getElementById('datePicker').value,svc=document.getElementById('serviceSelect').value;
-    const intervalo=currentShop.intervalo||30;
-    const durSel=getSelectedServiceDuracion('serviceSelect');
-    const slotsNeed=Math.ceil(durSel/intervalo);
-    const idx=generatedHours.indexOf(selectedTime);
-
-    // Insertar turno principal
+    const intervalo=currentShop.intervalo||30;const durSel=getSelectedServiceDuracion('serviceSelect');
+    const slotsNeed=Math.ceil(durSel/intervalo);const idx=generatedHours.indexOf(selectedTime);
     const {error}=await supabase.from('turnos').insert({barberia_id:currentShop.id,cliente_id:currentUser.id,fecha:date,hora:selectedTime,servicio:svc,duracion_min:durSel,tipo:'principal'});
     if(error){showToast('Error: '+error.message,true);return;}
-
-    // Insertar slots de bloqueo para los slots siguientes que ocupa el servicio
-    if(slotsNeed>1){
-        const bloques=[];
-        for(let k=1;k<slotsNeed;k++){
-            if(idx+k<generatedHours.length){
-                bloques.push({barberia_id:currentShop.id,cliente_id:currentUser.id,fecha:date,hora:generatedHours[idx+k],servicio:svc+' (cont.)',duracion_min:0,tipo:'bloqueo'});
-            }
-        }
-        if(bloques.length) await supabase.from('turnos').insert(bloques);
-    }
+    if(slotsNeed>1){const bloques=[];for(let k=1;k<slotsNeed;k++){if(idx+k<generatedHours.length)bloques.push({barberia_id:currentShop.id,cliente_id:currentUser.id,fecha:date,hora:generatedHours[idx+k],servicio:svc+' (cont.)',duracion_min:0,tipo:'bloqueo'});}if(bloques.length)await supabase.from('turnos').insert(bloques);}
     showToast('¡Turno confirmado! 👍');showClientDashboard();
 }
 async function cancelMyAppointment(){
-    showConfirmationModal('¿Cancelar tu turno?',async()=>{
-        await supabase.from('turnos').update({estado:'cancelado'}).eq('id',currentUser.activeApptId);
-        showToast('Turno cancelado.',true);showClientDashboard();
-    });
+    showConfirmationModal('¿Cancelar tu turno?',async()=>{await supabase.from('turnos').update({estado:'cancelado'}).eq('id',currentUser.activeApptId);showToast('Turno cancelado.',true);showClientDashboard();});
 }
 
-// -------- ADMIN PANEL --------
+// -------- ADMIN --------
 async function loginBarber(){
     const u=document.getElementById('adminUsername').value,p=document.getElementById('adminPass').value;
     const {data:b}=await supabase.from('barberos').select('*').eq('barberia_id',currentShop.id).eq('email',u).eq('password',p).single();
-    if(b){
-        currentUser=b;localStorage.setItem(ADMIN_STORAGE_KEY,currentUser.id);localStorage.removeItem(CLIENT_STORAGE_KEY);
-        toggleModal('modalBarberLogin');showAdminPanel();
-    }else showToast('Datos incorrectos',true);
+    if(b){currentUser=b;localStorage.setItem(ADMIN_STORAGE_KEY,currentUser.id);localStorage.removeItem(CLIENT_STORAGE_KEY);toggleModal('modalBarberLogin');showAdminPanel();}
+    else showToast('Datos incorrectos',true);
 }
 function switchAdminTab(tab){
     ['agenda','caja','config','pagina'].forEach(t=>{
@@ -1068,8 +1109,12 @@ function switchAdminTab(tab){
     if(tab==='agenda')loadBarberDashboard();
     if(tab==='caja')loadCaja();
 }
+
+// FIX: loadBarberDashboard lee la fecha del flatpickr correctamente
 async function loadBarberDashboard(){
-    const date=document.getElementById('barberDatePicker').value;
+    const fp=document.getElementById('barberDatePicker')._flatpickr;
+    const date=fp?fp.selectedDates[0]?.toISOString().split('T')[0]:new Date().toISOString().split('T')[0];
+    if(!date)return;
     const list=document.getElementById('barberAppointmentsList'),summary=document.getElementById('occupancySummary');
     list.innerHTML='<p class="text-center text-gray-400 text-sm py-4">Cargando...</p>';
     const {data:appts}=await supabase.from('turnos').select('id,hora,servicio,estado,tipo,duracion_min,monto_cobrado,clientes(nombre,celular)').eq('barberia_id',currentShop.id).eq('fecha',date).order('hora');
@@ -1077,40 +1122,30 @@ async function loadBarberDashboard(){
     if(!appts||!appts.length){list.innerHTML='<p class="text-center text-gray-400 py-10">Agenda libre 🏖️</p>';return;}
     const occ={};appts.forEach(a=>{if(a.estado!=='cancelado')occ[a.hora.slice(0,5)]=(occ[a.hora.slice(0,5)]||0)+1;});
     generatedHours.forEach(h=>{const c=occ[h]||0;if(c>0){const d=document.createElement('div');d.className=`flex-shrink-0 px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap ${c>=currentShop.sillas?'bg-red-100 text-red-600':'bg-green-100 text-green-600'}`;d.innerText=`${h}: ${c}/${currentShop.sillas}`;summary.appendChild(d);}});
-    // Filtrar bloqueos — mostrar solo turnos principales y cancelados
     const mainAppts=appts.filter(a=>a.tipo!=='bloqueo');
-    // Agrupar: para cada turno principal, calcular hora fin
     const intervalo=currentShop.intervalo||30;
     mainAppts.forEach(a=>{
         const ib=a.clientes?.nombre==='PAUSA';
-        // Calcular hora fin según duración
         const durMin=a.duracion_min||intervalo;
         const [hh,mm]=a.hora.slice(0,5).split(':').map(Number);
         const finDate=new Date();finDate.setHours(hh,mm+durMin,0,0);
         const horaFin=finDate.toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit',hour12:false});
         const timeLabel=durMin>intervalo?`${a.hora.slice(0,5)} – ${horaFin}`:a.hora.slice(0,5);
-
         let cc='bg-white shadow-sm border-l-4 border-green-500',sl='<span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">✅ EN ESPERA</span>',ab=`<button onclick="barberCancel(${a.id})" class="text-red-500 p-2 hover:bg-red-100 rounded-full"><i class="fas fa-times"></i></button>`;
         if(a.estado==='cancelado'){cc='bg-red-50 border-l-4 border-red-300 opacity-75';sl='<span class="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded">❌ CANCELADO</span>';ab=`<button onclick="deleteAppt(${a.id})" class="text-gray-500 p-2 hover:bg-gray-200 rounded-full"><i class="fas fa-trash-alt"></i></button>`;}
         else if(ib){cc='bg-yellow-50 border-l-4 border-yellow-400';sl='<span class="text-xs font-bold text-yellow-700 bg-yellow-100 px-2 py-1 rounded">⏸️ PAUSA</span>';}
         const item=document.createElement('div');item.className=`border rounded-xl p-4 ${cc}`;
         const durBadge=durMin>intervalo?`<span class="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded ml-1">⏱ ${durMin}min</span>`:'';
-        // Botón completar solo si está pendiente y no es pausa
-        const completarBtn=(!ib&&a.estado==='pendiente')?`<button onclick="abrirCompletarTurno(${a.id},'${a.servicio.replace(/'/g,"\'")}')" class="estado-btn bg-green-100 text-green-700 hover:bg-green-200 mt-2">✅ Marcar cobrado</button>`:'';
+        const completarBtn=(!ib&&a.estado==='pendiente')?`<button onclick="abrirCompletarTurno(${a.id},'${a.servicio.replace(/'/g,"\\'")}')" class="estado-btn bg-green-100 text-green-700 hover:bg-green-200 mt-2">✅ Marcar cobrado</button>`:'';
         item.innerHTML=`<div class="flex justify-between items-start"><div><div class="flex items-center gap-1 mb-1 flex-wrap"><span class="font-bold text-base">${timeLabel}</span>${durBadge}${sl}</div><div class="text-sm font-medium ${ib?'text-yellow-700':'text-gray-700'}">${a.clientes?.nombre||'-'}</div><div class="text-xs text-gray-500">${a.servicio}</div>${completarBtn}</div>${ab}</div>`;
         list.appendChild(item);
     });
 }
 async function barberCancel(id){
     showConfirmationModal('¿Cancelar este turno?',async()=>{
-        // Obtener datos del turno principal para cancelar sus bloqueos
         const {data:t}=await supabase.from('turnos').select('fecha,hora,cliente_id,duracion_min,barberia_id').eq('id',id).single();
         await supabase.from('turnos').update({estado:'cancelado'}).eq('id',id);
-        // Cancelar bloqueos asociados (misma fecha, cliente, tipo bloqueo)
-        if(t&&t.duracion_min>0){
-            await supabase.from('turnos').update({estado:'cancelado'})
-                .eq('barberia_id',t.barberia_id).eq('fecha',t.fecha).eq('cliente_id',t.cliente_id).eq('tipo','bloqueo');
-        }
+        if(t&&t.duracion_min>0)await supabase.from('turnos').update({estado:'cancelado'}).eq('barberia_id',t.barberia_id).eq('fecha',t.fecha).eq('cliente_id',t.cliente_id).eq('tipo','bloqueo');
         showToast('Turno cancelado.');loadBarberDashboard();
     });
 }
@@ -1124,14 +1159,10 @@ function loadConfigForm(){
     document.getElementById('cfgChairs').value=currentShop.sillas;
     document.getElementById('cfgMsg').value=shopConfig.mensaje_aviso||'';
     document.querySelectorAll('input[name="workday"]').forEach(cb=>{cb.checked=(shopConfig.dias_laborables||[]).includes(parseInt(cb.value));});
-    // Pago
-    document.getElementById('cfgCuentaBanco').value=shopConfig.pago_cuenta||'';
-    document.getElementById('cfgAliasCBU').value=shopConfig.pago_alias||'';
-    document.getElementById('cfgLinkPago').value=shopConfig.pago_link||'';
-    document.getElementById('cfgTitularPago').value=shopConfig.pago_titular||'';
     renderServicesListDOM();renderBarberBreaks();renderExcepciones();
-    // Setup flatpickr para excepciones
-    flatpickr('#newExcFecha',{locale:'es',dateFormat:'Y-m-d',altInput:true,altFormat:'j/n/Y',disableMobile:true,minDate:'today'});
+    // Flatpickr para excepciones
+    const excInput=document.getElementById('newExcFecha');
+    if(!excInput._flatpickr)flatpickr(excInput,{locale:'es',dateFormat:'Y-m-d',altInput:true,altFormat:'j/n/Y',disableMobile:false,minDate:'today'});
 }
 function renderBarberBreaks(){
     const c=document.getElementById('barberBreaksContainer');c.innerHTML='';
@@ -1150,57 +1181,29 @@ function renderServicesListDOM(){
     const intervalo=currentShop.intervalo||30;
     (shopConfig.servicios||[]).forEach((s,i)=>{
         const dur=s.duracion||intervalo;
-        const d=document.createElement('div');
-        d.className='flex justify-between items-center bg-gray-50 p-2 rounded border gap-2';
-        d.innerHTML=`
-            <div class="flex-1 min-w-0">
-                <input type="text" value="${s.nombre}" onchange="editService(${i},'nombre',this.value)" class="w-full text-sm font-medium bg-transparent border-b border-transparent hover:border-gray-300 focus:border-primary outline-none">
-            </div>
-            <div class="flex items-center gap-1 shrink-0">
-                <span class="text-xs text-gray-400">$</span>
-                <input type="tel" inputmode="numeric" value="${s.precio}" onchange="editService(${i},'precio',parseInt(this.value)||0)" class="w-14 text-sm text-right border rounded p-1 bg-white">
-                <span class="text-xs text-gray-400 ml-1">⏱</span>
-                <input type="tel" inputmode="numeric" value="${dur}" onchange="editService(${i},'duracion',parseInt(this.value)||${intervalo})" class="w-14 text-sm text-right border rounded p-1 bg-white" title="minutos">
-                <span class="text-xs text-gray-400">m</span>
-                <button onclick="removeService(${i})" class="text-red-400 font-bold px-1 text-lg hover:text-red-600">×</button>
-            </div>`;
+        const d=document.createElement('div');d.className='flex justify-between items-center bg-gray-50 p-2 rounded border gap-2';
+        d.innerHTML=`<div class="flex-1 min-w-0"><input type="text" value="${s.nombre}" onchange="editService(${i},'nombre',this.value)" class="w-full text-sm font-medium bg-transparent border-b border-transparent hover:border-gray-300 focus:border-primary outline-none"></div><div class="flex items-center gap-1 shrink-0"><span class="text-xs text-gray-400">$</span><input type="tel" inputmode="numeric" value="${s.precio}" onchange="editService(${i},'precio',parseInt(this.value)||0)" class="w-14 text-sm text-right border rounded p-1 bg-white"><span class="text-xs text-gray-400 ml-1">⏱</span><input type="tel" inputmode="numeric" value="${dur}" onchange="editService(${i},'duracion',parseInt(this.value)||${intervalo})" class="w-14 text-sm text-right border rounded p-1 bg-white" title="minutos"><span class="text-xs text-gray-400">m</span><button onclick="removeService(${i})" class="text-red-400 font-bold px-1 text-lg hover:text-red-600">×</button></div>`;
         c.appendChild(d);
     });
 }
 function addServiceDOM(){
-    const n=document.getElementById('newSvcName').value.trim();
-    const p=document.getElementById('newSvcPrice').value;
-    const dur=parseInt(document.getElementById('newSvcDuracion').value)||currentShop.intervalo||30;
-    if(!n||!p)return;
-    if(!shopConfig.servicios)shopConfig.servicios=[];
+    const n=document.getElementById('newSvcName').value.trim();const p=document.getElementById('newSvcPrice').value;const dur=parseInt(document.getElementById('newSvcDuracion').value)||currentShop.intervalo||30;
+    if(!n||!p)return;if(!shopConfig.servicios)shopConfig.servicios=[];
     shopConfig.servicios.push({nombre:n,precio:parseInt(p),duracion:dur});
-    document.getElementById('newSvcName').value='';
-    document.getElementById('newSvcPrice').value='';
-    document.getElementById('newSvcDuracion').value='';
+    document.getElementById('newSvcName').value='';document.getElementById('newSvcPrice').value='';document.getElementById('newSvcDuracion').value='';
     renderServicesListDOM();
 }
-function editService(i,field,val){
-    if(shopConfig.servicios[i])shopConfig.servicios[i][field]=val;
-}
+function editService(i,field,val){if(shopConfig.servicios[i])shopConfig.servicios[i][field]=val;}
 function removeService(i){shopConfig.servicios.splice(i,1);renderServicesListDOM();}
 function renderServiceOptions(){
-    const intervalo=currentShop.intervalo||30;
-    const s=shopConfig.servicios||[{nombre:'Corte',precio:0,duracion:intervalo}];
+    const intervalo=currentShop.intervalo||30;const s=shopConfig.servicios||[{nombre:'Corte',precio:0,duracion:intervalo}];
     [document.getElementById('serviceSelect'),document.getElementById('manualService')].forEach(sel=>{
         if(!sel)return;sel.innerHTML='';
-        s.forEach(sv=>{
-            const dur=sv.duracion||intervalo;
-            const o=document.createElement('option');
-            o.value=sv.nombre;
-            o.dataset.duracion=dur;
-            o.innerText=`${sv.nombre} ($${sv.precio}) — ${dur}min`;
-            sel.appendChild(o);
-        });
+        s.forEach(sv=>{const dur=sv.duracion||intervalo;const o=document.createElement('option');o.value=sv.nombre;o.dataset.duracion=dur;o.innerText=`${sv.nombre} ($${sv.precio}) — ${dur}min`;sel.appendChild(o);});
     });
 }
 function getSelectedServiceDuracion(selectId){
-    const sel=document.getElementById(selectId);
-    if(!sel||!sel.selectedOptions[0])return currentShop.intervalo||30;
+    const sel=document.getElementById(selectId);if(!sel||!sel.selectedOptions[0])return currentShop.intervalo||30;
     return parseInt(sel.selectedOptions[0].dataset.duracion)||currentShop.intervalo||30;
 }
 async function saveConfig(){
@@ -1209,15 +1212,9 @@ async function saveConfig(){
     shopConfig.dias_laborables=Array.from(document.querySelectorAll('input[name="workday"]:checked')).map(cb=>parseInt(cb.value));
     shopConfig.mensaje_aviso=document.getElementById('cfgMsg').value;
     shopConfig.barber_breaks=shopConfig.barber_breaks.filter(b=>b.start&&b.end);
-    shopConfig.pago_cuenta=document.getElementById('cfgCuentaBanco').value.trim();
-    shopConfig.pago_alias=document.getElementById('cfgAliasCBU').value.trim();
-    shopConfig.pago_link=document.getElementById('cfgLinkPago').value.trim();
-    shopConfig.pago_titular=document.getElementById('cfgTitularPago').value.trim();
     const {error}=await supabase.from('barberias').update({apertura:nO,cierre:nC,intervalo:nI,sillas:nCh,config:shopConfig}).eq('id',currentShop.id);
-    if(!error){
-        showToast('Guardado ✅');currentShop.apertura=nO;currentShop.cierre=nC;currentShop.intervalo=nI;currentShop.sillas=nCh;
-        generatedHours=generateTimeSlots(nO,nC,nI);renderServiceOptions();applyTheme();renderDetalles();
-    }else showToast('Error: '+error.message,true);
+    if(!error){showToast('Guardado ✅');currentShop.apertura=nO;currentShop.cierre=nC;currentShop.intervalo=nI;currentShop.sillas=nCh;generatedHours=generateTimeSlots(nO,nC,nI);renderServiceOptions();applyTheme();renderDetalles();}
+    else showToast('Error: '+error.message,true);
 }
 
 // -------- PÁGINA --------
@@ -1225,29 +1222,42 @@ function loadPaginaForm(){
     document.getElementById('cfgSobre').value=shopConfig.sobre||'';
     document.getElementById('cfgDireccion').value=shopConfig.direccion||'';
     document.getElementById('cfgInstagram').value=shopConfig.instagram||'';
+    // FIX: cargar datos de pago correctamente
+    document.getElementById('cfgTitularPago').value=shopConfig.pago_titular||'';
+    document.getElementById('cfgCuentaBanco').value=shopConfig.pago_cuenta||'';
+    document.getElementById('cfgAliasCBU').value=shopConfig.pago_alias||'';
+    document.getElementById('cfgLinkPago').value=shopConfig.pago_link||'';
+    // FIX: activar checkboxes y mostrar/ocultar campos según config guardada
+    const ckCuenta=!!(shopConfig.pago_cuenta);
+    const ckAlias=!!(shopConfig.pago_alias);
+    const ckLink=!!(shopConfig.pago_link);
+    const ckEfectivo=!!(shopConfig.pago_efectivo);
+    document.getElementById('chkCuenta').checked=ckCuenta;
+    document.getElementById('chkAlias').checked=ckAlias;
+    document.getElementById('chkLink').checked=ckLink;
+    document.getElementById('chkEfectivo').checked=ckEfectivo;
+    togglePagoField('fieldCuenta',ckCuenta);
+    togglePagoField('fieldAlias',ckAlias);
+    togglePagoField('fieldLink',ckLink);
     renderCarouselThumbs();renderPortfolioThumbs();renderWppContacts();
 }
-function thumbHtml(url, i, deleteFn){
-    return `<div class="photo-thumb"><img src="${url}" alt="" style="background:#f3f4f6;" onerror="this.parentElement.style.border='2px solid #ef4444';this.style.opacity='0.3';"><button class="del-btn" onclick="${deleteFn}(${i})">✕</button></div>`;
-}
-function renderCarouselThumbs(){
-    document.getElementById('carouselThumbList').innerHTML=(shopConfig.carousel_photos||[]).map((url,i)=>thumbHtml(url,i,'deleteCarouselPhoto')).join('');
-}
-function renderPortfolioThumbs(){
-    document.getElementById('portfolioThumbList').innerHTML=(shopConfig.portfolio_photos||[]).map((url,i)=>thumbHtml(url,i,'deletePortfolioPhoto')).join('');
+
+// FIX: togglePagoField corregido
+function togglePagoField(fieldId,show){
+    const el=document.getElementById(fieldId);
+    if(el){if(show)el.classList.remove('hidden');else el.classList.add('hidden');}
 }
 
-// ---- MÚLTIPLES WPP ----
+function thumbHtml(url,i,deleteFn){return `<div class="photo-thumb"><img src="${url}" alt="" style="background:#f3f4f6;" onerror="this.parentElement.style.border='2px solid #ef4444';this.style.opacity='0.3';"><button class="del-btn" onclick="${deleteFn}(${i})">✕</button></div>`;}
+function renderCarouselThumbs(){document.getElementById('carouselThumbList').innerHTML=(shopConfig.carousel_photos||[]).map((url,i)=>thumbHtml(url,i,'deleteCarouselPhoto')).join('');}
+function renderPortfolioThumbs(){document.getElementById('portfolioThumbList').innerHTML=(shopConfig.portfolio_photos||[]).map((url,i)=>thumbHtml(url,i,'deletePortfolioPhoto')).join('');}
+
+// WPP MÚLTIPLES
 function renderWppContacts(){
-    const list=document.getElementById('wppContactsList');
-    list.innerHTML='';
+    const list=document.getElementById('wppContactsList');list.innerHTML='';
     (shopConfig.wpp_contacts||[]).forEach((c,i)=>{
         const row=document.createElement('div');row.className='wpp-contact-row';
-        row.innerHTML=`
-            <input type="tel" inputmode="numeric" placeholder="099 123 456" value="${c.numero||''}" maxlength="11" oninput="maskPhone(this);updateWppContact(${i},'numero',this.value.replace(/\\D/g,''))" class="flex-1">
-            <input type="text" placeholder="Etiqueta (ej: Reservas)" value="${c.etiqueta||''}" oninput="updateWppContact(${i},'etiqueta',this.value)" class="flex-1">
-            <button class="del-wpp" onclick="removeWppContact(${i})"><i class="fas fa-times"></i></button>
-        `;
+        row.innerHTML=`<input type="tel" inputmode="numeric" placeholder="099 123 456" value="${c.numero||''}" maxlength="11" oninput="maskPhone(this);updateWppContact(${i},'numero',this.value.replace(/\\D/g,''))" class="flex-1"><input type="text" placeholder="Etiqueta (ej: Reservas)" value="${c.etiqueta||''}" oninput="updateWppContact(${i},'etiqueta',this.value)" class="flex-1"><button class="del-wpp" onclick="removeWppContact(${i})"><i class="fas fa-times"></i></button>`;
         list.appendChild(row);
     });
 }
@@ -1255,47 +1265,31 @@ function updateWppContact(i,field,val){if(shopConfig.wpp_contacts[i])shopConfig.
 function addWppContact(){if(!shopConfig.wpp_contacts)shopConfig.wpp_contacts=[];shopConfig.wpp_contacts.push({numero:'',etiqueta:''});renderWppContacts();}
 function removeWppContact(i){shopConfig.wpp_contacts.splice(i,1);renderWppContacts();}
 
-// ---- FOTO UPLOAD (RLS-safe) ----
+// FOTO UPLOAD
 async function uploadCarouselPhotos(input){
     const files=Array.from(input.files);if(!files.length)return;
     if((shopConfig.carousel_photos||[]).length+files.length>8){showToast('Máximo 8 fotos en el carrusel.',true);return;}
     showToast('Subiendo fotos...');
     for(const file of files){
-        const ext=file.name.split('.').pop().toLowerCase();
-        const path=`${currentShop.slug}/carousel/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-        console.log('[UPLOAD] Subiendo a path:', path, '| tipo:', file.type, '| tamaño:', file.size);
+        const ext=file.name.split('.').pop().toLowerCase();const path=`${currentShop.slug}/carousel/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
         const {data:upData,error}=await supabase.storage.from(STORAGE_BUCKET).upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type});
-        if(error){
-            console.error('[UPLOAD ERROR]', error);
-            showToast('Error: '+error.message,true);
-            continue;
-        }
-        console.log('[UPLOAD OK] upData:', upData);
-        // Intentar con getPublicUrl primero, fallback a URL manual
+        if(error){showToast('Error: '+error.message,true);continue;}
         const {data:urlData}=supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
         const publicUrl=urlData?.publicUrl||`${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/${path}`;
-        console.log('[URL GENERADA]', publicUrl);
-        // Test si la URL responde
-        fetch(publicUrl,{method:'HEAD'}).then(r=>console.log('[URL STATUS]',publicUrl, r.status, r.ok?'OK':'FALLO')).catch(e=>console.error('[URL FETCH ERROR]',e));
-        if(!shopConfig.carousel_photos)shopConfig.carousel_photos=[];
-        shopConfig.carousel_photos.push(publicUrl);
+        if(!shopConfig.carousel_photos)shopConfig.carousel_photos=[];shopConfig.carousel_photos.push(publicUrl);
     }
-    await saveShopConfig();
-    console.log('[CONFIG GUARDADA] carousel_photos:', shopConfig.carousel_photos);
-    renderCarouselThumbs();loadCarousel();input.value='';showToast('Fotos guardadas - revisá consola para debug ✅');
+    await saveShopConfig();renderCarouselThumbs();loadCarousel();input.value='';showToast('Fotos guardadas ✅');
 }
 async function uploadPortfolioPhotos(input){
     const files=Array.from(input.files);if(!files.length)return;
     if((shopConfig.portfolio_photos||[]).length+files.length>9){showToast('Máximo 9 fotos en portafolio.',true);return;}
     showToast('Subiendo fotos...');
     for(const file of files){
-        const ext=file.name.split('.').pop().toLowerCase();
-        const path=`${currentShop.slug}/portfolio/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+        const ext=file.name.split('.').pop().toLowerCase();const path=`${currentShop.slug}/portfolio/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
         const {data:upData,error}=await supabase.storage.from(STORAGE_BUCKET).upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type});
-        if(error){showToast('Error subiendo foto: '+error.message,true);console.error('Upload error:',error);continue;}
+        if(error){showToast('Error subiendo foto: '+error.message,true);continue;}
         const publicUrl=`${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/${path}`;
-        if(!shopConfig.portfolio_photos)shopConfig.portfolio_photos=[];
-        shopConfig.portfolio_photos.push(publicUrl);
+        if(!shopConfig.portfolio_photos)shopConfig.portfolio_photos=[];shopConfig.portfolio_photos.push(publicUrl);
     }
     await saveShopConfig();renderPortfolioThumbs();renderDetalles();input.value='';showToast('Fotos de portafolio guardadas ✅');
 }
@@ -1307,6 +1301,11 @@ async function savePaginaConfig(){
     shopConfig.direccion=document.getElementById('cfgDireccion').value;
     shopConfig.instagram=document.getElementById('cfgInstagram').value;
     shopConfig.wpp_contacts=(shopConfig.wpp_contacts||[]).filter(c=>c.numero);
+    shopConfig.pago_titular=document.getElementById('cfgTitularPago').value.trim();
+    shopConfig.pago_cuenta=document.getElementById('chkCuenta').checked?document.getElementById('cfgCuentaBanco').value.trim():'';
+    shopConfig.pago_alias=document.getElementById('chkAlias').checked?document.getElementById('cfgAliasCBU').value.trim():'';
+    shopConfig.pago_link=document.getElementById('chkLink').checked?document.getElementById('cfgLinkPago').value.trim():'';
+    shopConfig.pago_efectivo=document.getElementById('chkEfectivo').checked;
     await saveShopConfig();renderDetalles();renderFooterWpp();showToast('Página guardada ✅');
 }
 async function saveShopConfig(){
@@ -1318,35 +1317,21 @@ async function saveShopConfig(){
 async function createManualBooking(){
     const phone=document.getElementById('manualPhone').value.replace(/\D/g,'')||'000000000';
     const name=document.getElementById('manualName').value.trim();
-    const date=document.getElementById('manualDate').value;
+    // FIX: leer fecha del flatpickr correctamente
+    const fp=document.getElementById('manualDate')._flatpickr;
+    const date=fp&&fp.selectedDates[0]?fp.selectedDates[0].toISOString().split('T')[0]:document.getElementById('manualDate').value;
     const time=document.getElementById('manualTime').value;
     const svc=document.getElementById('manualService').value;
     if(!name||!date||!time)return showToast('Faltan datos',true);
-
-    const intervalo=currentShop.intervalo||30;
-    const durSel=getSelectedServiceDuracion('manualService');
-    const slotsNeed=Math.ceil(durSel/intervalo);
-    const idx=generatedHours.indexOf(time);
-
+    const intervalo=currentShop.intervalo||30;const durSel=getSelectedServiceDuracion('manualService');const slotsNeed=Math.ceil(durSel/intervalo);const idx=generatedHours.indexOf(time);
     let cid;
     const {data:ex}=await supabase.from('clientes').select('id').eq('barberia_id',currentShop.id).eq('celular',phone).single();
-    if(ex)cid=ex.id;
-    else{const {data:nC}=await supabase.from('clientes').insert({barberia_id:currentShop.id,celular:phone,nombre:name,pin_temporal:'0000'}).select().single();cid=nC?.id;}
+    if(ex)cid=ex.id;else{const {data:nC}=await supabase.from('clientes').insert({barberia_id:currentShop.id,celular:phone,nombre:name,pin_temporal:'0000'}).select().single();cid=nC?.id;}
     if(!cid){showToast('Error al buscar cliente',true);return;}
-
     const {error}=await supabase.from('turnos').insert({barberia_id:currentShop.id,cliente_id:cid,fecha:date,hora:time,servicio:svc,duracion_min:durSel,tipo:'principal'});
     if(error){showToast(error.message,true);return;}
-
-    if(slotsNeed>1){
-        const bloques=[];
-        for(let k=1;k<slotsNeed;k++){
-            if(idx>=0&&idx+k<generatedHours.length){
-                bloques.push({barberia_id:currentShop.id,cliente_id:cid,fecha:date,hora:generatedHours[idx+k],servicio:svc+' (cont.)',duracion_min:0,tipo:'bloqueo'});
-            }
-        }
-        if(bloques.length) await supabase.from('turnos').insert(bloques);
-    }
-    showToast('Agendado');toggleModal('modalManualBooking');loadBarberDashboard();
+    if(slotsNeed>1){const bloques=[];for(let k=1;k<slotsNeed;k++){if(idx>=0&&idx+k<generatedHours.length)bloques.push({barberia_id:currentShop.id,cliente_id:cid,fecha:date,hora:generatedHours[idx+k],servicio:svc+' (cont.)',duracion_min:0,tipo:'bloqueo'});}if(bloques.length)await supabase.from('turnos').insert(bloques);}
+    showToast('Agendado ✅');toggleModal('modalManualBooking');loadBarberDashboard();
 }
 
 // -------- MI CUENTA CLIENTE --------
@@ -1404,243 +1389,113 @@ async function changeAdminPassword(){
 
 // -------- EXCEPCIONES --------
 function renderExcepciones(){
-    const list=document.getElementById('excepcionesList');
-    if(!list)return;
+    const list=document.getElementById('excepcionesList');if(!list)return;
     const exc=shopConfig.excepciones||[];
-    list.innerHTML=exc.length?exc.map((e,i)=>`
-        <div class="exc-row">
-            <span class="exc-fecha">${formatDateShort(e.fecha)}</span>
-            <span class="exc-motivo">${e.motivo||'Sin motivo'}</span>
-            <button onclick="removeExcepcion(${i})" class="text-red-400 hover:text-red-600 font-bold text-lg leading-none">×</button>
-        </div>`).join(''):'<p class="text-xs text-gray-400">Sin excepciones cargadas.</p>';
+    list.innerHTML=exc.length?exc.map((e,i)=>`<div class="exc-row"><span class="exc-fecha">${formatDateShort(e.fecha)}</span><span class="exc-motivo">${e.motivo||'Sin motivo'}</span><button onclick="removeExcepcion(${i})" class="text-red-400 hover:text-red-600 font-bold text-lg leading-none ml-auto">×</button></div>`).join(''):'<p class="text-xs text-gray-400">Sin excepciones cargadas.</p>';
 }
 function addExcepcion(){
-    const f=document.getElementById('newExcFecha')._flatpickr?.selectedDates[0];
-    const fecha=f?f.toISOString().split('T')[0]:document.getElementById('newExcFecha').value;
+    const fpEl=document.getElementById('newExcFecha');
+    const fp=fpEl._flatpickr;
+    const fecha=fp&&fp.selectedDates[0]?fp.selectedDates[0].toISOString().split('T')[0]:fpEl.value;
     const motivo=document.getElementById('newExcMotivo').value.trim();
     if(!fecha)return showToast('Seleccioná una fecha',true);
     if(!shopConfig.excepciones)shopConfig.excepciones=[];
     if(shopConfig.excepciones.find(e=>e.fecha===fecha))return showToast('Esa fecha ya está agregada.',true);
-    shopConfig.excepciones.push({fecha,motivo});
-    shopConfig.excepciones.sort((a,b)=>a.fecha.localeCompare(b.fecha));
-    document.getElementById('newExcMotivo').value='';
-    if(document.getElementById('newExcFecha')._flatpickr)document.getElementById('newExcFecha')._flatpickr.clear();
+    shopConfig.excepciones.push({fecha,motivo});shopConfig.excepciones.sort((a,b)=>a.fecha.localeCompare(b.fecha));
+    document.getElementById('newExcMotivo').value='';if(fp)fp.clear();
     renderExcepciones();
 }
-function removeExcepcion(i){
-    shopConfig.excepciones.splice(i,1);renderExcepciones();
-}
-function formatDateShort(d){
-    const dt=new Date(d+'T00:00:00');
-    return dt.toLocaleDateString('es-UY',{day:'numeric',month:'short'});
-}
+function removeExcepcion(i){shopConfig.excepciones.splice(i,1);renderExcepciones();}
+function formatDateShort(d){const dt=new Date(d+'T00:00:00');return dt.toLocaleDateString('es-UY',{day:'numeric',month:'short'});}
 
 // -------- CAJA --------
-let cajaPeriod='week';
-let cajaCacheTurnos=[];
-
+let cajaPeriod='week';let cajaCacheTurnos=[];
 function setCajaPeriod(p){
     cajaPeriod=p;
     document.getElementById('cajaPeriodWeek').className=`px-3 py-1 rounded-full font-bold text-xs ${p==='week'?'bg-primary text-white':'bg-gray-100 text-gray-600'}`;
     document.getElementById('cajaPeriodMonth').className=`px-3 py-1 rounded-full font-bold text-xs ${p==='month'?'bg-primary text-white':'bg-gray-100 text-gray-600'}`;
     loadCaja();
 }
-
 async function loadCaja(){
-    const today=new Date();
-    const todayISO=today.toISOString().split('T')[0];
-    // Calcular rango
+    const today=new Date();const todayISO=today.toISOString().split('T')[0];
     let startDate;
-    if(cajaPeriod==='week'){
-        const d=new Date(today);d.setDate(d.getDate()-6);
-        startDate=d.toISOString().split('T')[0];
-    } else {
-        const d=new Date(today.getFullYear(),today.getMonth(),1);
-        startDate=d.toISOString().split('T')[0];
-    }
-
-    // Traer turnos completados del período
-    const {data:turnos}=await supabase.from('turnos')
-        .select('id,fecha,hora,servicio,monto_cobrado,estado,tipo,clientes(nombre)')
-        .eq('barberia_id',currentShop.id)
-        .eq('estado','completado')
-        .neq('tipo','bloqueo')
-        .gte('fecha',startDate)
-        .lte('fecha',todayISO)
-        .order('fecha',{ascending:false});
-
-    // Traer movimientos manuales
-    const {data:movs}=await supabase.from('caja_movimientos')
-        .select('*')
-        .eq('barberia_id',currentShop.id)
-        .gte('fecha',startDate)
-        .lte('fecha',todayISO)
-        .order('fecha',{ascending:false});
-
-    const allMovs=movs||[];
-    const allTurnos=turnos||[];
-    cajaCacheTurnos=allTurnos;
-
-    // Calcular totales
+    if(cajaPeriod==='week'){const d=new Date(today);d.setDate(d.getDate()-6);startDate=d.toISOString().split('T')[0];}
+    else{const d=new Date(today.getFullYear(),today.getMonth(),1);startDate=d.toISOString().split('T')[0];}
+    const {data:turnos}=await supabase.from('turnos').select('id,fecha,hora,servicio,monto_cobrado,estado,tipo,clientes(nombre)').eq('barberia_id',currentShop.id).eq('estado','completado').neq('tipo','bloqueo').gte('fecha',startDate).lte('fecha',todayISO).order('fecha',{ascending:false});
+    const {data:movs}=await supabase.from('caja_movimientos').select('*').eq('barberia_id',currentShop.id).gte('fecha',startDate).lte('fecha',todayISO).order('fecha',{ascending:false});
+    const allMovs=movs||[];const allTurnos=turnos||[];cajaCacheTurnos=allTurnos;
     const totalTurnos=allTurnos.reduce((s,t)=>s+(t.monto_cobrado||0),0);
     const totalMovIngresos=allMovs.filter(m=>m.tipo==='ingreso').reduce((s,m)=>s+(m.monto||0),0);
     const totalMovEgresos=allMovs.filter(m=>m.tipo==='egreso').reduce((s,m)=>s+(m.monto||0),0);
     const totalPeriod=totalTurnos+totalMovIngresos-totalMovEgresos;
-
-    // Hoy
     const hoyTurnos=allTurnos.filter(t=>t.fecha===todayISO).reduce((s,t)=>s+(t.monto_cobrado||0),0);
     const hoyMovI=allMovs.filter(m=>m.fecha===todayISO&&m.tipo==='ingreso').reduce((s,m)=>s+(m.monto||0),0);
     const hoyMovE=allMovs.filter(m=>m.fecha===todayISO&&m.tipo==='egreso').reduce((s,m)=>s+(m.monto||0),0);
     const totalHoy=hoyTurnos+hoyMovI-hoyMovE;
-
-    const dias=cajaPeriod==='week'?7:today.getDate();
-    const prom=dias>0?Math.round(totalPeriod/dias):0;
-
+    const dias=cajaPeriod==='week'?7:today.getDate();const prom=dias>0?Math.round(totalPeriod/dias):0;
     document.getElementById('cajaTotalPeriod').innerText='$'+totalPeriod.toLocaleString('es-UY');
     document.getElementById('cajaTurnosPeriod').innerText=allTurnos.length;
     document.getElementById('cajaTotalHoy').innerText='$'+totalHoy.toLocaleString('es-UY');
     document.getElementById('cajaProm').innerText='$'+prom.toLocaleString('es-UY');
-
-    // Gráfico barras (últimos 7 días siempre)
-    const barDays=[];
-    for(let i=6;i>=0;i--){const d=new Date(today);d.setDate(d.getDate()-i);barDays.push(d.toISOString().split('T')[0]);}
-    const dayTotals=barDays.map(date=>{
-        const t=allTurnos.filter(x=>x.fecha===date).reduce((s,x)=>s+(x.monto_cobrado||0),0);
-        const mi=allMovs.filter(m=>m.fecha===date&&m.tipo==='ingreso').reduce((s,m)=>s+(m.monto||0),0);
-        const me=allMovs.filter(m=>m.fecha===date&&m.tipo==='egreso').reduce((s,m)=>s+(m.monto||0),0);
-        return t+mi-me;
-    });
+    const barDays=[];for(let i=6;i>=0;i--){const d=new Date(today);d.setDate(d.getDate()-i);barDays.push(d.toISOString().split('T')[0]);}
+    const dayTotals=barDays.map(date=>{const t=allTurnos.filter(x=>x.fecha===date).reduce((s,x)=>s+(x.monto_cobrado||0),0);const mi=allMovs.filter(m=>m.fecha===date&&m.tipo==='ingreso').reduce((s,m)=>s+(m.monto||0),0);const me=allMovs.filter(m=>m.fecha===date&&m.tipo==='egreso').reduce((s,m)=>s+(m.monto||0),0);return t+mi-me;});
     const maxVal=Math.max(...dayTotals,1);
-    const chart=document.getElementById('cajaBarChart');
-    const labels=document.getElementById('cajaBarLabels');
-    chart.innerHTML=dayTotals.map((v,i)=>{
-        const h=Math.max(4,Math.round((v/maxVal)*56));
-        const isToday=barDays[i]===todayISO;
-        return `<div class="bar-col${isToday?' today':''}" style="height:${h}px" title="$${v}"></div>`;
-    }).join('');
-    labels.innerHTML=barDays.map(d=>{
-        const dt=new Date(d+'T00:00:00');
-        return `<span style="flex:1;text-align:center">${['D','L','M','X','J','V','S'][dt.getDay()]}</span>`;
-    }).join('');
-
-    // Top servicios
-    const svcMap={};
-    allTurnos.forEach(t=>{if(!svcMap[t.servicio])svcMap[t.servicio]={total:0,count:0};svcMap[t.servicio].total+=t.monto_cobrado||0;svcMap[t.servicio].count++;});
-    const svcList=Object.entries(svcMap).sort((a,b)=>b[1].total-a[1].total);
-    const maxSvc=svcList[0]?svcList[0][1].total:1;
-    document.getElementById('cajaServiciosList').innerHTML=svcList.length?svcList.map(([nombre,{total,count}])=>`
-        <div>
-            <div class="flex justify-between text-xs mb-1">
-                <span class="font-medium text-gray-700">${nombre}</span>
-                <span class="text-gray-500">${count}x — <span class="font-bold text-primary">$${total.toLocaleString('es-UY')}</span></span>
-            </div>
-            <div class="h-1.5 bg-gray-100 rounded-full"><div class="h-1.5 bg-primary rounded-full" style="width:${Math.round((total/maxSvc)*100)}%"></div></div>
-        </div>`).join(''):'<p class="text-xs text-gray-400">Sin datos para el período.</p>';
-
-    // Movimientos de hoy
-    const movsHoy=[
-        ...allTurnos.filter(t=>t.fecha===todayISO).map(t=>({tipo:'turno',concepto:t.servicio,monto:t.monto_cobrado||0,nombre:t.clientes?.nombre||'',hora:t.hora?.slice(0,5)||''})),
-        ...allMovs.filter(m=>m.fecha===todayISO).map(m=>({tipo:m.tipo,concepto:m.concepto,monto:m.monto,nombre:'',hora:''}))
-    ];
-    document.getElementById('cajaMovimientosList').innerHTML=movsHoy.length?movsHoy.map(m=>`
-        <div class="flex justify-between items-center p-2 rounded-lg bg-gray-50 border text-sm">
-            <div>
-                <span class="font-medium text-gray-700">${m.concepto}</span>
-                ${m.nombre?`<span class="text-xs text-gray-400 ml-1">· ${m.nombre}</span>`:''}
-                ${m.hora?`<span class="text-xs text-gray-400 ml-1">· ${m.hora}</span>`:''}
-            </div>
-            <span class="font-bold ${m.tipo==='egreso'?'text-red-500':'text-green-600'}">${m.tipo==='egreso'?'-':'+'} $${m.monto.toLocaleString('es-UY')}</span>
-        </div>`).join(''):'<p class="text-xs text-gray-400 text-center py-2">Sin movimientos hoy.</p>';
+    const chart=document.getElementById('cajaBarChart');const labels=document.getElementById('cajaBarLabels');
+    chart.innerHTML=dayTotals.map((v,i)=>{const h=Math.max(4,Math.round((v/maxVal)*56));const isToday=barDays[i]===todayISO;return `<div class="bar-col${isToday?' today':''}" style="height:${h}px" title="$${v}"></div>`;}).join('');
+    labels.innerHTML=barDays.map(d=>{const dt=new Date(d+'T00:00:00');return `<span style="flex:1;text-align:center">${['D','L','M','X','J','V','S'][dt.getDay()]}</span>`;}).join('');
+    const svcMap={};allTurnos.forEach(t=>{if(!svcMap[t.servicio])svcMap[t.servicio]={total:0,count:0};svcMap[t.servicio].total+=t.monto_cobrado||0;svcMap[t.servicio].count++;});
+    const svcList=Object.entries(svcMap).sort((a,b)=>b[1].total-a[1].total);const maxSvc=svcList[0]?svcList[0][1].total:1;
+    document.getElementById('cajaServiciosList').innerHTML=svcList.length?svcList.map(([nombre,{total,count}])=>`<div><div class="flex justify-between text-xs mb-1"><span class="font-medium text-gray-700">${nombre}</span><span class="text-gray-500">${count}x — <span class="font-bold text-primary">$${total.toLocaleString('es-UY')}</span></span></div><div class="h-1.5 bg-gray-100 rounded-full"><div class="h-1.5 bg-primary rounded-full" style="width:${Math.round((total/maxSvc)*100)}%"></div></div></div>`).join(''):'<p class="text-xs text-gray-400">Sin datos para el período.</p>';
+    const movsHoy=[...allTurnos.filter(t=>t.fecha===todayISO).map(t=>({tipo:'turno',concepto:t.servicio,monto:t.monto_cobrado||0,nombre:t.clientes?.nombre||'',hora:t.hora?.slice(0,5)||''})),...allMovs.filter(m=>m.fecha===todayISO).map(m=>({tipo:m.tipo,concepto:m.concepto,monto:m.monto,nombre:'',hora:''}))];
+    document.getElementById('cajaMovimientosList').innerHTML=movsHoy.length?movsHoy.map(m=>`<div class="flex justify-between items-center p-2 rounded-lg bg-gray-50 border text-sm"><div><span class="font-medium text-gray-700">${m.concepto}</span>${m.nombre?`<span class="text-xs text-gray-400 ml-1">· ${m.nombre}</span>`:''}${m.hora?`<span class="text-xs text-gray-400 ml-1">· ${m.hora}</span>`:''}</div><span class="font-bold ${m.tipo==='egreso'?'text-red-500':'text-green-600'}">${m.tipo==='egreso'?'-':'+'} $${m.monto.toLocaleString('es-UY')}</span></div>`).join(''):'<p class="text-xs text-gray-400 text-center py-2">Sin movimientos hoy.</p>';
 }
-
 async function saveCajaManual(){
-    const concepto=document.getElementById('cajaManualConcepto').value.trim();
-    const monto=parseInt(document.getElementById('cajaManualMonto').value)||0;
-    const tipo=document.getElementById('cajaManualTipo').value;
+    const concepto=document.getElementById('cajaManualConcepto').value.trim();const monto=parseInt(document.getElementById('cajaManualMonto').value)||0;const tipo=document.getElementById('cajaManualTipo').value;
     if(!concepto||!monto)return showToast('Faltan datos',true);
     const today=new Date().toISOString().split('T')[0];
     const {error}=await supabase.from('caja_movimientos').insert({barberia_id:currentShop.id,fecha:today,concepto,monto,tipo});
     if(error){showToast('Error: '+error.message,true);return;}
-    document.getElementById('cajaManualConcepto').value='';
-    document.getElementById('cajaManualMonto').value='';
-    toggleModal('modalCajaManual');
-    showToast('Registrado ✅');
-    loadCaja();
+    document.getElementById('cajaManualConcepto').value='';document.getElementById('cajaManualMonto').value='';
+    toggleModal('modalCajaManual');showToast('Registrado ✅');loadCaja();
 }
-
 function abrirCompletarTurno(id,servicio){
-    document.getElementById('completarTurnoId').value=id;
-    document.getElementById('completarTurnoServicio').innerText=servicio;
-    // Pre-llenar con precio del servicio si está configurado
+    document.getElementById('completarTurnoId').value=id;document.getElementById('completarTurnoServicio').innerText=servicio;
     const svcCfg=(shopConfig.servicios||[]).find(s=>servicio.startsWith(s.nombre));
     document.getElementById('completarMonto').value=svcCfg?svcCfg.precio:'';
     toggleModal('modalCompletarTurno');
 }
-
 async function confirmarCompletarTurno(){
-    const id=document.getElementById('completarTurnoId').value;
-    const monto=parseInt(document.getElementById('completarMonto').value)||0;
+    const id=document.getElementById('completarTurnoId').value;const monto=parseInt(document.getElementById('completarMonto').value)||0;
     const {error}=await supabase.from('turnos').update({estado:'completado',monto_cobrado:monto}).eq('id',id);
     if(error){showToast('Error: '+error.message,true);return;}
-    // Completar bloqueos asociados también
     const turno=cajaCacheTurnos.find(t=>t.id==id);
-    if(!turno){
-        const {data:t}=await supabase.from('turnos').select('fecha,cliente_id,barberia_id').eq('id',id).single();
-        if(t)await supabase.from('turnos').update({estado:'completado',monto_cobrado:0}).eq('barberia_id',t.barberia_id).eq('fecha',t.fecha).eq('cliente_id',t.cliente_id).eq('tipo','bloqueo');
-    }
-    toggleModal('modalCompletarTurno');
-    showToast('💰 Cobrado y registrado en caja ✅');
-    loadBarberDashboard();
+    if(!turno){const {data:t}=await supabase.from('turnos').select('fecha,cliente_id,barberia_id').eq('id',id).single();if(t)await supabase.from('turnos').update({estado:'completado',monto_cobrado:0}).eq('barberia_id',t.barberia_id).eq('fecha',t.fecha).eq('cliente_id',t.cliente_id).eq('tipo','bloqueo');}
+    toggleModal('modalCompletarTurno');showToast('💰 Cobrado y registrado en caja ✅');loadBarberDashboard();
 }
 
 // -------- PAGO CLIENTE --------
 function renderClientPago(){
-    const cfg=shopConfig;
-    const section=document.getElementById('clientPagoSection');
-    const list=document.getElementById('clientPagoList');
+    const cfg=shopConfig;const section=document.getElementById('clientPagoSection');const list=document.getElementById('clientPagoList');
     if(!section||!list)return;
     const items=[];
     if(cfg.pago_cuenta)items.push({icon:'🏦',label:'Cuenta bancaria',value:cfg.pago_cuenta,copy:true});
     if(cfg.pago_alias)items.push({icon:'💸',label:'Alias / CBU',value:cfg.pago_alias,copy:true});
-    if(cfg.pago_link)items.push({icon:'🔗',label:'Link de pago',value:cfg.pago_link,link:true});
+    if(cfg.pago_link)items.push({icon:'🔗',label:'Link de pago',value:cfg.pago_link,link:true,copy:false});
+    if(cfg.pago_efectivo)items.push({icon:'💵',label:'Efectivo',value:'Se acepta efectivo',copy:false});
     if(!items.length){section.classList.add('hidden');return;}
-    const titular=cfg.pago_titular?`<p class="text-xs text-gray-500 mb-3">Titular: <span class="font-bold text-gray-700">${cfg.pago_titular}</span></p>`:'';
-    list.innerHTML=titular+items.map((item,i)=>`
-        <div class="pago-row">
-            <div class="pago-icon bg-gray-100">${item.icon}</div>
-            <div class="flex-1 min-w-0 mx-2">
-                <p class="text-xs text-gray-400">${item.label}</p>
-                <p class="text-sm font-bold text-gray-800 truncate">${item.value}</p>
-            </div>
-            ${item.copy?`<button class="copy-btn" onclick="copyPago('${item.value.replace(/'/g,"\'")}',this)"><i class="fas fa-copy mr-1"></i>Copiar</button>`:''}
-            ${item.link?`<a href="${item.value}" target="_blank" class="copy-btn"><i class="fas fa-external-link-alt mr-1"></i>Ir</a>`:''}
-        </div>`).join('');
+    const titular=cfg.pago_titular?`<div class="flex items-center gap-2 mb-3 pb-2 border-b"><i class="fas fa-user text-primary text-xs"></i><p class="text-xs text-gray-600">Titular: <span class="font-bold text-gray-800">${cfg.pago_titular}</span></p></div>`:'';
+    list.innerHTML=titular+items.map(item=>`<div class="pago-row"><div class="pago-icon bg-gray-100">${item.icon}</div><div class="flex-1 min-w-0 mx-2"><p class="text-xs text-gray-400">${item.label}</p><p class="text-sm font-bold text-gray-800 truncate">${item.value}</p></div>${item.copy?`<button class="copy-btn" onclick="copyPago('${item.value.replace(/'/g,"\\'")}',this)"><i class="fas fa-copy mr-1"></i>Copiar</button>`:''}${item.link?`<a href="${item.value}" target="_blank" class="copy-btn"><i class="fas fa-external-link-alt mr-1"></i>Ir</a>`:''}</div>`).join('');
     section.classList.remove('hidden');
 }
-
 function copyPago(val,btn){
-    navigator.clipboard.writeText(val).then(()=>{
-        const orig=btn.innerHTML;btn.innerHTML='✅ Copiado';btn.style.color='#10b981';
-        setTimeout(()=>{btn.innerHTML=orig;btn.style.color='';},2000);
-    }).catch(()=>showToast('No se pudo copiar',true));
+    navigator.clipboard.writeText(val).then(()=>{const orig=btn.innerHTML;btn.innerHTML='✅ Copiado';btn.style.color='#10b981';setTimeout(()=>{btn.innerHTML=orig;btn.style.color='';},2000);}).catch(()=>showToast('No se pudo copiar',true));
 }
 
 // -------- LOGOUT --------
 function logout(){
-    currentUser=null;
-    localStorage.removeItem(CLIENT_STORAGE_KEY);localStorage.removeItem(ADMIN_STORAGE_KEY);
-    showPublicApp();
-    document.getElementById('viewClient').classList.add('hidden');
-    document.getElementById('viewLogin').classList.remove('hidden');
+    currentUser=null;localStorage.removeItem(CLIENT_STORAGE_KEY);localStorage.removeItem(ADMIN_STORAGE_KEY);
+    showPublicApp();document.getElementById('viewClient').classList.add('hidden');document.getElementById('viewLogin').classList.remove('hidden');
     backToPhone();switchMainTab('servicios');
-}
-
-// -------- FLATPICKR SETUP --------
-function setupFlatpickr(){
-    const today=new Date().toISOString().split('T')[0];
-    flatpickr('#datePicker',{...flatpickrCfg,defaultDate:today,onChange:()=>loadSlots()});
-    flatpickr('#barberDatePicker',{...flatpickrCfg,defaultDate:today,onChange:()=>loadBarberDashboard()});
-    flatpickr('#manualDate',{...flatpickrCfg,defaultDate:today});
 }
 </script>
 </body>
