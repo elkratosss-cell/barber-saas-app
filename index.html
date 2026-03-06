@@ -501,6 +501,32 @@
 </div>
 
 <!-- Toast -->
+<!-- Modal Completar Turno (caja) -->
+<div id="modalCompletarTurno" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center px-4 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-xl text-green-600">✅ Completar turno</h3>
+            <button onclick="toggleModal('modalCompletarTurno')" class="text-gray-400 text-xl">✕</button>
+        </div>
+        <p class="text-sm text-gray-500 mb-4">Confirmá el monto cobrado para registrar en caja.</p>
+        <input type="hidden" id="completarTurnoId">
+        <div class="space-y-3">
+            <div>
+                <label class="text-xs font-bold text-gray-600 block mb-1">Servicio</label>
+                <p id="completarTurnoServicio" class="text-sm font-medium text-gray-800 bg-gray-50 p-2 rounded-lg"></p>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-600 block mb-1">Monto cobrado</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-3.5 text-gray-400 font-bold">$</span>
+                    <input type="tel" inputmode="numeric" id="completarMonto" placeholder="0" class="w-full pl-7 pr-4 py-3 border rounded-xl text-sm font-bold text-lg">
+                </div>
+            </div>
+            <button onclick="confirmarCompletarTurno()" class="w-full bg-green-500 text-white py-3 rounded-xl font-bold">💰 Cobrado — Registrar</button>
+        </div>
+    </div>
+</div>
+
 <div id="toastNotification" class="fixed top-5 left-1/2 -translate-x-1/2 px-6 py-3 bg-green-500 text-white font-bold rounded-lg shadow-xl z-50 hidden transition-all duration-300 transform opacity-0 text-sm max-w-xs text-center"></div>
 
 <!-- ======= SCRIPT ======= -->
@@ -789,6 +815,7 @@ async function showClientDashboard(){
     document.getElementById('viewClient').classList.remove('hidden');
     document.getElementById('clientNameDisplay').innerText=currentUser.nombre.split(' ')[0];
     switchMainTab('reservar');
+    renderClientPago();
     const todayISO=new Date().toISOString().split('T')[0];
     const {data:appt}=await supabase.from('turnos').select('*').eq('barberia_id',currentShop.id).eq('cliente_id',currentUser.id).eq('estado','pendiente').gte('fecha',todayISO).order('fecha',{ascending:true}).single();
     if(appt){
@@ -809,7 +836,15 @@ async function loadSlots(){
     if(!dateStr)return;
     const dow=new Date(dateStr+'T00:00:00').getDay();
     const openDays=shopConfig.dias_laborables||[1,2,3,4,5,6];
-    if(!openDays.includes(dow)){document.getElementById('slotsGrid').innerHTML='';document.getElementById('closedMessage').classList.remove('hidden');return;}
+    // Verificar excepciones (días cerrados puntuales)
+    const excepciones=shopConfig.excepciones||[];
+    const esExcepcion=excepciones.find(e=>e.fecha===dateStr);
+    if(esExcepcion||!openDays.includes(dow)){
+        document.getElementById('slotsGrid').innerHTML='';
+        const msg=document.getElementById('closedMessage');
+        msg.innerText=esExcepcion?(esExcepcion.motivo?`Cerrado: ${esExcepcion.motivo}`:'El local está cerrado este día.'):'El local está cerrado este día.';
+        msg.classList.remove('hidden');return;
+    }
     document.getElementById('closedMessage').classList.add('hidden');
     const grid=document.getElementById('slotsGrid');grid.innerHTML='<p class="col-span-3 text-center text-sm text-gray-400">Cargando...</p>';
     selectedTime=null;document.getElementById('btnConfirmBooking').disabled=true;
@@ -959,13 +994,14 @@ async function loginBarber(){
     }else showToast('Datos incorrectos',true);
 }
 function switchAdminTab(tab){
-    ['agenda','config','pagina'].forEach(t=>{
+    ['agenda','caja','config','pagina'].forEach(t=>{
         document.getElementById('adminPanel'+cap(t)).classList.toggle('hidden',t!==tab);
         document.getElementById('tab'+cap(t)).classList.toggle('active',t===tab);
     });
     if(tab==='config')loadConfigForm();
     if(tab==='pagina')loadPaginaForm();
     if(tab==='agenda')loadBarberDashboard();
+    if(tab==='caja')loadCaja();
 }
 async function loadBarberDashboard(){
     const date=document.getElementById('barberDatePicker').value;
@@ -992,9 +1028,11 @@ async function loadBarberDashboard(){
         let cc='bg-white shadow-sm border-l-4 border-green-500',sl='<span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">✅ EN ESPERA</span>',ab=`<button onclick="barberCancel(${a.id})" class="text-red-500 p-2 hover:bg-red-100 rounded-full"><i class="fas fa-times"></i></button>`;
         if(a.estado==='cancelado'){cc='bg-red-50 border-l-4 border-red-300 opacity-75';sl='<span class="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded">❌ CANCELADO</span>';ab=`<button onclick="deleteAppt(${a.id})" class="text-gray-500 p-2 hover:bg-gray-200 rounded-full"><i class="fas fa-trash-alt"></i></button>`;}
         else if(ib){cc='bg-yellow-50 border-l-4 border-yellow-400';sl='<span class="text-xs font-bold text-yellow-700 bg-yellow-100 px-2 py-1 rounded">⏸️ PAUSA</span>';}
-        const item=document.createElement('div');item.className=`border rounded-xl p-4 flex justify-between items-center ${cc}`;
+        const item=document.createElement('div');item.className=`border rounded-xl p-4 ${cc}`;
         const durBadge=durMin>intervalo?`<span class="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded ml-1">⏱ ${durMin}min</span>`:'';
-        item.innerHTML=`<div><div class="flex items-center gap-1 mb-1 flex-wrap"><span class="font-bold text-base">${timeLabel}</span>${durBadge}${sl}</div><div class="text-sm font-medium ${ib?'text-yellow-700':'text-gray-700'}">${a.clientes?.nombre||'-'}</div><div class="text-xs text-gray-500">${a.servicio}</div></div>${ab}`;
+        // Botón completar solo si está pendiente y no es pausa
+        const completarBtn=(!ib&&a.estado==='pendiente')?`<button onclick="abrirCompletarTurno(${a.id},'${a.servicio.replace(/'/g,"\'")}')" class="estado-btn bg-green-100 text-green-700 hover:bg-green-200 mt-2">✅ Marcar cobrado</button>`:'';
+        item.innerHTML=`<div class="flex justify-between items-start"><div><div class="flex items-center gap-1 mb-1 flex-wrap"><span class="font-bold text-base">${timeLabel}</span>${durBadge}${sl}</div><div class="text-sm font-medium ${ib?'text-yellow-700':'text-gray-700'}">${a.clientes?.nombre||'-'}</div><div class="text-xs text-gray-500">${a.servicio}</div>${completarBtn}</div>${ab}</div>`;
         list.appendChild(item);
     });
 }
@@ -1021,7 +1059,14 @@ function loadConfigForm(){
     document.getElementById('cfgChairs').value=currentShop.sillas;
     document.getElementById('cfgMsg').value=shopConfig.mensaje_aviso||'';
     document.querySelectorAll('input[name="workday"]').forEach(cb=>{cb.checked=(shopConfig.dias_laborables||[]).includes(parseInt(cb.value));});
-    renderServicesListDOM();renderBarberBreaks();
+    // Pago
+    document.getElementById('cfgCuentaBanco').value=shopConfig.pago_cuenta||'';
+    document.getElementById('cfgAliasCBU').value=shopConfig.pago_alias||'';
+    document.getElementById('cfgLinkPago').value=shopConfig.pago_link||'';
+    document.getElementById('cfgTitularPago').value=shopConfig.pago_titular||'';
+    renderServicesListDOM();renderBarberBreaks();renderExcepciones();
+    // Setup flatpickr para excepciones
+    flatpickr('#newExcFecha',{locale:'es',dateFormat:'Y-m-d',altInput:true,altFormat:'j/n/Y',disableMobile:true,minDate:'today'});
 }
 function renderBarberBreaks(){
     const c=document.getElementById('barberBreaksContainer');c.innerHTML='';
@@ -1099,6 +1144,10 @@ async function saveConfig(){
     shopConfig.dias_laborables=Array.from(document.querySelectorAll('input[name="workday"]:checked')).map(cb=>parseInt(cb.value));
     shopConfig.mensaje_aviso=document.getElementById('cfgMsg').value;
     shopConfig.barber_breaks=shopConfig.barber_breaks.filter(b=>b.start&&b.end);
+    shopConfig.pago_cuenta=document.getElementById('cfgCuentaBanco').value.trim();
+    shopConfig.pago_alias=document.getElementById('cfgAliasCBU').value.trim();
+    shopConfig.pago_link=document.getElementById('cfgLinkPago').value.trim();
+    shopConfig.pago_titular=document.getElementById('cfgTitularPago').value.trim();
     const {error}=await supabase.from('barberias').update({apertura:nO,cierre:nC,intervalo:nI,sillas:nCh,config:shopConfig}).eq('id',currentShop.id);
     if(!error){
         showToast('Guardado ✅');currentShop.apertura=nO;currentShop.cierre=nC;currentShop.intervalo=nI;currentShop.sillas=nCh;
@@ -1286,6 +1335,229 @@ async function changeAdminPassword(){
     if(c!==currentUser.password)return showToast('Contraseña actual incorrecta',true);
     const {error}=await supabase.from('barberos').update({password:n}).eq('id',currentUser.id);
     if(!error){currentUser.password=n;showToast('Actualizado');toggleModal('modalAccountSettings');}else showToast('Error',true);
+}
+
+// -------- EXCEPCIONES --------
+function renderExcepciones(){
+    const list=document.getElementById('excepcionesList');
+    if(!list)return;
+    const exc=shopConfig.excepciones||[];
+    list.innerHTML=exc.length?exc.map((e,i)=>`
+        <div class="exc-row">
+            <span class="exc-fecha">${formatDateShort(e.fecha)}</span>
+            <span class="exc-motivo">${e.motivo||'Sin motivo'}</span>
+            <button onclick="removeExcepcion(${i})" class="text-red-400 hover:text-red-600 font-bold text-lg leading-none">×</button>
+        </div>`).join(''):'<p class="text-xs text-gray-400">Sin excepciones cargadas.</p>';
+}
+function addExcepcion(){
+    const f=document.getElementById('newExcFecha')._flatpickr?.selectedDates[0];
+    const fecha=f?f.toISOString().split('T')[0]:document.getElementById('newExcFecha').value;
+    const motivo=document.getElementById('newExcMotivo').value.trim();
+    if(!fecha)return showToast('Seleccioná una fecha',true);
+    if(!shopConfig.excepciones)shopConfig.excepciones=[];
+    if(shopConfig.excepciones.find(e=>e.fecha===fecha))return showToast('Esa fecha ya está agregada.',true);
+    shopConfig.excepciones.push({fecha,motivo});
+    shopConfig.excepciones.sort((a,b)=>a.fecha.localeCompare(b.fecha));
+    document.getElementById('newExcMotivo').value='';
+    if(document.getElementById('newExcFecha')._flatpickr)document.getElementById('newExcFecha')._flatpickr.clear();
+    renderExcepciones();
+}
+function removeExcepcion(i){
+    shopConfig.excepciones.splice(i,1);renderExcepciones();
+}
+function formatDateShort(d){
+    const dt=new Date(d+'T00:00:00');
+    return dt.toLocaleDateString('es-UY',{day:'numeric',month:'short'});
+}
+
+// -------- CAJA --------
+let cajaPeriod='week';
+let cajaCacheTurnos=[];
+
+function setCajaPeriod(p){
+    cajaPeriod=p;
+    document.getElementById('cajaPeriodWeek').className=`px-3 py-1 rounded-full font-bold text-xs ${p==='week'?'bg-primary text-white':'bg-gray-100 text-gray-600'}`;
+    document.getElementById('cajaPeriodMonth').className=`px-3 py-1 rounded-full font-bold text-xs ${p==='month'?'bg-primary text-white':'bg-gray-100 text-gray-600'}`;
+    loadCaja();
+}
+
+async function loadCaja(){
+    const today=new Date();
+    const todayISO=today.toISOString().split('T')[0];
+    // Calcular rango
+    let startDate;
+    if(cajaPeriod==='week'){
+        const d=new Date(today);d.setDate(d.getDate()-6);
+        startDate=d.toISOString().split('T')[0];
+    } else {
+        const d=new Date(today.getFullYear(),today.getMonth(),1);
+        startDate=d.toISOString().split('T')[0];
+    }
+
+    // Traer turnos completados del período
+    const {data:turnos}=await supabase.from('turnos')
+        .select('id,fecha,hora,servicio,monto_cobrado,estado,tipo,clientes(nombre)')
+        .eq('barberia_id',currentShop.id)
+        .eq('estado','completado')
+        .neq('tipo','bloqueo')
+        .gte('fecha',startDate)
+        .lte('fecha',todayISO)
+        .order('fecha',{ascending:false});
+
+    // Traer movimientos manuales
+    const {data:movs}=await supabase.from('caja_movimientos')
+        .select('*')
+        .eq('barberia_id',currentShop.id)
+        .gte('fecha',startDate)
+        .lte('fecha',todayISO)
+        .order('fecha',{ascending:false});
+
+    const allMovs=movs||[];
+    const allTurnos=turnos||[];
+    cajaCacheTurnos=allTurnos;
+
+    // Calcular totales
+    const totalTurnos=allTurnos.reduce((s,t)=>s+(t.monto_cobrado||0),0);
+    const totalMovIngresos=allMovs.filter(m=>m.tipo==='ingreso').reduce((s,m)=>s+(m.monto||0),0);
+    const totalMovEgresos=allMovs.filter(m=>m.tipo==='egreso').reduce((s,m)=>s+(m.monto||0),0);
+    const totalPeriod=totalTurnos+totalMovIngresos-totalMovEgresos;
+
+    // Hoy
+    const hoyTurnos=allTurnos.filter(t=>t.fecha===todayISO).reduce((s,t)=>s+(t.monto_cobrado||0),0);
+    const hoyMovI=allMovs.filter(m=>m.fecha===todayISO&&m.tipo==='ingreso').reduce((s,m)=>s+(m.monto||0),0);
+    const hoyMovE=allMovs.filter(m=>m.fecha===todayISO&&m.tipo==='egreso').reduce((s,m)=>s+(m.monto||0),0);
+    const totalHoy=hoyTurnos+hoyMovI-hoyMovE;
+
+    const dias=cajaPeriod==='week'?7:today.getDate();
+    const prom=dias>0?Math.round(totalPeriod/dias):0;
+
+    document.getElementById('cajaTotalPeriod').innerText='$'+totalPeriod.toLocaleString('es-UY');
+    document.getElementById('cajaTurnosPeriod').innerText=allTurnos.length;
+    document.getElementById('cajaTotalHoy').innerText='$'+totalHoy.toLocaleString('es-UY');
+    document.getElementById('cajaProm').innerText='$'+prom.toLocaleString('es-UY');
+
+    // Gráfico barras (últimos 7 días siempre)
+    const barDays=[];
+    for(let i=6;i>=0;i--){const d=new Date(today);d.setDate(d.getDate()-i);barDays.push(d.toISOString().split('T')[0]);}
+    const dayTotals=barDays.map(date=>{
+        const t=allTurnos.filter(x=>x.fecha===date).reduce((s,x)=>s+(x.monto_cobrado||0),0);
+        const mi=allMovs.filter(m=>m.fecha===date&&m.tipo==='ingreso').reduce((s,m)=>s+(m.monto||0),0);
+        const me=allMovs.filter(m=>m.fecha===date&&m.tipo==='egreso').reduce((s,m)=>s+(m.monto||0),0);
+        return t+mi-me;
+    });
+    const maxVal=Math.max(...dayTotals,1);
+    const chart=document.getElementById('cajaBarChart');
+    const labels=document.getElementById('cajaBarLabels');
+    chart.innerHTML=dayTotals.map((v,i)=>{
+        const h=Math.max(4,Math.round((v/maxVal)*56));
+        const isToday=barDays[i]===todayISO;
+        return `<div class="bar-col${isToday?' today':''}" style="height:${h}px" title="$${v}"></div>`;
+    }).join('');
+    labels.innerHTML=barDays.map(d=>{
+        const dt=new Date(d+'T00:00:00');
+        return `<span style="flex:1;text-align:center">${['D','L','M','X','J','V','S'][dt.getDay()]}</span>`;
+    }).join('');
+
+    // Top servicios
+    const svcMap={};
+    allTurnos.forEach(t=>{if(!svcMap[t.servicio])svcMap[t.servicio]={total:0,count:0};svcMap[t.servicio].total+=t.monto_cobrado||0;svcMap[t.servicio].count++;});
+    const svcList=Object.entries(svcMap).sort((a,b)=>b[1].total-a[1].total);
+    const maxSvc=svcList[0]?svcList[0][1].total:1;
+    document.getElementById('cajaServiciosList').innerHTML=svcList.length?svcList.map(([nombre,{total,count}])=>`
+        <div>
+            <div class="flex justify-between text-xs mb-1">
+                <span class="font-medium text-gray-700">${nombre}</span>
+                <span class="text-gray-500">${count}x — <span class="font-bold text-primary">$${total.toLocaleString('es-UY')}</span></span>
+            </div>
+            <div class="h-1.5 bg-gray-100 rounded-full"><div class="h-1.5 bg-primary rounded-full" style="width:${Math.round((total/maxSvc)*100)}%"></div></div>
+        </div>`).join(''):'<p class="text-xs text-gray-400">Sin datos para el período.</p>';
+
+    // Movimientos de hoy
+    const movsHoy=[
+        ...allTurnos.filter(t=>t.fecha===todayISO).map(t=>({tipo:'turno',concepto:t.servicio,monto:t.monto_cobrado||0,nombre:t.clientes?.nombre||'',hora:t.hora?.slice(0,5)||''})),
+        ...allMovs.filter(m=>m.fecha===todayISO).map(m=>({tipo:m.tipo,concepto:m.concepto,monto:m.monto,nombre:'',hora:''}))
+    ];
+    document.getElementById('cajaMovimientosList').innerHTML=movsHoy.length?movsHoy.map(m=>`
+        <div class="flex justify-between items-center p-2 rounded-lg bg-gray-50 border text-sm">
+            <div>
+                <span class="font-medium text-gray-700">${m.concepto}</span>
+                ${m.nombre?`<span class="text-xs text-gray-400 ml-1">· ${m.nombre}</span>`:''}
+                ${m.hora?`<span class="text-xs text-gray-400 ml-1">· ${m.hora}</span>`:''}
+            </div>
+            <span class="font-bold ${m.tipo==='egreso'?'text-red-500':'text-green-600'}">${m.tipo==='egreso'?'-':'+'} $${m.monto.toLocaleString('es-UY')}</span>
+        </div>`).join(''):'<p class="text-xs text-gray-400 text-center py-2">Sin movimientos hoy.</p>';
+}
+
+async function saveCajaManual(){
+    const concepto=document.getElementById('cajaManualConcepto').value.trim();
+    const monto=parseInt(document.getElementById('cajaManualMonto').value)||0;
+    const tipo=document.getElementById('cajaManualTipo').value;
+    if(!concepto||!monto)return showToast('Faltan datos',true);
+    const today=new Date().toISOString().split('T')[0];
+    const {error}=await supabase.from('caja_movimientos').insert({barberia_id:currentShop.id,fecha:today,concepto,monto,tipo});
+    if(error){showToast('Error: '+error.message,true);return;}
+    document.getElementById('cajaManualConcepto').value='';
+    document.getElementById('cajaManualMonto').value='';
+    toggleModal('modalCajaManual');
+    showToast('Registrado ✅');
+    loadCaja();
+}
+
+function abrirCompletarTurno(id,servicio){
+    document.getElementById('completarTurnoId').value=id;
+    document.getElementById('completarTurnoServicio').innerText=servicio;
+    // Pre-llenar con precio del servicio si está configurado
+    const svcCfg=(shopConfig.servicios||[]).find(s=>servicio.startsWith(s.nombre));
+    document.getElementById('completarMonto').value=svcCfg?svcCfg.precio:'';
+    toggleModal('modalCompletarTurno');
+}
+
+async function confirmarCompletarTurno(){
+    const id=document.getElementById('completarTurnoId').value;
+    const monto=parseInt(document.getElementById('completarMonto').value)||0;
+    const {error}=await supabase.from('turnos').update({estado:'completado',monto_cobrado:monto}).eq('id',id);
+    if(error){showToast('Error: '+error.message,true);return;}
+    // Completar bloqueos asociados también
+    const turno=cajaCacheTurnos.find(t=>t.id==id);
+    if(!turno){
+        const {data:t}=await supabase.from('turnos').select('fecha,cliente_id,barberia_id').eq('id',id).single();
+        if(t)await supabase.from('turnos').update({estado:'completado',monto_cobrado:0}).eq('barberia_id',t.barberia_id).eq('fecha',t.fecha).eq('cliente_id',t.cliente_id).eq('tipo','bloqueo');
+    }
+    toggleModal('modalCompletarTurno');
+    showToast('💰 Cobrado y registrado en caja ✅');
+    loadBarberDashboard();
+}
+
+// -------- PAGO CLIENTE --------
+function renderClientPago(){
+    const cfg=shopConfig;
+    const section=document.getElementById('clientPagoSection');
+    const list=document.getElementById('clientPagoList');
+    if(!section||!list)return;
+    const items=[];
+    if(cfg.pago_cuenta)items.push({icon:'🏦',label:'Cuenta bancaria',value:cfg.pago_cuenta,copy:true});
+    if(cfg.pago_alias)items.push({icon:'💸',label:'Alias / CBU',value:cfg.pago_alias,copy:true});
+    if(cfg.pago_link)items.push({icon:'🔗',label:'Link de pago',value:cfg.pago_link,link:true});
+    if(!items.length){section.classList.add('hidden');return;}
+    const titular=cfg.pago_titular?`<p class="text-xs text-gray-500 mb-3">Titular: <span class="font-bold text-gray-700">${cfg.pago_titular}</span></p>`:'';
+    list.innerHTML=titular+items.map((item,i)=>`
+        <div class="pago-row">
+            <div class="pago-icon bg-gray-100">${item.icon}</div>
+            <div class="flex-1 min-w-0 mx-2">
+                <p class="text-xs text-gray-400">${item.label}</p>
+                <p class="text-sm font-bold text-gray-800 truncate">${item.value}</p>
+            </div>
+            ${item.copy?`<button class="copy-btn" onclick="copyPago('${item.value.replace(/'/g,"\'")}',this)"><i class="fas fa-copy mr-1"></i>Copiar</button>`:''}
+            ${item.link?`<a href="${item.value}" target="_blank" class="copy-btn"><i class="fas fa-external-link-alt mr-1"></i>Ir</a>`:''}
+        </div>`).join('');
+    section.classList.remove('hidden');
+}
+
+function copyPago(val,btn){
+    navigator.clipboard.writeText(val).then(()=>{
+        const orig=btn.innerHTML;btn.innerHTML='✅ Copiado';btn.style.color='#10b981';
+        setTimeout(()=>{btn.innerHTML=orig;btn.style.color='';},2000);
+    }).catch(()=>showToast('No se pudo copiar',true));
 }
 
 // -------- LOGOUT --------
