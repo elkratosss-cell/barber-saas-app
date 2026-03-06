@@ -277,6 +277,7 @@
     <!-- TABS ADMIN -->
     <div class="admin-tabs">
         <button class="admin-tab active" onclick="switchAdminTab('agenda')" id="tabAgenda"><i class="fas fa-calendar-day mr-1"></i>Agenda</button>
+        <button class="admin-tab" onclick="switchAdminTab('caja')" id="tabCaja"><i class="fas fa-cash-register mr-1"></i>Caja</button>
         <button class="admin-tab" onclick="switchAdminTab('config')" id="tabConfig"><i class="fas fa-sliders-h mr-1"></i>Config</button>
         <button class="admin-tab" onclick="switchAdminTab('pagina')" id="tabPagina"><i class="fas fa-store mr-1"></i>Página</button>
     </div>
@@ -289,6 +290,39 @@
         </div>
         <div id="occupancySummary" class="flex gap-2 mb-4 overflow-x-auto pb-2"></div>
         <div id="barberAppointmentsList" class="space-y-3"></div>
+    </div>
+
+    <!-- ADMIN: CAJA -->
+    <div id="adminPanelCaja" class="hidden p-4 pb-24 overflow-y-auto space-y-4">
+        <div class="flex items-center justify-between">
+            <h3 class="font-bold text-gray-800 text-base">💰 Caja</h3>
+            <div class="flex gap-1 text-xs">
+                <button onclick="setCajaPeriod('week')" id="cajaPeriodWeek" class="px-3 py-1 rounded-full font-bold bg-primary text-white">Semana</button>
+                <button onclick="setCajaPeriod('month')" id="cajaPeriodMonth" class="px-3 py-1 rounded-full font-bold bg-gray-100 text-gray-600">Mes</button>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <div class="stat-card"><p class="lbl">Total período</p><p class="val" id="cajaTotalPeriod">$0</p></div>
+            <div class="stat-card"><p class="lbl">Turnos cobrados</p><p class="val" id="cajaTurnosPeriod">0</p></div>
+            <div class="stat-card"><p class="lbl">Hoy</p><p class="val" id="cajaTotalHoy">$0</p></div>
+            <div class="stat-card"><p class="lbl">Promedio/día</p><p class="val" id="cajaProm">$0</p></div>
+        </div>
+        <div class="border rounded-xl p-4">
+            <p class="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Ingresos por día</p>
+            <div class="bar-wrap" id="cajaBarChart"></div>
+            <div class="flex gap-1 mt-1" id="cajaBarLabels" style="font-size:0.6rem;color:#9ca3af;"></div>
+        </div>
+        <div class="border rounded-xl p-4">
+            <p class="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wide">Por servicio</p>
+            <div id="cajaServiciosList" class="space-y-2"></div>
+        </div>
+        <div class="border rounded-xl p-4">
+            <div class="flex justify-between items-center mb-3">
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-wide">Movimientos de hoy</p>
+                <button onclick="toggleModal('modalCajaManual')" class="text-xs bg-primary text-white px-3 py-1 rounded-lg font-bold"><i class="fas fa-plus mr-1"></i>Manual</button>
+            </div>
+            <div id="cajaMovimientosList" class="space-y-2"></div>
+        </div>
     </div>
 
     <!-- ADMIN: CONFIG -->
@@ -1007,7 +1041,7 @@ async function loadBarberDashboard(){
     const date=document.getElementById('barberDatePicker').value;
     const list=document.getElementById('barberAppointmentsList'),summary=document.getElementById('occupancySummary');
     list.innerHTML='<p class="text-center text-gray-400 text-sm py-4">Cargando...</p>';
-    const {data:appts}=await supabase.from('turnos').select('id,hora,servicio,estado,clientes(nombre,celular)').eq('barberia_id',currentShop.id).eq('fecha',date).order('hora');
+    const {data:appts}=await supabase.from('turnos').select('id,hora,servicio,estado,tipo,duracion_min,monto_cobrado,clientes(nombre,celular)').eq('barberia_id',currentShop.id).eq('fecha',date).order('hora');
     list.innerHTML='';summary.innerHTML='';
     if(!appts||!appts.length){list.innerHTML='<p class="text-center text-gray-400 py-10">Agenda libre 🏖️</p>';return;}
     const occ={};appts.forEach(a=>{if(a.estado!=='cancelado')occ[a.hora.slice(0,5)]=(occ[a.hora.slice(0,5)]||0)+1;});
