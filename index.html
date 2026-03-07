@@ -32,88 +32,38 @@
         .main-tab{flex:1;padding:12px 0;font-size:0.82rem;font-weight:600;color:#9ca3af;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all 0.2s;}
         .main-tab.active{color:var(--color-primary);border-bottom-color:var(--color-primary);}
 
-        /* ===== DESKTOP RESPONSIVE ===== */
         @media(min-width:900px){
             body{background:#f1f5f9;}
+            #appPublic{ max-width:100% !important; box-shadow:none !important; background:transparent !important; }
+            #appAdmin{ max-width:780px !important; }
 
-            /* Contenedor principal full width en desktop */
-            #appPublic{
-                max-width:100% !important;
-                box-shadow:none !important;
-                background:transparent !important;
-            }
+            .shop-header{ padding:22px 40px 18px; display:flex; align-items:center; justify-content:space-between; }
+            .shop-header h1{ font-size:1.8rem; margin:0; padding:0; }
+            .shop-header p{ margin:0; font-size:0.9rem; }
 
-            /* Header full width */
-            .shop-header{
-                padding:22px 40px 18px;
-                display:flex;
-                align-items:center;
-                justify-content:space-between;
-            }
-            .shop-header h1{font-size:1.8rem;margin:0;padding:0;}
-            .shop-header p{margin:0;font-size:0.9rem;}
-            .shop-header-text{flex:1;}
+            .main-tabs{ padding:0 40px; border-bottom:2px solid #e5e7eb; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+            .main-tab{ flex:none; padding:14px 24px; font-size:0.88rem; }
 
-            /* Tabs como navbar horizontal */
-            .main-tabs{
-                padding:0 40px;
-                border-bottom:2px solid #e5e7eb;
-                background:#fff;
-                box-shadow:0 1px 3px rgba(0,0,0,0.06);
-            }
-            .main-tab{flex:none;padding:14px 24px;font-size:0.88rem;}
+            .carousel-wrap{ height:340px; }
+            #shopNotice{ padding:10px 40px; font-size:0.85rem; }
 
-            /* Carrusel más alto en desktop */
-            .carousel-wrap{height:340px;}
+            .desktop-layout{ display:grid; grid-template-columns:1fr 380px; gap:28px; max-width:1100px; margin:0 auto; padding:28px 40px; align-items:start; }
+            .desktop-main{ min-width:0; }
+            .desktop-sidebar{ position:sticky; top:60px; background:#fff; border-radius:16px; box-shadow:0 4px 24px rgba(0,0,0,0.08); border:1px solid #e5e7eb; overflow:hidden; }
 
-            /* Aviso de mensaje */
-            #shopNotice{padding:10px 40px;font-size:0.85rem;}
+            /* Servicios en 2 columnas */
+            #publicServicesList{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 
-            /* Layout 2 columnas para tabs de contenido */
-            .desktop-layout{
-                display:grid;
-                grid-template-columns:1fr 380px;
-                gap:28px;
-                max-width:1100px;
-                margin:0 auto;
-                padding:28px 40px;
-                align-items:start;
-            }
-            .desktop-main{min-width:0;}
-            .desktop-sidebar{
-                position:sticky;
-                top:60px;
-                background:#fff;
-                border-radius:16px;
-                box-shadow:0 4px 24px rgba(0,0,0,0.08);
-                border:1px solid #e5e7eb;
-                overflow:hidden;
-            }
+            /* Fix dropdown admin: aparece ARRIBA del botón */
+            #publicDropdown{ bottom:auto !important; top:auto !important; position:absolute !important; bottom:calc(100% + 8px) !important; left:50% !important; transform:translateX(-50%) !important; }
 
-            /* Servicios en desktop — grid 2 col */
-            #publicServicesList{
-                display:grid;
-                grid-template-columns:1fr 1fr;
-                gap:12px;
-            }
-
-            /* Detalles en desktop */
-            #panelDetalles .detail-photo-grid{
-                grid-template-columns:repeat(4,1fr) !important;
-            }
-
-            /* Panel reservar en desktop — ocultar tab, mostrar sidebar */
-            #panelReservar.desktop-hidden{display:none !important;}
-
-            /* Footer desktop */
-            footer{padding:16px 40px;display:flex;align-items:center;justify-content:space-between;}
-            #footerWpp{border-bottom:none;border-right:1px solid #e5e7eb;padding-right:20px;margin-right:20px;}
+            footer{ padding:16px 40px; display:flex; align-items:center; justify-content:space-between; position:relative; }
+            #footerWpp{ border-bottom:none; padding-right:20px; margin-right:20px; }
         }
-
         @media(max-width:899px){
-            .desktop-sidebar{display:none;}
-            .desktop-layout{display:contents;}
-            .desktop-main{display:contents;}
+            .desktop-sidebar{ display:none; }
+            .desktop-layout{ display:contents; }
+            .desktop-main{ display:contents; }
         }
         /* ADMIN PANEL */
         .admin-shell{display:flex;flex-direction:column;height:100%;}
@@ -428,11 +378,11 @@
             <div id="footerWppLinks" class="flex flex-wrap gap-2 justify-center px-4"></div>
         </div>
         <!-- Acceso Admin — pie de página -->
-        <div class="py-3 px-4">
+        <div class="py-3 px-4 relative">
             <button onclick="toggleDropdown('publicDropdown')" class="inline-flex items-center gap-2 text-xs text-gray-400 hover:text-gray-600 transition font-medium">
                 <i class="fas fa-lock text-gray-300"></i> Acceso admin
             </button>
-            <div id="publicDropdown" class="hidden fixed bottom-16 left-1/2 -translate-x-1/2 w-52 bg-white rounded-xl shadow-2xl border border-gray-100 py-1 text-gray-800 text-sm z-50">
+            <div id="publicDropdown" class="hidden absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 bg-white rounded-xl shadow-2xl border border-gray-100 py-1 text-gray-800 text-sm z-50">
                 <a href="#" onclick="openAdminLoginAndCloseDropdown(event)" class="block px-4 py-3 hover:bg-gray-50 font-medium" style="color:var(--color-primary)"><i class="fas fa-sign-in-alt mr-2"></i>Ingresar como admin</a>
             </div>
         </div>
@@ -441,7 +391,7 @@
 
 
 <!-- ===== PANEL ADMIN ===== -->
-<div id="appAdmin" class="max-w-md mx-auto min-h-screen bg-white shadow-2xl relative hidden flex flex-col w-full overflow-hidden">
+<div id="appAdmin" class="max-w-md mx-auto min-h-screen bg-white shadow-2xl relative hidden flex flex-col w-full" id="appAdmin">
 
     <div class="admin-topbar">
         <div>
@@ -1011,7 +961,11 @@ function renderFooterWpp(){
 // -------- PUBLIC SERVICES --------
 function renderPublicServices(){
     const s=shopConfig.servicios||[];
-    document.getElementById('publicServicesList').innerHTML=s.length?s.map(sv=>`<div class="flex justify-between items-center p-4 border border-gray-100 rounded-xl hover:border-primary transition"><p class="font-bold text-gray-800">${sv.nombre}</p><span class="font-bold text-primary text-lg">$${sv.precio}</span></div>`).join(''):'<p class="text-center text-gray-400 py-8 text-sm">No hay servicios cargados aún.</p>';
+    document.getElementById('publicServicesList').innerHTML=s.length?s.map(sv=>`
+        <div class="flex justify-between items-center p-4 border border-gray-100 rounded-xl hover:border-primary transition cursor-pointer" onclick="switchMainTab('reservar')">
+            <p class="font-bold text-gray-800 mr-3">${sv.nombre}</p>
+            <span class="font-bold text-primary text-lg whitespace-nowrap flex-shrink-0">$${sv.precio}</span>
+        </div>`).join(''):'<p class="text-center text-gray-400 py-8 text-sm col-span-2">No hay servicios cargados aún.</p>';
 }
 
 // -------- DETALLES --------
@@ -1085,22 +1039,33 @@ function switchMainTab(tab){
 }
 
 function initDesktopSidebar(){
-    if(window.innerWidth < 900) return;
-    // Mover el contenido de panelReservar al sidebar
-    const sidebar = document.getElementById('desktopReservaContent');
-    const source  = document.getElementById('panelReservar');
-    if(sidebar && source && !sidebar.hasChildNodes()){
-        // Clonar nodos al sidebar
-        Array.from(source.children).forEach(child => {
-            sidebar.appendChild(child.cloneNode(true));
-        });
-    }
-    // Ocultar tab reservar en desktop
+    const isDesktop = window.innerWidth >= 900;
+    const panel     = document.getElementById('panelReservar');
+    const sidebar   = document.getElementById('desktopReservaContent');
     const tabReservar = document.getElementById('mainTabReservar');
-    if(tabReservar) tabReservar.style.display = 'none';
-    // Ocultar CTA
-    const ctaBox = document.getElementById('reservarCTABox');
-    if(ctaBox) ctaBox.style.display = 'none';
+    const ctaBox    = document.getElementById('reservarCTABox');
+    if(!panel || !sidebar) return;
+
+    if(isDesktop){
+        // Mover el panelReservar real al sidebar (sin clonar, IDs únicos)
+        if(!sidebar.contains(panel)){
+            panel.classList.remove('hidden','pb-20');
+            panel.style.cssText = 'display:block;';
+            sidebar.appendChild(panel);
+        }
+        if(tabReservar) tabReservar.style.display = 'none';
+        if(ctaBox) ctaBox.style.display = 'none';
+    } else {
+        // En mobile: devolver el panel a desktop-main si fue movido
+        const desktopMain = document.querySelector('.desktop-main');
+        if(sidebar.contains(panel) && desktopMain){
+            panel.style.cssText = '';
+            panel.classList.add('hidden','pb-20');
+            desktopMain.appendChild(panel);
+        }
+        if(tabReservar) tabReservar.style.display = '';
+        if(ctaBox) ctaBox.style.display = '';
+    }
 }
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 
