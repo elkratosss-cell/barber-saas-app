@@ -157,13 +157,25 @@
     </div>
 
     <div class="shop-header">
-        <div style="position:absolute;top:13px;right:13px;">
-            <button onclick="toggleDropdown('publicDropdown')" style="background:none;border:none;color:rgba(255,255,255,0.65);font-size:1.15rem;cursor:pointer;"><i class="fas fa-cog"></i></button>
-            <div id="publicDropdown" class="hidden absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-xl py-1 text-gray-800 text-sm z-50" style="top:100%;">
+        <!-- Botones superiores derecha: Mi cuenta (cliente logueado) + Admin -->
+        <div style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:6px;z-index:10;">
+            <!-- Mi cuenta — visible solo cuando cliente logueado -->
+            <button id="headerClientBtn" onclick="openClientAccount()" class="hidden items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full transition" style="background:rgba(255,255,255,0.18);color:#fff;border:1.5px solid rgba(255,255,255,0.35);backdrop-filter:blur(4px);">
+                <i class="fas fa-user-circle"></i><span id="headerClientName"></span>
+            </button>
+            <!-- Logout cliente — visible solo cuando cliente logueado -->
+            <button id="headerLogoutBtn" onclick="logout()" class="hidden items-center justify-center w-7 h-7 rounded-full transition" style="background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.7);border:1.5px solid rgba(255,255,255,0.25);" title="Cerrar sesión">
+                <i class="fas fa-sign-out-alt text-xs"></i>
+            </button>
+            <!-- Acceso Admin — siempre visible, candado + texto -->
+            <button onclick="toggleDropdown('publicDropdown')" class="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full transition" style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);border:1.5px solid rgba(255,255,255,0.3);">
+                <i class="fas fa-lock text-xs"></i><span>Admin</span>
+            </button>
+            <div id="publicDropdown" class="hidden absolute right-0 mt-1 w-44 bg-white rounded-xl shadow-xl py-1 text-gray-800 text-sm z-50" style="top:100%;">
                 <a href="#" onclick="openAdminLoginAndCloseDropdown(event)" class="block px-4 py-2 hover:bg-gray-100 font-medium" style="color:var(--color-primary)"><i class="fas fa-sign-in-alt mr-2"></i>Acceso admin</a>
             </div>
         </div>
-        <h1 id="shopName" class="text-2xl font-bold mb-0.5 pr-8">Cargando...</h1>
+        <h1 id="shopName" class="text-2xl font-bold mb-0.5 pr-28">Cargando...</h1>
         <p id="headerSub" class="text-sm opacity-80"></p>
     </div>
     <div id="shopNotice" class="hidden"><i class="fas fa-bullhorn mr-1"></i><span id="shopNoticeText"></span></div>
@@ -286,12 +298,8 @@
 
         <!-- CLIENTE DASHBOARD -->
         <div id="viewClient" class="hidden p-5">
-            <div class="flex justify-between items-center mb-5">
+            <div class="mb-5">
                 <h2 class="font-bold text-xl">Hola, <span id="clientNameDisplay" class="text-primary"></span> 👋</h2>
-                <div class="flex items-center gap-2">
-                    <button onclick="openClientAccount()" class="flex items-center gap-1 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-xl transition"><i class="fas fa-user-circle text-primary"></i>&nbsp;Mi cuenta</button>
-                    <button onclick="logout()" class="text-gray-400 hover:text-red-500 text-sm"><i class="fas fa-sign-out-alt"></i></button>
-                </div>
             </div>
             <div id="activeAppointmentCard" class="hidden bg-white border-l-4 border-primary shadow-md rounded-r-xl p-5 mb-5">
                 <div class="flex justify-between items-start">
@@ -1082,7 +1090,14 @@ function startForgotPin(){if(loginState.phone)sendTempPinSms(true);}
 async function showClientDashboard(){
     document.getElementById('viewLogin').classList.add('hidden');
     document.getElementById('viewClient').classList.remove('hidden');
-    document.getElementById('clientNameDisplay').innerText=currentUser.nombre.split(' ')[0];
+    const firstName=currentUser.nombre.split(' ')[0];
+    document.getElementById('clientNameDisplay').innerText=firstName;
+    // Mostrar botones en el header superior
+    const hBtn=document.getElementById('headerClientBtn');
+    const hLogout=document.getElementById('headerLogoutBtn');
+    document.getElementById('headerClientName').innerText=firstName;
+    hBtn.classList.remove('hidden');hBtn.classList.add('flex');
+    hLogout.classList.remove('hidden');hLogout.classList.add('flex');
     switchMainTab('reservar');
     renderClientPago();
     const todayISO=new Date().toISOString().split('T')[0];
@@ -1748,6 +1763,11 @@ function copyPago(val,btn){
 // -------- LOGOUT --------
 function logout(){
     currentUser=null;localStorage.removeItem(CLIENT_STORAGE_KEY);localStorage.removeItem(ADMIN_STORAGE_KEY);
+    // Ocultar botones del header
+    const hBtn=document.getElementById('headerClientBtn');
+    const hLogout=document.getElementById('headerLogoutBtn');
+    hBtn.classList.add('hidden');hBtn.classList.remove('flex');
+    hLogout.classList.add('hidden');hLogout.classList.remove('flex');
     showPublicApp();document.getElementById('viewClient').classList.add('hidden');document.getElementById('viewLogin').classList.remove('hidden');
     backToPhone();switchMainTab('servicios');
 }
