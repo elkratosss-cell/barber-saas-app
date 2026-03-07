@@ -47,20 +47,19 @@
             .carousel-wrap{ height:340px; }
             #shopNotice{ padding:10px 40px; font-size:0.85rem; }
 
-            /* Layout 2 columnas: izq más amplia, der sidebar fija */
+            /* Layout 2 columnas cuando NO está logueado */
             .desktop-layout{ display:grid; grid-template-columns:1fr 460px; gap:32px; max-width:1200px; margin:0 auto; padding:32px 40px; align-items:start; }
             .desktop-main{ min-width:0; }
-            .desktop-sidebar{ position:sticky; top:60px; background:#fff; border-radius:16px; box-shadow:0 4px 24px rgba(0,0,0,0.08); border:1px solid #e5e7eb; overflow:hidden; max-height:calc(100vh - 80px); overflow-y:auto; }
 
-            /* Servicios: lista vertical limpia, NO grid */
+            /* Sidebar sin scroll propio — el scroll es solo el del navegador */
+            .desktop-sidebar{ position:sticky; top:60px; background:#fff; border-radius:16px; box-shadow:0 4px 24px rgba(0,0,0,0.08); border:1px solid #e5e7eb; overflow:visible; }
+
+            /* Servicios: lista vertical con mucho espaciado */
             #publicServicesList{ display:flex !important; flex-direction:column !important; gap:0 !important; border:1px solid #e5e7eb; border-radius:16px; overflow:hidden; background:#fff; }
-            #publicServicesList > div{ border-radius:0 !important; border:none !important; border-bottom:1px solid #f3f4f6 !important; display:flex !important; align-items:center !important; justify-content:space-between !important; padding:16px 20px !important; }
+            #publicServicesList > div{ border-radius:0 !important; border:none !important; border-bottom:1px solid #f3f4f6 !important; display:flex !important; align-items:center !important; justify-content:space-between !important; padding:22px 28px !important; }
             #publicServicesList > div:last-child{ border-bottom:none !important; }
-            #publicServicesList > div p:first-child{ font-size:1rem !important; margin:0 !important; }
-            #publicServicesList > div p.text-xl{ font-size:1.1rem !important; margin:0 !important; display:inline !important; }
-            #publicServicesList > div p.text-xs{ display:inline; margin-left:8px; }
 
-            /* Slots en 4 columnas en desktop */
+            /* Slots en 4 columnas */
             #slotsGrid{ grid-template-columns:repeat(4,1fr) !important; }
 
             /* Footer desktop */
@@ -1064,22 +1063,21 @@ function switchMainTab(tab){
 function initDesktopSidebar(){
     const isDesktop = window.innerWidth >= 900;
     const panel     = document.getElementById('panelReservar');
-    const sidebar   = document.getElementById('desktopReservaContent');
+    const sidebar   = document.getElementById('desktopSidebar');
     const tabReservar = document.getElementById('mainTabReservar');
     const ctaBox    = document.getElementById('reservarCTABox');
     if(!panel || !sidebar) return;
 
     if(isDesktop){
-        // Mover el panelReservar real al sidebar (sin clonar, IDs únicos)
+        // Mover panelReservar al sidebar (sin clonar, IDs únicos)
         if(!sidebar.contains(panel)){
             panel.classList.remove('hidden','pb-20');
             panel.style.cssText = 'display:block;';
-            sidebar.appendChild(panel);
+            document.getElementById('desktopReservaContent').appendChild(panel);
         }
         if(tabReservar) tabReservar.style.display = 'none';
         if(ctaBox) ctaBox.style.display = 'none';
     } else {
-        // En mobile: devolver el panel a desktop-main si fue movido
         const desktopMain = document.querySelector('.desktop-main');
         if(sidebar.contains(panel) && desktopMain){
             panel.style.cssText = '';
@@ -1088,6 +1086,43 @@ function initDesktopSidebar(){
         }
         if(tabReservar) tabReservar.style.display = '';
         if(ctaBox) ctaBox.style.display = '';
+    }
+}
+
+// Cuando el cliente se loguea, colapsar el layout a ancho completo (como admin)
+function setDesktopClientMode(loggedIn){
+    if(window.innerWidth < 900) return;
+    const layout  = document.querySelector('.desktop-layout');
+    const sidebar = document.getElementById('desktopSidebar');
+    const main    = document.querySelector('.desktop-main');
+    const panel   = document.getElementById('panelReservar');
+    const appPublic = document.getElementById('appPublic');
+
+    if(loggedIn){
+        // Modo cliente logueado: ancho fijo como admin, panel centrado
+        appPublic.style.maxWidth = '780px';
+        appPublic.style.margin   = '0 auto';
+        appPublic.style.background = '#fff';
+        appPublic.style.boxShadow = '0 4px 24px rgba(0,0,0,0.08)';
+        if(layout) layout.style.cssText = 'display:block;padding:0;';
+        if(sidebar) sidebar.style.display = 'none';
+        // Mostrar panelReservar directamente en el main
+        if(main && !main.contains(panel)){
+            panel.style.cssText = 'display:block;';
+            panel.classList.remove('hidden','pb-20');
+            main.appendChild(panel);
+        }
+        if(main) main.style.cssText = 'display:block;';
+    } else {
+        // Modo deslogueado: volver al layout 2 columnas
+        appPublic.style.maxWidth = '';
+        appPublic.style.margin   = '';
+        appPublic.style.background = '';
+        appPublic.style.boxShadow = '';
+        if(layout) layout.style.cssText = '';
+        if(sidebar) sidebar.style.display = '';
+        if(main) main.style.cssText = '';
+        initDesktopSidebar();
     }
 }
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
@@ -1211,8 +1246,8 @@ async function showClientDashboard(){
     document.getElementById('viewClient').classList.remove('hidden');
     const firstName=currentUser.nombre.split(' ')[0];
     document.getElementById('clientNameDisplay').innerText=firstName;
-    // Mostrar Mi cuenta + Salir en header
     document.getElementById('headerClientZone').style.display='flex';
+    setDesktopClientMode(true);
     switchMainTab('reservar');
     renderClientPago();
     const todayISO=new Date().toISOString().split('T')[0];
@@ -1879,6 +1914,7 @@ function copyPago(val,btn){
 function logout(){
     currentUser=null;localStorage.removeItem(CLIENT_STORAGE_KEY);localStorage.removeItem(ADMIN_STORAGE_KEY);
     document.getElementById('headerClientZone').style.display='none';
+    setDesktopClientMode(false);
     showPublicApp();document.getElementById('viewClient').classList.add('hidden');document.getElementById('viewLogin').classList.remove('hidden');
     backToPhone();switchMainTab('servicios');
 }
