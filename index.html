@@ -47,25 +47,42 @@
             .carousel-wrap{ height:340px; }
             #shopNotice{ padding:10px 40px; font-size:0.85rem; }
 
-            .desktop-layout{ display:grid; grid-template-columns:1fr 380px; gap:28px; max-width:1100px; margin:0 auto; padding:28px 40px; align-items:start; }
+            /* Layout 2 columnas: izq más amplia, der sidebar fija */
+            .desktop-layout{ display:grid; grid-template-columns:1fr 460px; gap:32px; max-width:1200px; margin:0 auto; padding:32px 40px; align-items:start; }
             .desktop-main{ min-width:0; }
-            .desktop-sidebar{ position:sticky; top:60px; background:#fff; border-radius:16px; box-shadow:0 4px 24px rgba(0,0,0,0.08); border:1px solid #e5e7eb; overflow:hidden; }
+            .desktop-sidebar{ position:sticky; top:60px; background:#fff; border-radius:16px; box-shadow:0 4px 24px rgba(0,0,0,0.08); border:1px solid #e5e7eb; overflow:hidden; max-height:calc(100vh - 80px); overflow-y:auto; }
 
-            /* Servicios en 2 columnas */
-            #publicServicesList{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+            /* Servicios: lista vertical limpia, NO grid */
+            #publicServicesList{ display:flex !important; flex-direction:column !important; gap:0 !important; border:1px solid #e5e7eb; border-radius:16px; overflow:hidden; background:#fff; }
+            #publicServicesList > div{ border-radius:0 !important; border:none !important; border-bottom:1px solid #f3f4f6 !important; display:flex !important; align-items:center !important; justify-content:space-between !important; padding:16px 20px !important; }
+            #publicServicesList > div:last-child{ border-bottom:none !important; }
+            #publicServicesList > div p:first-child{ font-size:1rem !important; margin:0 !important; }
+            #publicServicesList > div p.text-xl{ font-size:1.1rem !important; margin:0 !important; display:inline !important; }
+            #publicServicesList > div p.text-xs{ display:inline; margin-left:8px; }
 
-            /* Fix dropdown admin: aparece ARRIBA del botón */
-            #publicDropdown{ bottom:auto !important; top:auto !important; position:absolute !important; bottom:calc(100% + 8px) !important; left:50% !important; transform:translateX(-50%) !important; }
+            /* Slots en 4 columnas en desktop */
+            #slotsGrid{ grid-template-columns:repeat(4,1fr) !important; }
 
+            /* Footer desktop */
             footer{ padding:16px 40px; display:flex; align-items:center; justify-content:space-between; position:relative; }
-            #footerWpp{ border-bottom:none; padding-right:20px; margin-right:20px; }
         }
         @media(max-width:899px){
             .desktop-sidebar{ display:none; }
             .desktop-layout{ display:contents; }
             .desktop-main{ display:contents; }
         }
-        /* ADMIN PANEL */
+        /* Servicios cards base (mobile) */
+        #publicServicesList > div{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            padding:14px 16px;
+            border:1px solid #e5e7eb;
+            border-radius:12px;
+            background:#fff;
+            transition:border-color 0.2s;
+        }
+        #publicServicesList > div:hover{ border-color:var(--color-primary); }
         .admin-shell{display:flex;flex-direction:column;height:100%;}
         .admin-topbar{background:var(--color-primary);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
         .admin-tabs{display:flex;border-bottom:2px solid #e5e7eb;background:#fff;position:sticky;top:0;z-index:20;}
@@ -965,11 +982,13 @@ function renderFooterWpp(){
 function renderPublicServices(){
     const s=shopConfig.servicios||[];
     document.getElementById('publicServicesList').innerHTML=s.length?s.map(sv=>`
-        <div class="p-4 border border-gray-200 rounded-xl hover:border-primary hover:shadow-sm transition cursor-pointer bg-white" onclick="switchMainTab('reservar')">
-            <p class="font-bold text-gray-800 text-base">${sv.nombre}</p>
-            <p class="font-bold text-primary text-xl mt-1">$${sv.precio}</p>
-            ${sv.duracion?`<p class="text-xs text-gray-400 mt-1">${sv.duracion} min</p>`:''}
-        </div>`).join(''):'<p class="text-center text-gray-400 py-8 text-sm col-span-2">No hay servicios cargados aún.</p>';
+        <div onclick="switchMainTab('reservar')" style="cursor:pointer;">
+            <div>
+                <p class="font-bold text-gray-800 text-base">${sv.nombre}</p>
+                ${sv.duracion?`<p class="text-xs text-gray-400 mt-0.5">${sv.duracion} min</p>`:''}
+            </div>
+            <p class="font-bold text-primary text-xl">${sv.precio?'$'+sv.precio:''}</p>
+        </div>`).join(''):'<p class="text-center text-gray-400 py-8 text-sm">No hay servicios cargados aún.</p>';
 }
 
 // -------- DETALLES --------
