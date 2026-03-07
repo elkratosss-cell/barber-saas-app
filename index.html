@@ -157,14 +157,14 @@
     </div>
 
     <div class="shop-header">
-        <!-- Admin: solo ícono candado arriba derecha, discreto -->
-        <div style="position:absolute;top:10px;right:12px;z-index:10;">
-            <button onclick="toggleDropdown('publicDropdown')" title="Acceso admin" style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.75);border-radius:999px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.8rem;">
-                <i class="fas fa-lock"></i>
+        <!-- Cuando cliente logueado: Mi cuenta + Salir arriba derecha -->
+        <div id="headerClientZone" style="position:absolute;top:10px;right:12px;display:none;align-items:center;gap:6px;z-index:10;">
+            <button onclick="openClientAccount()" style="background:rgba(255,255,255,0.18);border:1.5px solid rgba(255,255,255,0.35);color:#fff;border-radius:999px;padding:5px 12px;font-size:0.75rem;font-weight:700;display:flex;align-items:center;gap:5px;cursor:pointer;">
+                <i class="fas fa-user-circle"></i> Mi cuenta
             </button>
-            <div id="publicDropdown" class="hidden absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-xl py-1 text-gray-800 text-sm z-50" style="top:100%;">
-                <a href="#" onclick="openAdminLoginAndCloseDropdown(event)" class="block px-4 py-2 hover:bg-gray-100 font-medium" style="color:var(--color-primary)"><i class="fas fa-sign-in-alt mr-2"></i>Acceso admin</a>
-            </div>
+            <button onclick="logout()" title="Salir" style="background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.75);border-radius:999px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.75rem;">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
         </div>
         <h1 id="shopName" class="text-2xl font-bold mb-0.5 pr-10">Cargando...</h1>
         <p id="headerSub" class="text-sm opacity-80"></p>
@@ -175,17 +175,6 @@
         <button class="main-tab active" onclick="switchMainTab('servicios')" id="mainTabServicios"><i class="fas fa-list-ul mr-1"></i>Servicios</button>
         <button class="main-tab" onclick="switchMainTab('detalles')" id="mainTabDetalles"><i class="fas fa-info-circle mr-1"></i>Detalles</button>
         <button class="main-tab" onclick="switchMainTab('reservar')" id="mainTabReservar"><i class="fas fa-calendar-plus mr-1"></i>Reservar</button>
-    </div>
-
-    <!-- Barra cliente logueado — aparece debajo de las tabs -->
-    <div id="clientSessionBar" class="hidden items-center justify-between px-4 py-2 border-b border-gray-100 bg-gray-50">
-        <button onclick="openClientAccount()" class="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-primary transition">
-            <i class="fas fa-user-circle text-primary text-base"></i>
-            <span>Mi cuenta</span>
-        </button>
-        <button onclick="logout()" class="flex items-center gap-1.5 text-xs text-gray-400 hover:text-red-500 transition font-medium">
-            <i class="fas fa-sign-out-alt"></i> Salir
-        </button>
     </div>
 
     <!-- TAB SERVICIOS -->
@@ -337,8 +326,20 @@
         </div>
     </div>
 
-    <footer id="footerWpp" class="hidden text-center py-4 border-t">
-        <div id="footerWppLinks" class="flex flex-wrap gap-2 justify-center px-4"></div>
+    <footer class="text-center border-t bg-white">
+        <!-- Links WhatsApp -->
+        <div id="footerWpp" class="hidden py-3 border-b border-gray-100">
+            <div id="footerWppLinks" class="flex flex-wrap gap-2 justify-center px-4"></div>
+        </div>
+        <!-- Acceso Admin — pie de página -->
+        <div class="py-3 px-4">
+            <button onclick="toggleDropdown('publicDropdown')" class="inline-flex items-center gap-2 text-xs text-gray-400 hover:text-gray-600 transition font-medium">
+                <i class="fas fa-lock text-gray-300"></i> Acceso admin
+            </button>
+            <div id="publicDropdown" class="hidden fixed bottom-16 left-1/2 -translate-x-1/2 w-52 bg-white rounded-xl shadow-2xl border border-gray-100 py-1 text-gray-800 text-sm z-50">
+                <a href="#" onclick="openAdminLoginAndCloseDropdown(event)" class="block px-4 py-3 hover:bg-gray-50 font-medium" style="color:var(--color-primary)"><i class="fas fa-sign-in-alt mr-2"></i>Ingresar como admin</a>
+            </div>
+        </div>
     </footer>
 </div>
 
@@ -1094,9 +1095,8 @@ async function showClientDashboard(){
     document.getElementById('viewClient').classList.remove('hidden');
     const firstName=currentUser.nombre.split(' ')[0];
     document.getElementById('clientNameDisplay').innerText=firstName;
-    // Mostrar barra de sesión debajo de las tabs
-    const bar=document.getElementById('clientSessionBar');
-    bar.classList.remove('hidden');bar.classList.add('flex');
+    // Mostrar Mi cuenta + Salir en header
+    document.getElementById('headerClientZone').style.display='flex';
     switchMainTab('reservar');
     renderClientPago();
     const todayISO=new Date().toISOString().split('T')[0];
@@ -1762,9 +1762,7 @@ function copyPago(val,btn){
 // -------- LOGOUT --------
 function logout(){
     currentUser=null;localStorage.removeItem(CLIENT_STORAGE_KEY);localStorage.removeItem(ADMIN_STORAGE_KEY);
-    // Ocultar barra de sesión
-    const bar=document.getElementById('clientSessionBar');
-    bar.classList.add('hidden');bar.classList.remove('flex');
+    document.getElementById('headerClientZone').style.display='none';
     showPublicApp();document.getElementById('viewClient').classList.add('hidden');document.getElementById('viewLogin').classList.remove('hidden');
     backToPhone();switchMainTab('servicios');
 }
