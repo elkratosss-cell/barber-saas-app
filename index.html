@@ -1092,33 +1092,49 @@ function initDesktopSidebar(){
 // Cuando el cliente se loguea, colapsar el layout a ancho completo (como admin)
 function setDesktopClientMode(loggedIn){
     if(window.innerWidth < 900) return;
-    const layout  = document.querySelector('.desktop-layout');
-    const sidebar = document.getElementById('desktopSidebar');
-    const main    = document.querySelector('.desktop-main');
-    const panel   = document.getElementById('panelReservar');
+    const layout    = document.querySelector('.desktop-layout');
+    const sidebar   = document.getElementById('desktopSidebar');
+    const main      = document.querySelector('.desktop-main');
+    const panel     = document.getElementById('panelReservar');
     const appPublic = document.getElementById('appPublic');
+    const tabs      = document.querySelector('.main-tabs');
+    const panelServ = document.getElementById('panelServicios');
+    const panelDet  = document.getElementById('panelDetalles');
 
     if(loggedIn){
-        // Modo cliente logueado: ancho fijo como admin, panel centrado
-        appPublic.style.maxWidth = '780px';
-        appPublic.style.margin   = '0 auto';
+        // Ocultar tabs y paneles de servicios/detalles
+        if(tabs) tabs.style.display = 'none';
+        if(panelServ) panelServ.style.display = 'none';
+        if(panelDet)  panelDet.style.display  = 'none';
+        // Modo ancho completo como admin
+        appPublic.style.maxWidth  = '780px';
+        appPublic.style.margin    = '0 auto';
         appPublic.style.background = '#fff';
-        appPublic.style.boxShadow = '0 4px 24px rgba(0,0,0,0.08)';
+        appPublic.style.boxShadow  = '0 4px 24px rgba(0,0,0,0.08)';
         if(layout) layout.style.cssText = 'display:block;padding:0;';
         if(sidebar) sidebar.style.display = 'none';
-        // Mostrar panelReservar directamente en el main
-        if(main && !main.contains(panel)){
-            panel.style.cssText = 'display:block;';
-            panel.classList.remove('hidden','pb-20');
-            main.appendChild(panel);
+        // Mover panelReservar al main y mostrarlo full width
+        if(main){
+            main.style.cssText = 'display:block;';
+            if(!main.contains(panel)){
+                panel.style.cssText = 'display:block;';
+                panel.classList.remove('hidden','pb-20');
+                main.appendChild(panel);
+            } else {
+                panel.style.cssText = 'display:block;';
+                panel.classList.remove('hidden','pb-20');
+            }
         }
-        if(main) main.style.cssText = 'display:block;';
     } else {
-        // Modo deslogueado: volver al layout 2 columnas
-        appPublic.style.maxWidth = '';
-        appPublic.style.margin   = '';
+        // Volver a mostrar tabs y paneles
+        if(tabs) tabs.style.display = '';
+        if(panelServ) panelServ.style.display = '';
+        if(panelDet)  panelDet.style.display  = '';
+        // Restaurar layout 2 columnas
+        appPublic.style.maxWidth  = '';
+        appPublic.style.margin    = '';
         appPublic.style.background = '';
-        appPublic.style.boxShadow = '';
+        appPublic.style.boxShadow  = '';
         if(layout) layout.style.cssText = '';
         if(sidebar) sidebar.style.display = '';
         if(main) main.style.cssText = '';
