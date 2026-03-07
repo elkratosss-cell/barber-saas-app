@@ -31,6 +31,90 @@
         .main-tabs{display:flex;border-bottom:2px solid #e5e7eb;background:#fff;position:sticky;top:0;z-index:20;}
         .main-tab{flex:1;padding:12px 0;font-size:0.82rem;font-weight:600;color:#9ca3af;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all 0.2s;}
         .main-tab.active{color:var(--color-primary);border-bottom-color:var(--color-primary);}
+
+        /* ===== DESKTOP RESPONSIVE ===== */
+        @media(min-width:900px){
+            body{background:#f1f5f9;}
+
+            /* Contenedor principal full width en desktop */
+            #appPublic{
+                max-width:100% !important;
+                box-shadow:none !important;
+                background:transparent !important;
+            }
+
+            /* Header full width */
+            .shop-header{
+                padding:22px 40px 18px;
+                display:flex;
+                align-items:center;
+                justify-content:space-between;
+            }
+            .shop-header h1{font-size:1.8rem;margin:0;padding:0;}
+            .shop-header p{margin:0;font-size:0.9rem;}
+            .shop-header-text{flex:1;}
+
+            /* Tabs como navbar horizontal */
+            .main-tabs{
+                padding:0 40px;
+                border-bottom:2px solid #e5e7eb;
+                background:#fff;
+                box-shadow:0 1px 3px rgba(0,0,0,0.06);
+            }
+            .main-tab{flex:none;padding:14px 24px;font-size:0.88rem;}
+
+            /* Carrusel más alto en desktop */
+            .carousel-wrap{height:340px;}
+
+            /* Aviso de mensaje */
+            #shopNotice{padding:10px 40px;font-size:0.85rem;}
+
+            /* Layout 2 columnas para tabs de contenido */
+            .desktop-layout{
+                display:grid;
+                grid-template-columns:1fr 380px;
+                gap:28px;
+                max-width:1100px;
+                margin:0 auto;
+                padding:28px 40px;
+                align-items:start;
+            }
+            .desktop-main{min-width:0;}
+            .desktop-sidebar{
+                position:sticky;
+                top:60px;
+                background:#fff;
+                border-radius:16px;
+                box-shadow:0 4px 24px rgba(0,0,0,0.08);
+                border:1px solid #e5e7eb;
+                overflow:hidden;
+            }
+
+            /* Servicios en desktop — grid 2 col */
+            #publicServicesList{
+                display:grid;
+                grid-template-columns:1fr 1fr;
+                gap:12px;
+            }
+
+            /* Detalles en desktop */
+            #panelDetalles .detail-photo-grid{
+                grid-template-columns:repeat(4,1fr) !important;
+            }
+
+            /* Panel reservar en desktop — ocultar tab, mostrar sidebar */
+            #panelReservar.desktop-hidden{display:none !important;}
+
+            /* Footer desktop */
+            footer{padding:16px 40px;display:flex;align-items:center;justify-content:space-between;}
+            #footerWpp{border-bottom:none;border-right:1px solid #e5e7eb;padding-right:20px;margin-right:20px;}
+        }
+
+        @media(max-width:899px){
+            .desktop-sidebar{display:none;}
+            .desktop-layout{display:contents;}
+            .desktop-main{display:contents;}
+        }
         /* ADMIN PANEL */
         .admin-shell{display:flex;flex-direction:column;height:100%;}
         .admin-topbar{background:var(--color-primary);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
@@ -145,7 +229,7 @@
 </div>
 
 <!-- ===== APP PÚBLICO ===== -->
-<div id="appPublic" class="max-w-md mx-auto min-h-screen bg-white shadow-2xl relative hidden flex flex-col w-full overflow-hidden">
+<div id="appPublic" class="max-w-md mx-auto min-h-screen bg-white shadow-2xl relative hidden flex flex-col w-full">
 
     <div class="carousel-wrap" id="carouselWrap">
         <div class="carousel-track" id="carouselTrack">
@@ -177,43 +261,47 @@
         <button class="main-tab" onclick="switchMainTab('reservar')" id="mainTabReservar"><i class="fas fa-calendar-plus mr-1"></i>Reservar</button>
     </div>
 
-    <!-- TAB SERVICIOS -->
-    <div id="panelServicios" class="p-5 pb-20">
-        <div id="publicServicesList" class="space-y-3 mb-6"></div>
-        <div class="p-4 bg-gray-50 rounded-xl text-center">
-            <p class="text-sm text-gray-500 mb-3">¿Querés sacar turno?</p>
-            <button onclick="switchMainTab('reservar')" class="bg-primary text-white px-6 py-3 rounded-xl font-bold text-sm hover:opacity-90 transition"><i class="fas fa-calendar-plus mr-2"></i>Reservar turno</button>
-        </div>
-    </div>
+    <!-- LAYOUT: columna izq (tabs) + columna der (sidebar reserva en desktop) -->
+    <div class="desktop-layout">
+      <div class="desktop-main">
 
-    <!-- TAB DETALLES -->
-    <div id="panelDetalles" class="hidden pb-20">
-        <div id="detailPhotosSection" class="hidden p-5 pb-2">
-            <h3 class="font-bold text-gray-700 mb-3 text-sm uppercase tracking-wide">📸 Portafolio</h3>
-            <div class="detail-photo-grid" id="detailPhotosGrid"></div>
-        </div>
-        <div class="p-5 space-y-5">
-            <div>
-                <h3 class="font-bold text-gray-700 mb-2 text-sm uppercase tracking-wide flex items-center gap-2"><i class="fas fa-clock text-primary"></i>Horario</h3>
-                <div id="detailHorario" class="bg-gray-50 rounded-xl p-3"></div>
-            </div>
-            <div id="detailSobreWrap" class="hidden">
-                <h3 class="font-bold text-gray-700 mb-2 text-sm uppercase tracking-wide flex items-center gap-2"><i class="fas fa-store text-primary"></i>Sobre nosotros</h3>
-                <p id="detailSobre" class="text-sm text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-xl"></p>
-            </div>
-            <div id="detailDireccionWrap" class="hidden">
-                <h3 class="font-bold text-gray-700 mb-2 text-sm uppercase tracking-wide flex items-center gap-2"><i class="fas fa-map-marker-alt text-primary"></i>Dirección</h3>
-                <p id="detailDireccion" class="text-sm text-gray-600 bg-gray-50 p-3 rounded-xl"></p>
-            </div>
-            <div id="detailContactoWrap" class="hidden">
-                <h3 class="font-bold text-gray-700 mb-2 text-sm uppercase tracking-wide flex items-center gap-2"><i class="fas fa-phone text-primary"></i>Contacto</h3>
-                <div id="detailContactoList" class="space-y-2"></div>
+        <!-- TAB SERVICIOS -->
+        <div id="panelServicios" class="p-5 pb-20">
+            <div id="publicServicesList" class="space-y-3 mb-6"></div>
+            <div class="p-4 bg-gray-50 rounded-xl text-center" id="reservarCTABox">
+                <p class="text-sm text-gray-500 mb-3">¿Querés sacar turno?</p>
+                <button onclick="switchMainTab('reservar')" class="bg-primary text-white px-6 py-3 rounded-xl font-bold text-sm hover:opacity-90 transition"><i class="fas fa-calendar-plus mr-2"></i>Reservar turno</button>
             </div>
         </div>
-    </div>
 
-    <!-- TAB RESERVAR -->
-    <div id="panelReservar" class="hidden pb-20">
+        <!-- TAB DETALLES -->
+        <div id="panelDetalles" class="hidden pb-20">
+            <div id="detailPhotosSection" class="hidden p-5 pb-2">
+                <h3 class="font-bold text-gray-700 mb-3 text-sm uppercase tracking-wide">📸 Portafolio</h3>
+                <div class="detail-photo-grid" id="detailPhotosGrid"></div>
+            </div>
+            <div class="p-5 space-y-5">
+                <div>
+                    <h3 class="font-bold text-gray-700 mb-2 text-sm uppercase tracking-wide flex items-center gap-2"><i class="fas fa-clock text-primary"></i>Horario</h3>
+                    <div id="detailHorario" class="bg-gray-50 rounded-xl p-3"></div>
+                </div>
+                <div id="detailSobreWrap" class="hidden">
+                    <h3 class="font-bold text-gray-700 mb-2 text-sm uppercase tracking-wide flex items-center gap-2"><i class="fas fa-store text-primary"></i>Sobre nosotros</h3>
+                    <p id="detailSobre" class="text-sm text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-xl"></p>
+                </div>
+                <div id="detailDireccionWrap" class="hidden">
+                    <h3 class="font-bold text-gray-700 mb-2 text-sm uppercase tracking-wide flex items-center gap-2"><i class="fas fa-map-marker-alt text-primary"></i>Dirección</h3>
+                    <p id="detailDireccion" class="text-sm text-gray-600 bg-gray-50 p-3 rounded-xl"></p>
+                </div>
+                <div id="detailContactoWrap" class="hidden">
+                    <h3 class="font-bold text-gray-700 mb-2 text-sm uppercase tracking-wide flex items-center gap-2"><i class="fas fa-phone text-primary"></i>Contacto</h3>
+                    <div id="detailContactoList" class="space-y-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB RESERVAR (mobile) -->
+        <div id="panelReservar" class="hidden pb-20">
         <div id="viewLogin" class="p-5">
             <div class="text-center mb-6 mt-2">
                 <h2 class="text-xl font-bold text-gray-800">Reserva tu turno</h2>
@@ -324,7 +412,15 @@
                 <div id="clientPagoList" class="p-4"></div>
             </div>
         </div>
-    </div>
+    </div><!-- /panelReservar mobile -->
+      </div><!-- /desktop-main -->
+
+      <!-- SIDEBAR DERECHA — solo desktop, contiene el panel de reserva -->
+      <div class="desktop-sidebar" id="desktopSidebar">
+        <div id="desktopReservaContent" class="p-5"></div>
+      </div>
+
+    </div><!-- /desktop-layout -->
 
     <footer class="text-center border-t bg-white">
         <!-- Links WhatsApp -->
@@ -833,6 +929,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
 function showPublicApp(){
     document.getElementById('appPublic').classList.remove('hidden');
     document.getElementById('appAdmin').classList.add('hidden');
+    setTimeout(initDesktopSidebar, 50);
 }
 
 // FIX: showAdminPanel inicializa flatpickr correctamente
@@ -969,10 +1066,41 @@ function carouselPrev(){carouselGoTo(carouselIndex-1);}
 
 // -------- PUBLIC TABS --------
 function switchMainTab(tab){
+    const isDesktop = window.innerWidth >= 900;
     ['servicios','detalles','reservar'].forEach(t=>{
-        document.getElementById('panel'+cap(t)).classList.toggle('hidden',t!==tab);
-        document.getElementById('mainTab'+cap(t)).classList.toggle('active',t===tab);
+        const panel = document.getElementById('panel'+cap(t));
+        const tabBtn = document.getElementById('mainTab'+cap(t));
+        if(isDesktop && t==='reservar'){
+            // En desktop: tab reservar oculto, sidebar siempre visible
+            panel.classList.add('hidden');
+            tabBtn.classList.toggle('active', tab==='reservar');
+        } else {
+            panel.classList.toggle('hidden', t!==tab);
+            tabBtn.classList.toggle('active', t===tab);
+        }
     });
+    // En desktop ocultar el CTA de "Reservar turno" en servicios (sidebar lo reemplaza)
+    const ctaBox = document.getElementById('reservarCTABox');
+    if(ctaBox) ctaBox.style.display = isDesktop ? 'none' : '';
+}
+
+function initDesktopSidebar(){
+    if(window.innerWidth < 900) return;
+    // Mover el contenido de panelReservar al sidebar
+    const sidebar = document.getElementById('desktopReservaContent');
+    const source  = document.getElementById('panelReservar');
+    if(sidebar && source && !sidebar.hasChildNodes()){
+        // Clonar nodos al sidebar
+        Array.from(source.children).forEach(child => {
+            sidebar.appendChild(child.cloneNode(true));
+        });
+    }
+    // Ocultar tab reservar en desktop
+    const tabReservar = document.getElementById('mainTabReservar');
+    if(tabReservar) tabReservar.style.display = 'none';
+    // Ocultar CTA
+    const ctaBox = document.getElementById('reservarCTABox');
+    if(ctaBox) ctaBox.style.display = 'none';
 }
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 
