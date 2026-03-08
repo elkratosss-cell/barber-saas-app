@@ -31,57 +31,7 @@
         .main-tabs{display:flex;border-bottom:2px solid #e5e7eb;background:#fff;position:sticky;top:0;z-index:20;}
         .main-tab{flex:1;padding:12px 0;font-size:0.82rem;font-weight:600;color:#9ca3af;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all 0.2s;}
         .main-tab.active{color:var(--color-primary);border-bottom-color:var(--color-primary);}
-
-        @media(min-width:900px){
-            body{background:#f1f5f9;}
-            #appPublic{ max-width:100% !important; box-shadow:none !important; background:transparent !important; }
-            #appAdmin{ max-width:780px !important; }
-
-            .shop-header{ padding:22px 40px 18px; display:flex; align-items:center; justify-content:space-between; }
-            .shop-header h1{ font-size:1.8rem; margin:0; padding:0; }
-            .shop-header p{ margin:0; font-size:0.9rem; }
-
-            .main-tabs{ padding:0 40px; border-bottom:2px solid #e5e7eb; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
-            .main-tab{ flex:none; padding:14px 24px; font-size:0.88rem; }
-
-            .carousel-wrap{ height:340px; }
-            #shopNotice{ padding:10px 40px; font-size:0.85rem; }
-
-            /* Layout 2 columnas cuando NO está logueado */
-            .desktop-layout{ display:grid; grid-template-columns:1fr 460px; gap:32px; max-width:1200px; margin:0 auto; padding:32px 40px; align-items:start; }
-            .desktop-main{ min-width:0; }
-
-            /* Sidebar sin scroll propio — el scroll es solo el del navegador */
-            .desktop-sidebar{ position:sticky; top:60px; background:#fff; border-radius:16px; box-shadow:0 4px 24px rgba(0,0,0,0.08); border:1px solid #e5e7eb; overflow:visible; }
-
-            /* Servicios: lista vertical con mucho espaciado */
-            #publicServicesList{ display:flex !important; flex-direction:column !important; gap:0 !important; border:1px solid #e5e7eb; border-radius:16px; overflow:hidden; background:#fff; }
-            #publicServicesList > div{ border-radius:0 !important; border:none !important; border-bottom:1px solid #f3f4f6 !important; display:flex !important; align-items:center !important; justify-content:space-between !important; padding:22px 28px !important; }
-            #publicServicesList > div:last-child{ border-bottom:none !important; }
-
-            /* Slots en 4 columnas */
-            #slotsGrid{ grid-template-columns:repeat(4,1fr) !important; }
-
-            /* Footer desktop */
-            footer{ padding:16px 40px; display:flex; align-items:center; justify-content:space-between; position:relative; }
-        }
-        @media(max-width:899px){
-            .desktop-sidebar{ display:none; }
-            .desktop-layout{ display:contents; }
-            .desktop-main{ display:contents; }
-        }
-        /* Servicios cards base (mobile) */
-        #publicServicesList > div{
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            padding:14px 16px;
-            border:1px solid #e5e7eb;
-            border-radius:12px;
-            background:#fff;
-            transition:border-color 0.2s;
-        }
-        #publicServicesList > div:hover{ border-color:var(--color-primary); }
+        /* ADMIN PANEL */
         .admin-shell{display:flex;flex-direction:column;height:100%;}
         .admin-topbar{background:var(--color-primary);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
         .admin-tabs{display:flex;border-bottom:2px solid #e5e7eb;background:#fff;position:sticky;top:0;z-index:20;}
@@ -144,8 +94,7 @@
         /* PAGO CLIENTE */
         .pago-row{display:flex;align-items:center;gap:10px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:8px;}
         .pago-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
-        .pago-value{font-size:0.9rem;font-weight:700;color:#1f2937;word-break:break-all;}
-        .copy-btn{display:inline-flex;align-items:center;gap:4px;background:var(--color-primary);color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:0.75rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity 0.2s;text-decoration:none;flex-shrink:0;}
+        .copy-btn{display:inline-flex;align-items:center;gap:4px;background:var(--color-primary);color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:0.75rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity 0.2s;text-decoration:none;}
         .copy-btn:hover{opacity:0.85;}
 
         /* EXCEPCIONES */
@@ -196,7 +145,7 @@
 </div>
 
 <!-- ===== APP PÚBLICO ===== -->
-<div id="appPublic" class="max-w-md mx-auto min-h-screen bg-white shadow-2xl relative hidden flex flex-col w-full">
+<div id="appPublic" class="max-w-md mx-auto min-h-screen bg-white shadow-2xl relative hidden flex flex-col w-full overflow-hidden">
 
     <div class="carousel-wrap" id="carouselWrap">
         <div class="carousel-track" id="carouselTrack">
@@ -208,12 +157,8 @@
     </div>
 
     <div class="shop-header">
-        <div style="flex:1;min-width:0;padding-right:12px;">
-            <h1 id="shopName" class="text-2xl font-bold mb-0.5">Cargando...</h1>
-            <p id="headerSub" class="text-sm opacity-80"></p>
-        </div>
         <!-- Cuando cliente logueado: Mi cuenta + Salir arriba derecha -->
-        <div id="headerClientZone" style="display:none;align-items:center;gap:6px;flex-shrink:0;">
+        <div id="headerClientZone" style="position:absolute;top:10px;right:12px;display:none;align-items:center;gap:6px;z-index:10;">
             <button onclick="openClientAccount()" style="background:rgba(255,255,255,0.18);border:1.5px solid rgba(255,255,255,0.35);color:#fff;border-radius:999px;padding:5px 12px;font-size:0.75rem;font-weight:700;display:flex;align-items:center;gap:5px;cursor:pointer;">
                 <i class="fas fa-user-circle"></i> Mi cuenta
             </button>
@@ -221,6 +166,8 @@
                 <i class="fas fa-sign-out-alt"></i>
             </button>
         </div>
+        <h1 id="shopName" class="text-2xl font-bold mb-0.5 pr-10">Cargando...</h1>
+        <p id="headerSub" class="text-sm opacity-80"></p>
     </div>
     <div id="shopNotice" class="hidden"><i class="fas fa-bullhorn mr-1"></i><span id="shopNoticeText"></span></div>
 
@@ -230,47 +177,43 @@
         <button class="main-tab" onclick="switchMainTab('reservar')" id="mainTabReservar"><i class="fas fa-calendar-plus mr-1"></i>Reservar</button>
     </div>
 
-    <!-- LAYOUT: columna izq (tabs) + columna der (sidebar reserva en desktop) -->
-    <div class="desktop-layout">
-      <div class="desktop-main">
+    <!-- TAB SERVICIOS -->
+    <div id="panelServicios" class="p-5 pb-20">
+        <div id="publicServicesList" class="space-y-3 mb-6"></div>
+        <div class="p-4 bg-gray-50 rounded-xl text-center">
+            <p class="text-sm text-gray-500 mb-3">¿Querés sacar turno?</p>
+            <button onclick="switchMainTab('reservar')" class="bg-primary text-white px-6 py-3 rounded-xl font-bold text-sm hover:opacity-90 transition"><i class="fas fa-calendar-plus mr-2"></i>Reservar turno</button>
+        </div>
+    </div>
 
-        <!-- TAB SERVICIOS -->
-        <div id="panelServicios" class="p-5 pb-20">
-            <div id="publicServicesList" class="space-y-3 mb-6"></div>
-            <div class="p-4 bg-gray-50 rounded-xl text-center" id="reservarCTABox">
-                <p class="text-sm text-gray-500 mb-3">¿Querés sacar turno?</p>
-                <button onclick="switchMainTab('reservar')" class="bg-primary text-white px-6 py-3 rounded-xl font-bold text-sm hover:opacity-90 transition"><i class="fas fa-calendar-plus mr-2"></i>Reservar turno</button>
+    <!-- TAB DETALLES -->
+    <div id="panelDetalles" class="hidden pb-20">
+        <div id="detailPhotosSection" class="hidden p-5 pb-2">
+            <h3 class="font-bold text-gray-700 mb-3 text-sm uppercase tracking-wide">📸 Portafolio</h3>
+            <div class="detail-photo-grid" id="detailPhotosGrid"></div>
+        </div>
+        <div class="p-5 space-y-5">
+            <div>
+                <h3 class="font-bold text-gray-700 mb-2 text-sm uppercase tracking-wide flex items-center gap-2"><i class="fas fa-clock text-primary"></i>Horario</h3>
+                <div id="detailHorario" class="bg-gray-50 rounded-xl p-3"></div>
+            </div>
+            <div id="detailSobreWrap" class="hidden">
+                <h3 class="font-bold text-gray-700 mb-2 text-sm uppercase tracking-wide flex items-center gap-2"><i class="fas fa-store text-primary"></i>Sobre nosotros</h3>
+                <p id="detailSobre" class="text-sm text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-xl"></p>
+            </div>
+            <div id="detailDireccionWrap" class="hidden">
+                <h3 class="font-bold text-gray-700 mb-2 text-sm uppercase tracking-wide flex items-center gap-2"><i class="fas fa-map-marker-alt text-primary"></i>Dirección</h3>
+                <p id="detailDireccion" class="text-sm text-gray-600 bg-gray-50 p-3 rounded-xl"></p>
+            </div>
+            <div id="detailContactoWrap" class="hidden">
+                <h3 class="font-bold text-gray-700 mb-2 text-sm uppercase tracking-wide flex items-center gap-2"><i class="fas fa-phone text-primary"></i>Contacto</h3>
+                <div id="detailContactoList" class="space-y-2"></div>
             </div>
         </div>
+    </div>
 
-        <!-- TAB DETALLES -->
-        <div id="panelDetalles" class="hidden pb-20">
-            <div id="detailPhotosSection" class="hidden p-5 pb-2">
-                <h3 class="font-bold text-gray-700 mb-3 text-sm uppercase tracking-wide">📸 Portafolio</h3>
-                <div class="detail-photo-grid" id="detailPhotosGrid"></div>
-            </div>
-            <div class="p-5 space-y-5">
-                <div>
-                    <h3 class="font-bold text-gray-700 mb-2 text-sm uppercase tracking-wide flex items-center gap-2"><i class="fas fa-clock text-primary"></i>Horario</h3>
-                    <div id="detailHorario" class="bg-gray-50 rounded-xl p-3"></div>
-                </div>
-                <div id="detailSobreWrap" class="hidden">
-                    <h3 class="font-bold text-gray-700 mb-2 text-sm uppercase tracking-wide flex items-center gap-2"><i class="fas fa-store text-primary"></i>Sobre nosotros</h3>
-                    <p id="detailSobre" class="text-sm text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-xl"></p>
-                </div>
-                <div id="detailDireccionWrap" class="hidden">
-                    <h3 class="font-bold text-gray-700 mb-2 text-sm uppercase tracking-wide flex items-center gap-2"><i class="fas fa-map-marker-alt text-primary"></i>Dirección</h3>
-                    <p id="detailDireccion" class="text-sm text-gray-600 bg-gray-50 p-3 rounded-xl"></p>
-                </div>
-                <div id="detailContactoWrap" class="hidden">
-                    <h3 class="font-bold text-gray-700 mb-2 text-sm uppercase tracking-wide flex items-center gap-2"><i class="fas fa-phone text-primary"></i>Contacto</h3>
-                    <div id="detailContactoList" class="space-y-2"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- TAB RESERVAR (mobile) -->
-        <div id="panelReservar" class="hidden pb-20">
+    <!-- TAB RESERVAR -->
+    <div id="panelReservar" class="hidden pb-20">
         <div id="viewLogin" class="p-5">
             <div class="text-center mb-6 mt-2">
                 <h2 class="text-xl font-bold text-gray-800">Reserva tu turno</h2>
@@ -301,12 +244,7 @@
                 <button onclick="backToPhone()" class="w-full py-2 text-gray-400 text-sm hover:text-primary">← Cambiar número</button>
             </div>
             <div id="loginStepTempPin" class="pin-step hidden space-y-4">
-                <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 text-center">
-                    <p class="text-2xl mb-1">📱</p>
-                    <p class="font-bold text-gray-800 text-sm">Te enviamos un SMS</p>
-                    <p id="tempPinDesc" class="text-sm text-gray-500 mt-1"></p>
-                    <p class="text-xs text-gray-400 mt-1">Ingresá el código de 4 dígitos que recibiste</p>
-                </div>
+                <p id="tempPinDesc" class="text-sm text-gray-600"></p>
                 <div id="nameFieldWrap" class="hidden space-y-3">
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-1">Nombre completo</label>
@@ -318,15 +256,15 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Código SMS</label>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">PIN SMS (4 dígitos)</label>
                     <div class="pin-visual-input" onclick="document.getElementById('tempPinReal').focus()">
                         <div class="pin-char" id="tpc0">·</div><div class="pin-char" id="tpc1">·</div><div class="pin-char" id="tpc2">·</div><div class="pin-char" id="tpc3">·</div>
                     </div>
                     <input type="tel" inputmode="numeric" id="tempPinReal" class="pin-input-hidden" maxlength="4" autocomplete="new-password">
-                    <p class="text-xs text-gray-400 mt-2 text-center">El código expira en 10 minutos</p>
+                    <p class="text-xs text-gray-400 mt-2 text-center">De un solo uso, expira en 10 min.</p>
                 </div>
-                <button onclick="verifyTempPin()" class="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-md hover:opacity-90 transition">Confirmar código</button>
-                <button onclick="resendTempPin()" class="w-full py-2 text-gray-500 text-sm hover:text-primary">¿No te llegó? Reenviar SMS</button>
+                <button onclick="verifyTempPin()" class="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-md hover:opacity-90 transition">Verificar</button>
+                <button onclick="resendTempPin()" class="w-full py-2 text-gray-500 text-sm hover:text-primary">Reenviar PIN por SMS</button>
                 <button onclick="backToPhone()" class="w-full py-2 text-gray-400 text-sm hover:text-primary">← Cambiar número</button>
             </div>
             <div id="loginStepSetPin" class="pin-step hidden space-y-4">
@@ -386,15 +324,7 @@
                 <div id="clientPagoList" class="p-4"></div>
             </div>
         </div>
-    </div><!-- /panelReservar mobile -->
-      </div><!-- /desktop-main -->
-
-      <!-- SIDEBAR DERECHA — solo desktop, contiene el panel de reserva -->
-      <div class="desktop-sidebar" id="desktopSidebar">
-        <div id="desktopReservaContent" class="p-5"></div>
-      </div>
-
-    </div><!-- /desktop-layout -->
+    </div>
 
     <footer class="text-center border-t bg-white">
         <!-- Links WhatsApp -->
@@ -402,11 +332,11 @@
             <div id="footerWppLinks" class="flex flex-wrap gap-2 justify-center px-4"></div>
         </div>
         <!-- Acceso Admin — pie de página -->
-        <div class="py-3 px-4 relative">
+        <div class="py-3 px-4">
             <button onclick="toggleDropdown('publicDropdown')" class="inline-flex items-center gap-2 text-xs text-gray-400 hover:text-gray-600 transition font-medium">
                 <i class="fas fa-lock text-gray-300"></i> Acceso admin
             </button>
-            <div id="publicDropdown" class="hidden absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 bg-white rounded-xl shadow-2xl border border-gray-100 py-1 text-gray-800 text-sm z-50">
+            <div id="publicDropdown" class="hidden fixed bottom-16 left-1/2 -translate-x-1/2 w-52 bg-white rounded-xl shadow-2xl border border-gray-100 py-1 text-gray-800 text-sm z-50">
                 <a href="#" onclick="openAdminLoginAndCloseDropdown(event)" class="block px-4 py-3 hover:bg-gray-50 font-medium" style="color:var(--color-primary)"><i class="fas fa-sign-in-alt mr-2"></i>Ingresar como admin</a>
             </div>
         </div>
@@ -415,7 +345,7 @@
 
 
 <!-- ===== PANEL ADMIN ===== -->
-<div id="appAdmin" class="max-w-md mx-auto min-h-screen bg-white shadow-2xl relative hidden flex flex-col w-full" id="appAdmin">
+<div id="appAdmin" class="max-w-md mx-auto min-h-screen bg-white shadow-2xl relative hidden flex flex-col w-full overflow-hidden">
 
     <div class="admin-topbar">
         <div>
@@ -704,8 +634,8 @@
 <div id="modalBarberLogin" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center px-4 backdrop-blur-sm">
     <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
         <h3 class="font-bold text-xl mb-4 text-center text-primary">Acceso Admin</h3>
-        <input type="text" id="adminUsername" placeholder="Usuario" class="w-full mb-3 px-4 py-3 border rounded-xl" autocomplete="off" onkeydown="if(event.key==='Enter')document.getElementById('adminPass').focus()">
-        <input type="password" id="adminPass" placeholder="Contraseña" class="w-full mb-5 px-4 py-3 border rounded-xl" onkeydown="if(event.key==='Enter')loginBarber()">
+        <input type="text" id="adminUsername" placeholder="Usuario" class="w-full mb-3 px-4 py-3 border rounded-xl" autocomplete="off">
+        <input type="password" id="adminPass" placeholder="Contraseña" class="w-full mb-5 px-4 py-3 border rounded-xl">
         <div class="flex gap-3">
             <button onclick="toggleModal('modalBarberLogin')" class="flex-1 py-3 text-gray-500">Cancelar</button>
             <button onclick="loginBarber()" class="flex-1 py-3 bg-primary text-white rounded-xl font-bold">Entrar</button>
@@ -903,7 +833,6 @@ document.addEventListener('DOMContentLoaded',async()=>{
 function showPublicApp(){
     document.getElementById('appPublic').classList.remove('hidden');
     document.getElementById('appAdmin').classList.add('hidden');
-    setTimeout(initDesktopSidebar, 50);
 }
 
 // FIX: showAdminPanel inicializa flatpickr correctamente
@@ -985,14 +914,7 @@ function renderFooterWpp(){
 // -------- PUBLIC SERVICES --------
 function renderPublicServices(){
     const s=shopConfig.servicios||[];
-    document.getElementById('publicServicesList').innerHTML=s.length?s.map(sv=>`
-        <div onclick="switchMainTab('reservar')" style="cursor:pointer;">
-            <div>
-                <p class="font-bold text-gray-800 text-base">${sv.nombre}</p>
-                ${sv.duracion?`<p class="text-xs text-gray-400 mt-0.5">${sv.duracion} min</p>`:''}
-            </div>
-            <p class="font-bold text-primary text-xl">${sv.precio?'$'+sv.precio:''}</p>
-        </div>`).join(''):'<p class="text-center text-gray-400 py-8 text-sm">No hay servicios cargados aún.</p>';
+    document.getElementById('publicServicesList').innerHTML=s.length?s.map(sv=>`<div class="flex justify-between items-center p-4 border border-gray-100 rounded-xl hover:border-primary transition"><p class="font-bold text-gray-800">${sv.nombre}</p><span class="font-bold text-primary text-lg">$${sv.precio}</span></div>`).join(''):'<p class="text-center text-gray-400 py-8 text-sm">No hay servicios cargados aún.</p>';
 }
 
 // -------- DETALLES --------
@@ -1047,104 +969,10 @@ function carouselPrev(){carouselGoTo(carouselIndex-1);}
 
 // -------- PUBLIC TABS --------
 function switchMainTab(tab){
-    const isDesktop = window.innerWidth >= 900;
     ['servicios','detalles','reservar'].forEach(t=>{
-        const panel = document.getElementById('panel'+cap(t));
-        const tabBtn = document.getElementById('mainTab'+cap(t));
-        if(isDesktop && t==='reservar'){
-            // En desktop: tab reservar oculto, sidebar siempre visible
-            panel.classList.add('hidden');
-            tabBtn.classList.toggle('active', tab==='reservar');
-        } else {
-            panel.classList.toggle('hidden', t!==tab);
-            tabBtn.classList.toggle('active', t===tab);
-        }
+        document.getElementById('panel'+cap(t)).classList.toggle('hidden',t!==tab);
+        document.getElementById('mainTab'+cap(t)).classList.toggle('active',t===tab);
     });
-    // En desktop ocultar el CTA de "Reservar turno" en servicios (sidebar lo reemplaza)
-    const ctaBox = document.getElementById('reservarCTABox');
-    if(ctaBox) ctaBox.style.display = isDesktop ? 'none' : '';
-}
-
-function initDesktopSidebar(){
-    const isDesktop = window.innerWidth >= 900;
-    const panel     = document.getElementById('panelReservar');
-    const sidebar   = document.getElementById('desktopSidebar');
-    const tabReservar = document.getElementById('mainTabReservar');
-    const ctaBox    = document.getElementById('reservarCTABox');
-    if(!panel || !sidebar) return;
-
-    if(isDesktop){
-        // Mover panelReservar al sidebar (sin clonar, IDs únicos)
-        if(!sidebar.contains(panel)){
-            panel.classList.remove('hidden','pb-20');
-            panel.style.cssText = 'display:block;';
-            document.getElementById('desktopReservaContent').appendChild(panel);
-        }
-        if(tabReservar) tabReservar.style.display = 'none';
-        if(ctaBox) ctaBox.style.display = 'none';
-    } else {
-        const desktopMain = document.querySelector('.desktop-main');
-        if(sidebar.contains(panel) && desktopMain){
-            panel.style.cssText = '';
-            panel.classList.add('hidden','pb-20');
-            desktopMain.appendChild(panel);
-        }
-        if(tabReservar) tabReservar.style.display = '';
-        if(ctaBox) ctaBox.style.display = '';
-    }
-}
-
-// Cuando el cliente se loguea, colapsar el layout a ancho completo (como admin)
-function setDesktopClientMode(loggedIn){
-    if(window.innerWidth < 900) return;
-    const layout    = document.querySelector('.desktop-layout');
-    const sidebar   = document.getElementById('desktopSidebar');
-    const main      = document.querySelector('.desktop-main');
-    const panel     = document.getElementById('panelReservar');
-    const appPublic = document.getElementById('appPublic');
-    const tabs      = document.querySelector('.main-tabs');
-    const panelServ = document.getElementById('panelServicios');
-    const panelDet  = document.getElementById('panelDetalles');
-
-    if(loggedIn){
-        // Ocultar tabs y paneles de servicios/detalles
-        if(tabs) tabs.style.display = 'none';
-        if(panelServ) panelServ.style.display = 'none';
-        if(panelDet)  panelDet.style.display  = 'none';
-        // Modo ancho completo como admin
-        appPublic.style.maxWidth  = '780px';
-        appPublic.style.margin    = '0 auto';
-        appPublic.style.background = '#fff';
-        appPublic.style.boxShadow  = '0 4px 24px rgba(0,0,0,0.08)';
-        if(layout) layout.style.cssText = 'display:block;padding:0;';
-        if(sidebar) sidebar.style.display = 'none';
-        // Mover panelReservar al main y mostrarlo full width
-        if(main){
-            main.style.cssText = 'display:block;';
-            if(!main.contains(panel)){
-                panel.style.cssText = 'display:block;';
-                panel.classList.remove('hidden','pb-20');
-                main.appendChild(panel);
-            } else {
-                panel.style.cssText = 'display:block;';
-                panel.classList.remove('hidden','pb-20');
-            }
-        }
-    } else {
-        // Volver a mostrar tabs y paneles
-        if(tabs) tabs.style.display = '';
-        if(panelServ) panelServ.style.display = '';
-        if(panelDet)  panelDet.style.display  = '';
-        // Restaurar layout 2 columnas
-        appPublic.style.maxWidth  = '';
-        appPublic.style.margin    = '';
-        appPublic.style.background = '';
-        appPublic.style.boxShadow  = '';
-        if(layout) layout.style.cssText = '';
-        if(sidebar) sidebar.style.display = '';
-        if(main) main.style.cssText = '';
-        initDesktopSidebar();
-    }
 }
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 
@@ -1218,7 +1046,7 @@ async function sendTempPinSms(isForgot){
     const res=await fetch(SUPABASE_FUNCTIONS_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${SUPABASE_KEY}`},body:JSON.stringify({to:loginState.phone,pin})});
     const rd=await res.json();
     if(!res.ok||rd.success===false){showToast('Error al enviar PIN. Intentá de nuevo.',true);return;}
-    document.getElementById('tempPinDesc').innerText=isForgot?`Enviamos un código al ${loginState.phone} para recuperar tu acceso.`:`Enviamos un código al ${loginState.phone} para verificar tu número.`;
+    document.getElementById('tempPinDesc').innerText=isForgot?`PIN temporal enviado a ${loginState.phone.slice(0,3)}...`:`PIN enviado a ${loginState.phone.slice(0,3)}...`;
     document.getElementById('nameFieldWrap').classList[loginState.isNewUser?'remove':'add']('hidden');
     clearPinInput('tempPinReal','tpc');showToast(`PIN enviado a ${loginState.phone.slice(0,3)}...`);
     showLoginStep('loginStepTempPin');setTimeout(()=>document.getElementById('tempPinReal').focus(),100);
@@ -1267,8 +1095,8 @@ async function showClientDashboard(){
     document.getElementById('viewClient').classList.remove('hidden');
     const firstName=currentUser.nombre.split(' ')[0];
     document.getElementById('clientNameDisplay').innerText=firstName;
+    // Mostrar Mi cuenta + Salir en header
     document.getElementById('headerClientZone').style.display='flex';
-    setDesktopClientMode(true);
     switchMainTab('reservar');
     renderClientPago();
     const todayISO=new Date().toISOString().split('T')[0];
@@ -1924,7 +1752,7 @@ function renderClientPago(){
     if(cfg.pago_efectivo)items.push({icon:'💵',label:'Efectivo',value:'Se acepta efectivo',copy:false});
     if(!items.length){section.classList.add('hidden');return;}
     const titular=cfg.pago_titular?`<div class="flex items-center gap-2 mb-3 pb-2 border-b"><i class="fas fa-user text-primary text-xs"></i><p class="text-xs text-gray-600">Titular: <span class="font-bold text-gray-800">${cfg.pago_titular}</span></p></div>`:'';
-    list.innerHTML=titular+items.map(item=>`<div class="pago-row"><div class="pago-icon bg-gray-100">${item.icon}</div><div class="flex-1 min-w-0 mx-2"><p class="text-xs text-gray-400">${item.label}</p><p class="pago-value">${item.value}</p></div>${item.copy?`<button class="copy-btn" onclick="copyPago('${item.value.replace(/'/g,"\\'")}',this)"><i class="fas fa-copy mr-1"></i>Copiar</button>`:''}${item.link?`<a href="${item.value}" target="_blank" class="copy-btn"><i class="fas fa-external-link-alt mr-1"></i>Ir</a>`:''}</div>`).join('');
+    list.innerHTML=titular+items.map(item=>`<div class="pago-row"><div class="pago-icon bg-gray-100">${item.icon}</div><div class="flex-1 min-w-0 mx-2"><p class="text-xs text-gray-400">${item.label}</p><p class="text-sm font-bold text-gray-800 truncate">${item.value}</p></div>${item.copy?`<button class="copy-btn" onclick="copyPago('${item.value.replace(/'/g,"\\'")}',this)"><i class="fas fa-copy mr-1"></i>Copiar</button>`:''}${item.link?`<a href="${item.value}" target="_blank" class="copy-btn"><i class="fas fa-external-link-alt mr-1"></i>Ir</a>`:''}</div>`).join('');
     section.classList.remove('hidden');
 }
 function copyPago(val,btn){
@@ -1935,7 +1763,6 @@ function copyPago(val,btn){
 function logout(){
     currentUser=null;localStorage.removeItem(CLIENT_STORAGE_KEY);localStorage.removeItem(ADMIN_STORAGE_KEY);
     document.getElementById('headerClientZone').style.display='none';
-    setDesktopClientMode(false);
     showPublicApp();document.getElementById('viewClient').classList.add('hidden');document.getElementById('viewLogin').classList.remove('hidden');
     backToPhone();switchMainTab('servicios');
 }
